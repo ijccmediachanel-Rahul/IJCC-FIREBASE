@@ -12,6 +12,8 @@ import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
+import { client } from "@/sanity/lib/client";
+import { RESOURCES_QUERY, RESOURCES_PAGE_QUERY } from "@/sanity/lib/queries";
 
 const allResources = [
   {
@@ -86,6 +88,24 @@ export default function ResourcesPage() {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<DocumentData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [cmsResources, setCmsResources] = useState<any[]>([]);
+  const [cmsPage, setCmsPage] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchResources() {
+      try {
+        const [resData, pageData] = await Promise.all([
+          client.fetch(RESOURCES_QUERY),
+          client.fetch(RESOURCES_PAGE_QUERY)
+        ]);
+        if (resData && resData.length > 0) setCmsResources(resData);
+        if (pageData) setCmsPage(pageData);
+      } catch (error) {
+        console.error("Failed to fetch resources from Sanity", error);
+      }
+    }
+    fetchResources();
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -112,6 +132,40 @@ export default function ResourcesPage() {
 
   const hasMembership = profile?.membershipTier && profile.membershipTier !== "none";
 
+  const cardIconPool = [
+    <FileText key="r1" className="h-8 w-8 text-primary" />,
+    <BarChart key="r2" className="h-8 w-8 text-primary" />,
+    <BookOpen key="r3" className="h-8 w-8 text-primary" />,
+    <Sparkles key="r4" className="h-8 w-8 text-primary" />,
+    <BookOpen key="r5" className="h-8 w-8 text-primary" />,
+    <BookOpen key="r6" className="h-8 w-8 text-primary" />,
+    <Presentation key="r7" className="h-8 w-8 text-primary" />,
+    <FileText key="r8" className="h-8 w-8 text-primary" />,
+  ];
+
+  // Cards come from the CMS when available, otherwise built-in defaults.
+  // CMS controls title, description, link and member-gating; icon/type shell stays in code.
+  const cards = (cmsResources.length > 0
+    ? cmsResources.map((d: any, i: number) => {
+        const base = allResources.find((r) => r.id === d.resourceId) ?? {
+          id: d.resourceId, icon: cardIconPool[i % cardIconPool.length], type: "Document", href: "", isProtected: false,
+        };
+        const linkUrl = d.linkUrl || "";
+        return {
+          ...base,
+          title: d.title,
+          description: d.description || "",
+          href: linkUrl || base.href,
+          isLink: linkUrl.length > 0,
+          isProtected: d.isProtected ?? base.isProtected,
+        };
+      })
+    : allResources.map((r) => ({
+        ...r,
+        title: t(`resource_${r.id}_title`),
+        description: t(`resource_${r.id}_description`),
+      })));
+
   const handleDownload = (resourceTitle: string) => {
     toast({
       title: "Download Started",
@@ -137,9 +191,9 @@ export default function ResourcesPage() {
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{t('resources_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('resources_title')}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {t('resources_description')}
+          {cmsPage?.description || t('resources_description')}
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -158,14 +212,14 @@ export default function ResourcesPage() {
                 </CardFooter>
               </Card>
             ))
-          : allResources.map((resource) => {
+          : cards.map((resource: any) => {
               const isAccessible = !resource.isProtected || hasMembership;
               return (
                 <Card key={resource.id} className="flex flex-col transform transition-transform duration-300 hover:-translate-y-2">
                   <CardHeader>
                     {resource.icon}
-                    <CardTitle className="font-headline mt-4">{t(`resource_${resource.id}_title`)}</CardTitle>
-                    <CardDescription>{t(`resource_${resource.id}_description`)}</CardDescription>
+                    <CardTitle className="font-headline mt-4">{resource.title}</CardTitle>
+                    <CardDescription>{resource.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow" />
                   <CardFooter>
@@ -178,7 +232,7 @@ export default function ResourcesPage() {
                           </Link>
                         </Button>
                       ) : (
-                        <Button variant="outline" className="w-full rounded-full" onClick={() => handleDownload(t(`resource_${resource.id}_title`))}>
+                        <Button variant="outline" className="w-full rounded-full" onClick={() => handleDownload(resource.title)}>
                           <Download className="mr-2 h-4 w-4" />
                           {t('resource_download')} {t(`resource_type_${resource.type.toLowerCase().replace(' ', '')}`) || resource.type}
                         </Button>

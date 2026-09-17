@@ -15,9 +15,9 @@ import {
 import { useTranslation } from "@/hooks/use-translation";
 import placeholders from "@/app/lib/placeholder-images.json";
 import { client } from "@/sanity/lib/client";
-import { EVENTS_QUERY } from "@/sanity/lib/queries";
+import { EVENTS_QUERY, EVENTS_PAGE_QUERY } from "@/sanity/lib/queries";
 
-const eventsData = [
+const defaultEventsData = [
   {
     id: 13,
     date: "2026-10-01",
@@ -115,11 +115,63 @@ const eventsData = [
   },
 ];
 
-const eventDates = eventsData.map(event => new Date(event.date + 'T00:00:00'));
+export default function EventsPage() {
+  const [isClient, setIsClient] = useState(false);
+  const [cmsEvents, setCmsEvents] = useState<any[]>([]);
+  const [cmsPage, setCmsPage] = useState<any>(null);
+  const { t } = useTranslation();
 
-const modifiers = {
-  event: eventDates,
-};
+  useEffect(() => {
+    setIsClient(true);
+    async function fetchEvents() {
+      try {
+        const [eventsData, pageData] = await Promise.all([
+          client.fetch(EVENTS_QUERY),
+          client.fetch(EVENTS_PAGE_QUERY)
+        ]);
+        if (eventsData && eventsData.length > 0) {
+          setCmsEvents(eventsData);
+        }
+        if (pageData) setCmsPage(pageData);
+      } catch (err) {
+        console.error("Failed to fetch sanity events", err);
+      }
+    }
+    fetchEvents();
+  }, []);
+
+  const defaultEvents = defaultEventsData.map(event => ({
+    ...event,
+    title: t(`event_${event.id}_title`),
+    displayDate: t(`event_${event.id}_displayDate`),
+    time: t(`event_${event.id}_time`),
+    location: t(`event_${event.id}_location`),
+    description: t(`event_${event.id}_description`),
+  }));
+
+  // Events come from the CMS when available, otherwise built-in defaults.
+  const events = (cmsEvents.length > 0
+    ? cmsEvents.map((event: any) => ({
+        id: event._id,
+        date: event.date ? event.date.slice(0, 10) : "2026-01-01",
+        imageUrl: event.imageUrl,
+        isVertical: !!event.isVertical,
+        href: event.registrationLink || undefined,
+        title: event.title || "TBA",
+        displayDate: event.date
+          ? new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+          : "TBA",
+        time: event.time || "TBA",
+        location: event.location || "TBA",
+        description: event.description || "",
+      }))
+    : defaultEvents);
+
+  const eventDates = events.map(event => new Date(event.date + 'T00:00:00'));
+
+  const modifiers = {
+    event: eventDates,
+  };
 
 const modifiersStyles = {
   event: {
@@ -129,62 +181,12 @@ const modifiersStyles = {
 };
 
 
-export default function EventsPage() {
-  const [isClient, setIsClient] = useState(false);
-  const [sanityEvents, setSanityEvents] = useState<any[]>([]);
-  const { t } = useTranslation();
-
-  useEffect(() => {
-    setIsClient(true);
-    async function fetchEvents() {
-      try {
-        const data = await client.fetch(EVENTS_QUERY);
-        if (data && data.length > 0) {
-          setSanityEvents(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch sanity events", err);
-      }
-    }
-    fetchEvents();
-  }, []);
-
-  const hardcodedEvents = eventsData.map(event => ({
-    ...event,
-    title: t(`event_${event.id}_title`),
-    displayDate: t(`event_${event.id}_displayDate`),
-    time: t(`event_${event.id}_time`),
-    location: t(`event_${event.id}_location`),
-    description: t(`event_${event.id}_description`),
-  }));
-
-  const mappedSanityEvents = sanityEvents.map(event => ({
-    id: event._id,
-    date: event.date || "2026-01-01",
-    imageUrl: event.imageUrl || "https://picsum.photos/seed/event/800/400",
-    isVertical: false,
-    href: event.registrationLink || "/contact",
-    title: event.title || "TBA",
-    displayDate: event.date ? new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : "TBA",
-    time: event.time || "TBA",
-    location: event.location || "TBA",
-    description: event.description || "",
-  }));
-
-  const sanityEventTitles = mappedSanityEvents.map(e => e.title?.toLowerCase().trim());
-
-  const filteredHardcodedEvents = hardcodedEvents.filter(
-    e => !sanityEventTitles.includes(e.title?.toLowerCase().trim())
-  );
-
-  const events = [...mappedSanityEvents, ...filteredHardcodedEvents];
-  
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{t('events_page_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('events_page_title')}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {t('events_page_subtitle')}
+          {cmsPage?.description || t('events_page_subtitle')}
         </p>
       </div>
 
@@ -255,7 +257,7 @@ export default function EventsPage() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-2xl">{t('events_calendar_title')}</CardTitle>
+                <CardTitle className="font-headline text-2xl">{cmsPage?.calendarTitle || t('events_calendar_title')}</CardTitle>
             </CardHeader>
             <CardContent>
               {isClient ? (

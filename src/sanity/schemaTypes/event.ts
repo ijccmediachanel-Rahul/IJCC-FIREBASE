@@ -18,6 +18,19 @@ export const event = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'time',
+      title: 'Time (text)',
+      type: 'string',
+      description: 'e.g. 10:00 AM - 4:00 PM. Shown next to the date.',
+    }),
+    defineField({
+      name: 'isVertical',
+      title: 'Vertical Poster',
+      type: 'boolean',
+      description: 'ON if the event image is a tall poster/flyer.',
+      initialValue: false,
+    }),
+    defineField({
       name: 'location',
       title: 'Location',
       type: 'string',
@@ -40,5 +53,18 @@ export const event = defineType({
         hotspot: true,
       },
     }),
+    defineField({
+      name: 'imageUrl',
+      title: 'Event Image URL (fallback)',
+      type: 'url',
+      description: 'Used when no image is uploaded above.',
+    }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      subtitle: 'date',
+      media: 'image',
+    },
+  },
 });

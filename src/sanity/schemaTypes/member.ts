@@ -50,8 +50,29 @@ export const member = defineType({
       },
     }),
     defineField({
+      name: 'imageUrl',
+      title: 'Photo URL (fallback)',
+      type: 'url',
+      description: 'Used when no image is uploaded above. Paste any https:// image link.',
+    }),
+    defineField({
       name: 'bio',
       title: 'Biography',
+      type: 'text',
+    }),
+    defineField({
+      name: 'name_ja',
+      title: 'Name (Japanese)',
+      type: 'string',
+    }),
+    defineField({
+      name: 'role_ja',
+      title: 'Role / Designation (Japanese)',
+      type: 'string',
+    }),
+    defineField({
+      name: 'bio_ja',
+      title: 'Biography (Japanese)',
       type: 'text',
     }),
   ],

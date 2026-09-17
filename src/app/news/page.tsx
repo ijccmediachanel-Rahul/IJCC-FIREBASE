@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Trophy, Star, ShieldCheck, Building2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { client } from "@/sanity/lib/client";
+import { NEWS_ARTICLES_QUERY, NEWS_PAGE_QUERY } from "@/sanity/lib/queries";
 
 const newsArticlesData = [
   {
@@ -64,19 +67,57 @@ const newsArticlesData = [
 
 export default function NewsPage() {
   const { t } = useTranslation();
+  const [cmsArticles, setCmsArticles] = useState<any[]>([]);
+  const [cmsPage, setCmsPage] = useState<any>(null);
 
-  const newsArticles = newsArticlesData.map(article => ({
-    ...article,
-    title: t(`news_article_${article.id}_title`),
-    description: t(`news_article_${article.id}_description`),
-  }));
+  useEffect(() => {
+    async function fetchNews() {
+      try {
+        const [articlesData, pageData] = await Promise.all([
+          client.fetch(NEWS_ARTICLES_QUERY),
+          client.fetch(NEWS_PAGE_QUERY)
+        ]);
+        setCmsArticles(articlesData);
+        setCmsPage(pageData);
+      } catch (error) {
+        console.error("Failed to fetch news from Sanity", error);
+      }
+    }
+    fetchNews();
+  }, []);
+
+  const iconForTag = (tag: string) => {
+    if (tag?.includes('NEW')) return <Star className="h-3 w-3" />;
+    if (tag?.includes('FEATURED')) return <Trophy className="h-3 w-3" />;
+    if (tag) return <Building2 className="h-3 w-3" />;
+    return <ShieldCheck className="h-3 w-3" />;
+  };
+
+  // Articles come from the CMS when available, otherwise built-in defaults.
+  const newsArticles = (cmsArticles.length > 0
+    ? cmsArticles.map((a: any) => ({
+        id: a.slug,
+        date: a.publishDate,
+        imageUrl: a.featuredImageUrl,
+        href: `/news/${a.slug}`,
+        isSpecial: !!a.tag,
+        tag: a.tag,
+        icon: iconForTag(a.tag),
+        title: a.title,
+        description: a.excerpt,
+      }))
+    : newsArticlesData.map(article => ({
+        ...article,
+        title: t(`news_article_${article.id}_title`),
+        description: t(`news_article_${article.id}_description`),
+      })));
 
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{t('news_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('news_title')}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {t('news_description')}
+          {cmsPage?.description || t('news_description')}
         </p>
       </div>
 

@@ -6,10 +6,27 @@ export const membershipPricing = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'tierId',
+      title: 'Tier ID (do not change)',
+      type: 'string',
+      description: 'Stable key linking this price to the website card: student, individual, startup, sme-standard, sme-plus, corporate-standard, corporate-premium, patron, strategic-platinum.',
+    }),
+    defineField({
       name: 'tierName',
       title: 'Tier Name',
       type: 'string',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'eligibility',
+      title: 'Eligibility / Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'order',
+      title: 'Display Order',
+      type: 'number',
+      initialValue: 99,
     }),
     defineField({
       name: 'price',
@@ -25,12 +42,6 @@ export const membershipPricing = defineType({
         list: ['INR', 'JPY', 'USD'],
       },
       initialValue: 'INR',
-    }),
-    defineField({
-      name: 'duration',
-      title: 'Duration (e.g., Annual, Monthly)',
-      type: 'string',
-      initialValue: 'Annual',
     }),
     defineField({
       name: 'benefits',

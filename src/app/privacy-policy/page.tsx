@@ -1,21 +1,32 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { client } from "@/sanity/lib/client";
+import { LEGAL_PAGE_QUERY } from "@/sanity/lib/queries";
+import { PortableText } from "@portabletext/react";
 
 export default function PrivacyPolicyPage() {
   const [lastUpdated, setLastUpdated] = useState('');
+  const [cms, setCms] = useState<any>(null);
 
   useEffect(() => {
     setLastUpdated(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+    client.fetch(LEGAL_PAGE_QUERY, { id: 'privacyPolicy' }).then((d) => { if (d) setCms(d); }).catch(() => {});
   }, []);
 
   return (
     <div className="container py-12">
       <div className="prose mx-auto">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl text-center mb-8">Privacy Policy</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl text-center mb-8">{cms?.title || 'Privacy Policy'}</h1>
         
-        {lastUpdated && <p><em>Last updated: {lastUpdated}</em></p>}
-        
+        {(cms?.lastUpdated || lastUpdated) && <p><em>Last updated: {cms?.lastUpdated || lastUpdated}</em></p>}
+        {cms?.content ? (
+          <PortableText value={cms.content} />
+        ) : (
+          <></>
+        )}
+        {!cms?.content && (
+          <>
         <p>This is a placeholder Privacy Policy page. In a real application, this page would contain detailed information about how user data is collected, used, and protected.</p>
         
         <h2 className="text-2xl font-headline mt-8">1. Information We Collect</h2>
@@ -32,6 +43,8 @@ export default function PrivacyPolicyPage() {
 
         <h2 className="text-2xl font-headline mt-8">5. Contact Us</h2>
         <p>If you have any questions about this Privacy Policy, please contact us at contact@indojapanhub.com.</p>
+          </>
+        )}
       </div>
     </div>
   );

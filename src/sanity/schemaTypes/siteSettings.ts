@@ -6,16 +6,6 @@ export const siteSettings = defineType({
   type: 'document',
   fields: [
     defineField({
-      name: 'title',
-      title: 'Site Title',
-      type: 'string',
-    }),
-    defineField({
-      name: 'description',
-      title: 'Site Description',
-      type: 'text',
-    }),
-    defineField({
       name: 'contactEmail',
       title: 'Contact Email',
       type: 'string',
@@ -29,6 +19,26 @@ export const siteSettings = defineType({
       name: 'address',
       title: 'Office Address',
       type: 'text',
+    }),
+    defineField({
+      name: 'instagramUrl',
+      title: 'Instagram URL',
+      type: 'url',
+    }),
+    defineField({
+      name: 'linkedinUrl',
+      title: 'LinkedIn URL',
+      type: 'url',
+    }),
+    defineField({
+      name: 'facebookUrl',
+      title: 'Facebook URL',
+      type: 'url',
+    }),
+    defineField({
+      name: 'youtubeUrl',
+      title: 'YouTube URL',
+      type: 'url',
     }),
   ],
 });

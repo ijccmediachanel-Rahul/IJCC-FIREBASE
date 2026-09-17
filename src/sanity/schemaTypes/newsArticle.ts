@@ -34,6 +34,18 @@ export const newsArticle = defineType({
       options: { hotspot: true },
     }),
     defineField({
+      name: 'featuredImageUrl',
+      title: 'Featured Image URL (fallback)',
+      type: 'url',
+      description: 'Used when no image is uploaded above.',
+    }),
+    defineField({
+      name: 'tag',
+      title: 'Badge Tag (e.g. STRATEGIC, NEW MoU)',
+      type: 'string',
+      description: 'Small badge shown on the card. Leave empty for no badge.',
+    }),
+    defineField({
       name: 'excerpt',
       title: 'Excerpt',
       type: 'text',

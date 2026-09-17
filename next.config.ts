@@ -4,6 +4,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  outputFileTracingRoot: __dirname,
   transpilePackages: ['sanity', 'next-sanity'],
   typescript: {
     ignoreBuildErrors: true,
@@ -255,18 +256,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'ibb.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'postimg.cc',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'i.postimg.cc',
         port: '',
         pathname: '/**',
@@ -310,6 +299,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.ctfassets.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
         port: '',
         pathname: '/**',
       },

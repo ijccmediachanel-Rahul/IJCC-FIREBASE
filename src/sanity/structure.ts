@@ -1,63 +1,65 @@
 import type { StructureResolver } from 'sanity/structure';
 
+type S = Parameters<StructureResolver>[0];
+
+const singleton = (S: S, title: string, schemaType: string, documentId: string) =>
+  S.listItem()
+    .title(title)
+    .child(S.document().schemaType(schemaType).documentId(documentId).title(title));
+
+const group = (S: S, title: string, items: ReturnType<S['listItem']>[]) =>
+  S.listItem()
+    .title(title)
+    .child(S.list().title(title).items(items));
+
+// Sidebar mirrors the website: one folder per page, page texts first,
+// then the content lists that appear on that page.
 export const structure: StructureResolver = (S) =>
   S.list()
     .title('Website Content')
     .items([
-      // Global Settings
-      S.listItem()
-        .title('Global Site Settings')
-        .child(
-          S.document()
-            .schemaType('siteSettings')
-            .documentId('siteSettings')
-            .title('Global Site Settings')
-        ),
+      singleton(S, '🏠 Home Page', 'homePage', 'homePage'),
+
+      group(S, 'About Us Page', [
+        singleton(S, 'Page Texts', 'aboutPage', 'aboutPage'),
+        S.documentTypeListItem('member').title('Team & Members'),
+      ]),
+
+      group(S, 'Services', [
+        S.documentTypeListItem('serviceItem').title('All Services'),
+      ]),
+
+      group(S, 'Members Page', [
+        singleton(S, 'Page Texts & Bank Details', 'membersPage', 'membersPage'),
+        S.documentTypeListItem('membershipPricing').title('Membership Prices'),
+        S.documentTypeListItem('associate').title('Associates & Logos'),
+      ]),
+
+      group(S, 'Associates Page', [
+        singleton(S, 'Page Titles', 'newsPage', 'newsPage'),
+        S.documentTypeListItem('newsArticle').title('Associates Posts'),
+      ]),
+
+      group(S, 'Events Page', [
+        singleton(S, 'Page Titles', 'eventsPage', 'eventsPage'),
+        S.documentTypeListItem('event').title('All Events'),
+      ]),
+
+      group(S, 'Gallery Page', [
+        singleton(S, 'Page Titles', 'galleryPage', 'galleryPage'),
+        S.documentTypeListItem('galleryImage').title('All Photos'),
+      ]),
+
+      group(S, 'Resources Page', [
+        singleton(S, 'Page Titles', 'resourcesPage', 'resourcesPage'),
+        S.documentTypeListItem('resourceItem').title('All Resources'),
+      ]),
+
+      singleton(S, 'Contact Page', 'contactPage', 'contactPage'),
+      singleton(S, 'Privacy Policy', 'legalPage', 'privacyPolicy'),
+      singleton(S, 'Terms of Service', 'legalPage', 'termsOfService'),
 
       S.divider(),
 
-      // Pages Grouping
-      S.listItem()
-        .title('Static Pages')
-        .child(
-          S.list()
-            .title('Pages')
-            .items([
-              S.listItem()
-                .title('Home Page')
-                .child(
-                  S.document()
-                    .schemaType('homePage')
-                    .documentId('homePage')
-                    .title('Home Page')
-                ),
-              S.listItem()
-                .title('About Us Page')
-                .child(
-                  S.document()
-                    .schemaType('aboutPage')
-                    .documentId('aboutPage')
-                    .title('About Us Page')
-                ),
-              S.listItem()
-                .title('Contact Page')
-                .child(
-                  S.document()
-                    .schemaType('contactPage')
-                    .documentId('contactPage')
-                    .title('Contact Page')
-                ),
-            ])
-        ),
-
-      S.divider(),
-
-      // Content Collections
-      S.documentTypeListItem('serviceItem').title('Services'),
-      S.documentTypeListItem('newsArticle').title('News Articles'),
-      S.documentTypeListItem('resourceItem').title('Resources'),
-      S.documentTypeListItem('event').title('Events'),
-      S.documentTypeListItem('member').title('Team & Members'),
-      S.documentTypeListItem('galleryImage').title('Gallery Images'),
-      S.documentTypeListItem('membershipPricing').title('Membership Prices'),
+      singleton(S, '⚙️ Global Site Settings', 'siteSettings', 'siteSettings'),
     ]);

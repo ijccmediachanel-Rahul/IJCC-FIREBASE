@@ -20,6 +20,8 @@ import {
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { auth } from "@/lib/firebase";
+import { client } from "@/sanity/lib/client";
+import { SERVICES_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import { signOut } from "firebase/auth";
 import {
   DropdownMenu,
@@ -72,22 +74,59 @@ export function AppHeader() {
   const { user, loading } = useAuth();
   const { t } = useTranslation();
 
-  const servicesSubmenu = [
-    { id: "indian-schools", icon: <School className="text-primary" /> },
-    { id: "indian-universities", icon: <University className="text-primary" /> },
-    { id: "indian-smes", icon: <Handshake className="text-primary" /> },
-    { id: "japanese-smes", icon: <Briefcase className="text-primary" /> },
-    { id: "company-registration-jp-in", icon: <Building className="text-primary" /> },
-    { id: "company-registration-in-jp", icon: <Landmark className="text-primary" /> },
-    { id: "digital-services", icon: <Globe className="text-primary" /> },
-    { id: "startup-support", icon: <Lightbulb className="text-primary" /> },
-    { id: "management-training", icon: <Zap className="text-primary" /> },
-  ].map(item => ({
-    href: `/services/${item.id}`,
-    title: t(`service_${item.id}_title`),
-    description: t(`service_${item.id}_description`),
-    icon: item.icon,
-  }));
+  const [cmsServices, setCmsServices] = useState<any[]>([]);
+  const [socialLinks, setSocialLinks] = useState({ instagram: "", linkedin: "", facebook: "" });
+
+  useEffect(() => {
+    client.fetch(SERVICES_QUERY).then(setCmsServices).catch(() => {});
+    client.fetch(SITE_SETTINGS_QUERY).then((s) => {
+      if (s) {
+        setSocialLinks({
+          instagram: s.instagramUrl || "",
+          linkedin: s.linkedinUrl || "",
+          facebook: s.facebookUrl || "",
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
+  const serviceMenuIcons = [
+    <School key="s1" className="text-primary" />,
+    <University key="s2" className="text-primary" />,
+    <Handshake key="s3" className="text-primary" />,
+    <Briefcase key="s4" className="text-primary" />,
+    <Building key="s5" className="text-primary" />,
+    <Landmark key="s6" className="text-primary" />,
+    <Globe key="s7" className="text-primary" />,
+    <Lightbulb key="s8" className="text-primary" />,
+    <Zap key="s9" className="text-primary" />,
+  ];
+  const serviceMenuIds = [
+    "indian-schools",
+    "indian-universities",
+    "indian-smes",
+    "japanese-smes",
+    "company-registration-jp-in",
+    "company-registration-in-jp",
+    "digital-services",
+    "startup-support",
+    "management-training",
+  ];
+  // Services menu comes from the CMS when available, otherwise the built-in list.
+  const servicesSubmenu = (cmsServices.length > 0
+    ? cmsServices.map((s: any, i: number) => ({
+        href: `/services/${s.slug}`,
+        title: s.title,
+        description: s.shortDescription,
+        icon: serviceMenuIcons[i % serviceMenuIcons.length],
+      }))
+    : serviceMenuIds.map((id, i) => ({
+        href: `/services/${id}`,
+        title: t(`service_${id}_title`),
+        description: t(`service_${id}_description`),
+        icon: serviceMenuIcons[i % serviceMenuIcons.length],
+      }))
+  );
 
   const navLinks = [
     { href: "/", label: t('navHome') },
@@ -270,17 +309,17 @@ export function AppHeader() {
                   <hr className="my-2"/>
                   <div className="flex items-center gap-2">
                     <Button asChild variant="ghost">
-                      <Link href="https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y" target="_blank" rel="noopener noreferrer">
+                      <Link href={socialLinks.instagram || "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y"} target="_blank" rel="noopener noreferrer">
                         <Instagram className="mr-2"/> Instagram
                       </Link>
                     </Button>
                     <Button asChild variant="ghost">
-                      <Link href="https://www.linkedin.com/company/indo-japan-chamber-of-commerce/" target="_blank" rel="noopener noreferrer">
+                      <Link href={socialLinks.linkedin || "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/"} target="_blank" rel="noopener noreferrer">
                         <Linkedin className="mr-2"/> LinkedIn
                       </Link>
                     </Button>
                      <Button asChild variant="ghost">
-                      <Link href="https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/" target="_blank" rel="noopener noreferrer">
+                      <Link href={socialLinks.facebook || "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/"} target="_blank" rel="noopener noreferrer">
                         <Facebook className="mr-2"/> Facebook
                       </Link>
                     </Button>

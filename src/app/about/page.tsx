@@ -38,41 +38,8 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { client } from "@/sanity/lib/client";
-import { MEMBERS_QUERY, ABOUT_PAGE_QUERY } from "@/sanity/lib/queries";
+import { MEMBERS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import { PortableText } from "@portabletext/react";
-
-const leadershipData = [
-  { id: "rahulMishra", imageUrl: "https://i.postimg.cc/3JdfvHM7/rahulsir1.jpg" },
-  { id: "gajendraBadgujar", imageUrl: "https://i.postimg.cc/25KMJ8NH/gajendra1.jpg" },
-  { id: "prakashYadav", imageUrl: "https://i.postimg.cc/9QnxQ442/prakash2.jpg" },
-  { id: "neelamRamaiah", imageUrl: "https://i.postimg.cc/L5nGMJBJ/neelam-removebg-preview.png" },
-  { id: "surajitKalita", imageUrl: "https://i.ibb.co/xcg7tmW/sujit.jpg" },
-  { id: "sushilKumarChauhan", imageUrl: "https://i.ibb.co/tMVw5jbc/mr-sushil-kumar.png" },
-  { id: "krishnanNarayanan", imageUrl: "https://i.ibb.co/WNJvF1YB/mr-krishnan-narayanan.jpg" },
-  { id: "parijatTiwari", imageUrl: "https://i.ibb.co/Rp71ncwh/mr-parijat-tiwari.png" },
-  { id: "nidhi", imageUrl: "https://i.postimg.cc/d3dvvrdY/Nidhi.jpg" },
-  { id: "mukeshRanjan", imageUrl: "https://i.postimg.cc/HnrRBVXS/mukesh-removebg.png" },
-  { id: "yokoTorii", imageUrl: "https://i.ibb.co/99zx9ZGn/yoko-torii.jpg" },
-  { id: "dhruvHans", imageUrl: "https://i.ibb.co/8D7x8kKq/Mr-Dhruv-Hans-Dhruv.jpg" },
-  { id: "muazAhmed", imageUrl: "https://i.ibb.co/fYjdtSwp/Mr-Muaz-Ahmed.jpg" },
-];
-
-const advisoryBoard = [
-  { id: "tomoyuki", name: "Mr. Tomoyuki Iwama", imageUrl: "https://i.postimg.cc/025b7P5b/iwama-removebg-preview.png" },
-  { id: "naveen", name: "Mr. Naveen Verma", imageUrl: "https://i.postimg.cc/CK70VjSM/Naveen-Verma-2.jpg" },
-  { id: "randeep", name: "Dr. Randeep Rakwal", imageUrl: "https://i.postimg.cc/Gh6Kf8sB/randeep-removebg-preview.png" },
-  { id: "kenichiro", name: "Mr. Kenichiro Iwahori", imageUrl: "https://i.ibb.co/VcG0s7QJ/iwahori-removebg-preview.png" },
-  { id: "supratic", name: "Dr. Supratic Gupta", imageUrl: "https://i.postimg.cc/7LmS9f7R/supratic1.jpg" },
-  { id: "markus", name: "Mr. Markus", imageUrl: "https://i.postimg.cc/brHtYXS7/Markus-removebg-preview.png" },
-  { id: "anil", name: "Mr. Anil K. Khandelwal", imageUrl: "https://i.postimg.cc/Qxz8QsHq/anil1.jpg" },
-  { id: "lctrivedi", name: "Mr. L C Trivedi", imageUrl: "https://i.ibb.co/GQdncnrY/L-C-TRIVEDI.png" },
-  { id: "jatinder", name: "Dr. Jatinder Khanna", imageUrl: "https://i.postimg.cc/CKgMZKnZ/jatinder.jpg" },
-  { id: "maushumi", name: "Dr. Maushumi Barooah", imageUrl: "https://i.postimg.cc/h4TXtN53/mausimi1.jpg" },
-  { id: "rajesh", name: "Mr. Rajesh Mehta", imageUrl: "https://i.postimg.cc/Vsb5G5Qh/rajesh-removebg-preview.png" },
-  { id: "vinod", name: "Dr. Vinod K. Yadavendu", imageUrl: "https://i.postimg.cc/fbKbhgFG/vinod-removebg.png" },
-  { id: "pdsharma", name: "Mr. P.D. Sharma", imageUrl: "https://i.postimg.cc/RVBWhvf3/pd-sharma.jpg" },
-  { id: "anjali", name: "Ms. Anjali Sharma", imageUrl: "https://i.postimg.cc/kX4zvbb0/anjali1.jpg" },
-];
 
 const verticals = [
   { id: "01", icon: <Handshake className="h-6 w-6" />, titleKey: "vertical_01_title", descKey: "vertical_01_desc", points: ["vertical_01_p1", "vertical_01_p2", "vertical_01_p3", "vertical_01_p4", "vertical_01_p5", "vertical_01_p6"] },
@@ -90,19 +57,22 @@ const verticals = [
 ];
 
 export default function AboutPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [cmsMembers, setCmsMembers] = useState<any[]>([]);
   const [cmsAbout, setCmsAbout] = useState<any>(null);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membersData, aboutData] = await Promise.all([
+        const [membersData, aboutData, settingsData] = await Promise.all([
           client.fetch(MEMBERS_QUERY),
-          client.fetch(ABOUT_PAGE_QUERY)
+          client.fetch(ABOUT_PAGE_QUERY),
+          client.fetch(SITE_SETTINGS_QUERY)
         ]);
         setCmsMembers(membersData);
         setCmsAbout(aboutData);
+        if (settingsData) setSiteSettings(settingsData);
       } catch (error) {
         console.error("Failed to fetch from Sanity", error);
       }
@@ -110,43 +80,125 @@ export default function AboutPage() {
     fetchData();
   }, []);
 
-  const leadership = [
-    ...leadershipData.map((member, index) => ({
-      id: member.id,
-      imageUrl: member.imageUrl,
-      name: t(`team_${member.id}_name`),
-      title: t(`team_${member.id}_title`),
-      bio: t(`team_${member.id}_bio`),
-      order: (index + 1) + 0.1,
-    })),
-    ...cmsMembers.filter(m => m.category === 'Board').map(m => ({
-      id: m._id,
-      imageUrl: m.imageUrl,
-      name: m.name,
-      title: m.role,
-      bio: m.bio,
-      order: (m.order && m.order !== 99) ? m.order : 999,
-    }))
-  ].sort((a, b) => a.order - b.order);
+  // Team data comes 100% from Sanity CMS (member docs with
+  // category Board / Advisory). Editing a name/role/bio/photo in the
+  // Studio reflects on the site after refresh — no code change needed.
+  const pickLang = (m: any, base: 'name' | 'role' | 'bio') =>
+    language === 'ja' && m[`${base}_ja`] ? m[`${base}_ja`] : m[base];
 
-  const advisors = [
-    ...advisoryBoard.map((advisor, index) => ({
-      id: advisor.id,
-      imageUrl: advisor.imageUrl,
-      name: advisor.name,
-      role: t(`advisor_${advisor.id}_role`),
-      bio: t(`advisor_${advisor.id}_bio`),
-      order: (index + 1) + 0.1,
-    })),
-    ...cmsMembers.filter(m => m.category === 'Advisory').map(m => ({
+  const leadership = cmsMembers
+    .filter((m) => m.category === 'Board')
+    .map((m) => ({
       id: m._id,
       imageUrl: m.imageUrl,
-      name: m.name,
-      role: m.role,
-      bio: m.bio,
-      order: (m.order && m.order !== 99) ? m.order : 999,
-    }))
-  ].sort((a, b) => a.order - b.order);
+      name: pickLang(m, 'name'),
+      title: pickLang(m, 'role'),
+      bio: pickLang(m, 'bio'),
+    }));
+
+  const advisors = cmsMembers
+    .filter((m) => m.category === 'Advisory')
+    .map((m) => ({
+      id: m._id,
+      imageUrl: m.imageUrl,
+      name: pickLang(m, 'name'),
+      role: pickLang(m, 'role'),
+      bio: pickLang(m, 'bio'),
+    }));
+
+  // ---- CMS-driven content (falls back to built-in text when CMS is empty) ----
+  const verticalsList = (cmsAbout?.verticals?.length
+    ? cmsAbout.verticals.map((v: any, i: number) => ({
+        id: String(i + 1).padStart(2, '0'),
+        icon: (verticals[i] || verticals[0]).icon,
+        title: v.title,
+        description: v.description,
+        points: v.points || [],
+      }))
+    : verticals.map((v) => ({
+        id: v.id,
+        icon: v.icon,
+        title: t(v.titleKey),
+        description: t(v.descKey),
+        points: v.points.map((p) => t(p)),
+      })));
+
+  const factIcons = [
+    <Calendar key="f1" className="text-primary h-5 w-5" />,
+    <Layers key="f2" className="text-primary h-5 w-5" />,
+    <Handshake key="f3" className="text-primary h-5 w-5" />,
+    <Users key="f4" className="text-primary h-5 w-5" />,
+    <Building2 key="f5" className="text-primary h-5 w-5" />,
+  ];
+  const defaultFacts = [
+    { label: t('about_facts_est'), value: "2025" },
+    { label: t('about_facts_verts'), value: "12" },
+    { label: t('about_facts_mous'), value: "5" },
+    { label: t('about_facts_msme_members'), value: "16,000+" },
+    { label: t('about_facts_corp_members'), value: "36,000+" },
+  ];
+  const factsList = (cmsAbout?.facts?.length ? cmsAbout.facts : defaultFacts).map((f: any, i: number) => ({
+    label: f.label,
+    value: f.value,
+    icon: factIcons[i % factIcons.length],
+  }));
+
+  const objectiveIcons = [
+    <Briefcase key="o1" className="h-6 w-6 text-primary" />,
+    <GraduationCap key="o2" className="h-6 w-6 text-primary" />,
+    <Users2 key="o3" className="h-6 w-6 text-primary" />,
+    <Zap key="o4" className="h-6 w-6 text-primary" />,
+    <Sparkles key="o5" className="h-6 w-6 text-primary" />,
+    <Scale key="o6" className="h-6 w-6 text-primary" />,
+    <Building2 key="o7" className="h-6 w-6 text-primary" />,
+    <Sprout key="o8" className="h-6 w-6 text-primary" />,
+    <Target key="o9" className="h-6 w-6 text-primary" />,
+    <Database key="o10" className="h-6 w-6 text-primary" />,
+    <Cpu key="o11" className="h-6 w-6 text-primary" />,
+    <SearchCode key="o12" className="h-6 w-6 text-primary" />,
+  ];
+  const defaultObjectives = Array.from({ length: 12 }, (_, i) => {
+    const n = String(i + 1).padStart(2, '0');
+    return { id: n, title: t(`obj_${n}_title`), desc: t(`obj_${n}_desc`) };
+  });
+  const objectivesList = (cmsAbout?.objectives?.length ? cmsAbout.objectives : defaultObjectives).map((o: any, i: number) => ({
+    id: o.id || String(i + 1).padStart(2, '0'),
+    icon: objectiveIcons[i % objectiveIcons.length],
+    title: o.title,
+    desc: o.description || o.desc,
+  }));
+
+  const benefitIcons = [
+    <Globe key="b1" className="h-8 w-8 text-primary" />,
+    <GraduationCap key="b2" className="h-8 w-8 text-primary" />,
+    <Scale key="b3" className="h-8 w-8 text-primary" />,
+    <Sparkles key="b4" className="h-8 w-8 text-primary" />,
+  ];
+  const defaultBenefits = ["01", "02", "03", "04"].map((n) => ({
+    id: n,
+    title: t(`ben_${n}_title`),
+    points: [1, 2, 3, 4].map((p) => t(`ben_${n}_p${p}`)),
+  }));
+  const benefitsList = (cmsAbout?.benefits?.length ? cmsAbout.benefits : defaultBenefits).map((b: any, i: number) => ({
+    id: b.id || String(i + 1).padStart(2, '0'),
+    icon: benefitIcons[i % benefitIcons.length],
+    title: b.title,
+    points: b.points || [],
+  }));
+
+  const defaultMouPartners = [
+    { id: "spolto", name: "Spolto", desc: t('mou_spolto_desc') },
+    { id: "nihon", name: "Nihon Edutech", desc: t('mou_nihon_desc') },
+    { id: "iia", name: "Indian Industries Association (IIA)", desc: t('mou_iia_desc') },
+    { id: "wadhwani", name: "Wadhwani Foundation", desc: t('mou_wadhwani_desc') },
+    { id: "sem", name: "SEM — Smart Education Method", desc: t('mou_sem_desc') },
+    { id: "alliances", name: "JETRO | FICCI | CII | AIMA", desc: t('mou_alliances_desc') },
+  ];
+  const mouList = (cmsAbout?.mouPartners?.length ? cmsAbout.mouPartners : defaultMouPartners).map((p: any, i: number) => ({
+    id: p.id || `mou-${i}`,
+    name: p.name,
+    desc: p.description || p.desc,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -156,16 +208,18 @@ export default function AboutPage() {
         <div className="container relative z-10 text-center">
           <div className="max-w-4xl mx-auto space-y-8">
             <Badge className="bg-accent text-accent-foreground px-4 py-1 text-sm font-bold tracking-widest uppercase mb-4">
-              {t('about_hero_badge')}
+              {cmsAbout?.heroBadge || t('about_hero_badge')}
             </Badge>
             <h1 className="text-5xl font-headline tracking-tight lg:text-7xl leading-tight">
-              {t('about_hero_title')}
+              {cmsAbout?.heroTitle || t('about_hero_title')}
             </h1>
             <p className="text-2xl font-headline italic text-accent">
-              "{t('about_hero_tagline')}"
+              "{cmsAbout?.heroTagline || t('about_hero_tagline')}"
             </p>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-primary-foreground/80 font-medium">
-              <span>{t('vertical_01_title')}</span> • <span>{t('vertical_02_title')}</span> • <span>{t('vertical_03_title')}</span> • <span>{t('vertical_04_title')}</span> • <span>{t('vertical_05_title')}</span> • <span>{t('vertical_06_title')}</span> • <span>{t('vertical_07_title')}</span> • <span>{t('vertical_08_title')}</span> • <span>{t('vertical_09_title')}</span> • <span>{t('vertical_10_title')}</span> • <span>{t('vertical_11_title')}</span> • <span>{t('vertical_12_title')}</span>
+              {verticalsList.map((v: any, i: number) => (
+                <span key={v.id}>{i > 0 ? ' • ' : ''}{v.title}</span>
+              ))}
             </div>
           </div>
         </div>
@@ -180,7 +234,9 @@ export default function AboutPage() {
             </h2>
             <div className="prose prose-lg text-muted-foreground max-w-none space-y-6">
               {cmsAbout?.introduction ? (
-                <p>{cmsAbout.introduction}</p>
+                cmsAbout.introduction.split(/\n\n+/).map((para: string, i: number) => (
+                  <p key={i}>{para}</p>
+                ))
               ) : (
                 <>
                   <p>{t('about_intro_p1')}</p>
@@ -193,7 +249,7 @@ export default function AboutPage() {
               <Card className="bg-primary/5 border-none shadow-none text-left">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2 text-primary uppercase tracking-wider">
-                    <Target className="h-5 w-5" /> {t('about_mission_title')}
+                    <Target className="h-5 w-5" /> {cmsAbout?.missionTitle || t('about_mission_title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground text-sm leading-relaxed prose-sm prose-p:my-1">
@@ -207,11 +263,15 @@ export default function AboutPage() {
               <Card className="bg-accent/5 border-none shadow-none text-left">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2 text-accent uppercase tracking-wider">
-                    <Globe className="h-5 w-5" /> {t('about_vision_title')}
+                    <Globe className="h-5 w-5" /> {cmsAbout?.visionTitle || t('about_vision_title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground text-sm leading-relaxed prose-sm prose-p:my-1">
-                  {cmsAbout?.history ? (
+                  {cmsAbout?.visionDescription ? (
+                    cmsAbout.visionDescription.split(/\n\n+/).map((para: string, i: number) => (
+                      <p key={i} className="my-1">{para}</p>
+                    ))
+                  ) : cmsAbout?.history ? (
                     <PortableText value={cmsAbout.history} />
                   ) : (
                     t('about_vision_desc')
@@ -222,15 +282,9 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-muted/30 p-8 rounded-3xl space-y-8">
-            <h3 className="text-2xl font-headline text-primary">{t('about_facts_title')}</h3>
+            <h3 className="text-2xl font-headline text-primary">{cmsAbout?.factsTitle || t('about_facts_title')}</h3>
             <div className="grid grid-cols-2 gap-8">
-              {[
-                { label: t('about_facts_est'), value: "2025", icon: <Calendar className="text-primary h-5 w-5" /> },
-                { label: t('about_facts_verts'), value: "12", icon: <Layers className="text-primary h-5 w-5" /> },
-                { label: t('about_facts_mous'), value: "5", icon: <Handshake className="text-primary h-5 w-5" /> },
-                { label: t('about_facts_msme_members'), value: "16,000+", icon: <Users className="text-primary h-5 w-5" /> },
-                { label: t('about_facts_corp_members'), value: "36,000+", icon: <Building2 className="text-primary h-5 w-5" /> },
-              ].map((stat, i) => (
+              {factsList.map((stat: any, i: number) => (
                 <div key={i} className="space-y-1">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     {stat.icon} {stat.label}
@@ -241,16 +295,16 @@ export default function AboutPage() {
             </div>
             <div className="pt-8 border-t border-muted-foreground/20 space-y-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('about_facts_type_label')}:</span>
-                <span className="font-bold">{t('about_facts_type_val')}</span>
+                <span className="text-muted-foreground">{cmsAbout?.orgTypeLabel || t('about_facts_type_label')}:</span>
+                <span className="font-bold">{cmsAbout?.orgTypeValue || t('about_facts_type_val')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('about_facts_hq_label')}:</span>
-                <span className="font-bold">{t('about_facts_hq_val')}</span>
+                <span className="text-muted-foreground">{cmsAbout?.hqLabel || t('about_facts_hq_label')}:</span>
+                <span className="font-bold">{cmsAbout?.hqValue || t('about_facts_hq_val')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('about_facts_web_label')}:</span>
-                <span className="font-bold">www.ijcc.in</span>
+                <span className="text-muted-foreground">{cmsAbout?.websiteLabel || t('about_facts_web_label')}:</span>
+                <span className="font-bold">{cmsAbout?.websiteValue || "www.ijcc.in"}</span>
               </div>
             </div>
           </div>
@@ -261,24 +315,11 @@ export default function AboutPage() {
       <section className="bg-muted/30 py-24">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline text-primary">{t('about_objectives_title')}</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto italic">{t('about_objectives_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary">{cmsAbout?.objectivesTitle || t('about_objectives_title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto italic">{cmsAbout?.objectivesSubtitle || t('about_objectives_subtitle')}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { id: "01", icon: <Briefcase className="h-6 w-6 text-primary" />, title: t('obj_01_title'), desc: t('obj_01_desc') },
-              { id: "02", icon: <GraduationCap className="h-6 w-6 text-primary" />, title: t('obj_02_title'), desc: t('obj_02_desc') },
-              { id: "03", icon: <Users2 className="h-6 w-6 text-primary" />, title: t('obj_03_title'), desc: t('obj_03_desc') },
-              { id: "04", icon: <Zap className="h-6 w-6 text-primary" />, title: t('obj_04_title'), desc: t('obj_04_desc') },
-              { id: "05", icon: <Sparkles className="h-6 w-6 text-primary" />, title: t('obj_05_title'), desc: t('obj_05_desc') },
-              { id: "06", icon: <Scale className="h-6 w-6 text-primary" />, title: t('obj_06_title'), desc: t('obj_06_desc') },
-              { id: "07", icon: <Building2 className="h-6 w-6 text-primary" />, title: t('obj_07_title'), desc: t('obj_07_desc') },
-              { id: "08", icon: <Sprout className="h-6 w-6 text-primary" />, title: t('obj_08_title'), desc: t('obj_08_desc') },
-              { id: "09", icon: <Target className="h-6 w-6 text-primary" />, title: t('obj_09_title'), desc: t('obj_09_desc') },
-              { id: "10", icon: <Database className="h-6 w-6 text-primary" />, title: t('obj_10_title'), desc: t('obj_10_desc') },
-              { id: "11", icon: <Cpu className="h-6 w-6 text-primary" />, title: t('obj_11_title'), desc: t('obj_11_desc') },
-              { id: "12", icon: <SearchCode className="h-6 w-6 text-primary" />, title: t('obj_12_title'), desc: t('obj_12_desc') },
-            ].map((obj) => (
+            {objectivesList.map((obj: any) => (
               <Card key={obj.id} className="group border-none shadow-sm hover:shadow-md transition-all duration-300">
                 <CardHeader className="flex flex-row items-center gap-4 space-y-0">
                   <div className="text-primary/20 text-3xl font-bold group-hover:text-primary/40 transition-colors">{obj.id}</div>
@@ -298,11 +339,11 @@ export default function AboutPage() {
       <section className="container py-24">
         <div className="max-w-4xl mx-auto space-y-12">
           <div className="text-center space-y-4">
-            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{t('about_verts_title')}</h2>
-            <p className="text-muted-foreground">{t('about_verts_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.verticalsTitle || t('about_verts_title')}</h2>
+            <p className="text-muted-foreground">{cmsAbout?.verticalsSubtitle || t('about_verts_subtitle')}</p>
           </div>
           <Accordion type="single" collapsible className="w-full space-y-4">
-            {verticals.map((v) => (
+            {verticalsList.map((v: any) => (
               <AccordionItem key={v.id} value={v.id} className="border rounded-2xl px-6 bg-white overflow-hidden shadow-sm">
                 <AccordionTrigger className="hover:no-underline py-6">
                   <div className="flex items-center gap-4 text-left">
@@ -319,7 +360,7 @@ export default function AboutPage() {
                   <div className="space-y-4">
                     <p className="text-primary font-semibold">{t(v.descKey)}</p>
                     <ul className="flex flex-col gap-y-3">
-                      {v.points.map((pointKey, idx) => (
+                      {v.points.map((pointKey: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2 text-muted-foreground text-sm">
                           <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                           <span>{t(pointKey)}</span>
@@ -338,9 +379,9 @@ export default function AboutPage() {
       <section className="bg-primary py-24 text-primary-foreground">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline uppercase tracking-tight">{t('about_leadership_title')}</h2>
+            <h2 className="text-4xl font-headline uppercase tracking-tight">{cmsAbout?.leadershipTitle || t('about_leadership_title')}</h2>
             <p className="text-primary-foreground/70 max-w-2xl mx-auto italic">
-              {t('about_leadership_subtitle')}
+              {cmsAbout?.leadershipSubtitle || t('about_leadership_subtitle')}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -396,12 +437,12 @@ export default function AboutPage() {
       {/* Advisory Board */}
       <section className="container py-24">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{t('about_advisory_title')}</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{t('about_advisory_subtitle')}</p>
+          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.advisoryTitle || t('about_advisory_title')}</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">{cmsAbout?.advisorySubtitle || t('about_advisory_subtitle')}</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {advisors.map((advisor) => {
-            const hasBio = advisor.bio && advisor.bio !== `advisor_${advisor.id}_bio`;
+            const hasBio = !!advisor.bio;
             const cardContent = (
               <Card className={`flex flex-row items-center gap-4 p-4 rounded-2xl bg-muted/30 border-none shadow-sm ${hasBio ? 'hover:bg-muted transition-colors cursor-pointer' : ''}`}>
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border-2 border-accent overflow-hidden">
@@ -460,26 +501,21 @@ export default function AboutPage() {
       <section className="bg-muted/30 py-24">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{t('about_benefits_title')}</h2>
-            <p className="text-muted-foreground">{t('about_benefits_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.benefitsTitle || t('about_benefits_title')}</h2>
+            <p className="text-muted-foreground">{cmsAbout?.benefitsSubtitle || t('about_benefits_subtitle')}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { id: "01", icon: <Globe className="h-8 w-8 text-primary" />, points: ["ben_01_p1", "ben_01_p2", "ben_01_p3", "ben_01_p4"] },
-              { id: "02", icon: <GraduationCap className="h-8 w-8 text-primary" />, points: ["ben_02_p1", "ben_02_p2", "ben_02_p3", "ben_02_p4"] },
-              { id: "03", icon: <Scale className="h-8 w-8 text-primary" />, points: ["ben_03_p1", "ben_03_p2", "ben_03_p3", "ben_03_p4"] },
-              { id: "04", icon: <Sparkles className="h-8 w-8 text-primary" />, points: ["ben_04_p1", "ben_04_p2", "ben_04_p3", "ben_04_p4"] },
-            ].map((benefit) => (
+            {benefitsList.map((benefit: any) => (
               <Card key={benefit.id} className="border-none shadow-xl hover:-translate-y-2 transition-transform">
                 <CardHeader className="text-center">
                   <div className="mx-auto mb-4">{benefit.icon}</div>
-                  <CardTitle className="text-lg uppercase tracking-tight">{t(`ben_${benefit.id}_title`)}</CardTitle>
+                  <CardTitle className="text-lg uppercase tracking-tight">{benefit.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {benefit.points.map((pKey, j) => (
+                    {benefit.points.map((point: string, j: number) => (
                       <li key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {t(pKey)}
+                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {point}
                       </li>
                     ))}
                   </ul>
@@ -493,21 +529,14 @@ export default function AboutPage() {
       {/* MoU Partners */}
       <section className="container py-24">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{t('about_mou_title')}</h2>
-          <p className="text-muted-foreground">{t('about_mou_subtitle')}</p>
+          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.mouTitle || t('about_mou_title')}</h2>
+          <p className="text-muted-foreground">{cmsAbout?.mouSubtitle || t('about_mou_subtitle')}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            { id: "spolto", name: "Spolto" },
-            { id: "nihon", name: "Nihon Edutech" },
-            { id: "iia", name: "Indian Industries Association (IIA)" },
-            { id: "wadhwani", name: "Wadhwani Foundation" },
-            { id: "sem", name: "SEM — Smart Education Method" },
-            { id: "alliances", name: "JETRO | FICCI | CII | AIMA" },
-          ].map((partner) => (
+          {mouList.map((partner: any) => (
             <Card key={partner.id} className="bg-primary/5 border-none text-center p-6 group hover:bg-primary transition-colors">
               <CardTitle className="text-xl font-headline mb-4 group-hover:text-white">{partner.name}</CardTitle>
-              <CardDescription className="text-sm group-hover:text-white/80">{t(`mou_${partner.id}_desc`)}</CardDescription>
+              <CardDescription className="text-sm group-hover:text-white/80">{partner.desc}</CardDescription>
             </Card>
           ))}
         </div>
@@ -518,15 +547,15 @@ export default function AboutPage() {
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
             <div className="space-y-4">
-              <h3 className="text-3xl font-headline text-primary">{t('about_footer_title')}</h3>
-              <p className="text-muted-foreground">{t('about_footer_subtitle')}</p>
+              <h3 className="text-3xl font-headline text-primary">{cmsAbout?.connectTitle || t('about_footer_title')}</h3>
+              <p className="text-muted-foreground">{cmsAbout?.connectSubtitle || t('about_footer_subtitle')}</p>
             </div>
             <div className="flex flex-wrap justify-center md:justify-end gap-8">
               {[
                 { label: "Website", icon: <Globe className="h-6 w-6" />, href: "/" },
-                { label: "LinkedIn", icon: <Linkedin className="h-6 w-6" />, href: "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/" },
-                { label: "Instagram", icon: <Instagram className="h-6 w-6" />, href: "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y" },
-                { label: "Facebook", icon: <Facebook className="h-6 w-6" />, href: "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/" },
+                { label: "LinkedIn", icon: <Linkedin className="h-6 w-6" />, href: siteSettings?.linkedinUrl || "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/" },
+                { label: "Instagram", icon: <Instagram className="h-6 w-6" />, href: siteSettings?.instagramUrl || "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y" },
+                { label: "Facebook", icon: <Facebook className="h-6 w-6" />, href: siteSettings?.facebookUrl || "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/" },
               ].map((link, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 group">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{link.label}</div>

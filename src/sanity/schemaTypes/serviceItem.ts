@@ -35,11 +35,34 @@ export const serviceItem = defineType({
       description: 'A brief description shown on the services listing page.',
     }),
     defineField({
-      name: 'detailedContent',
-      title: 'Detailed Content',
+      name: 'sections',
+      title: 'Detail Sections (accordion)',
       type: 'array',
-      of: [{ type: 'block' }, { type: 'image' }],
-      description: 'Full content for the individual service page.',
+      description: 'Content blocks shown on the individual service page. Shown in order.',
+      of: [
+        {
+          type: 'object',
+          preview: { select: { title: 'title' } },
+          fields: [
+            { name: 'title', title: 'Section Title', type: 'string' },
+            {
+              name: 'items',
+              title: 'Bullet Points',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  preview: { select: { title: 'text' } },
+                  fields: [
+                    { name: 'text', title: 'Point', type: 'text' },
+                    { name: 'subItems', title: 'Sub Points', type: 'array', of: [{ type: 'string' }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     }),
     defineField({
       name: 'order',

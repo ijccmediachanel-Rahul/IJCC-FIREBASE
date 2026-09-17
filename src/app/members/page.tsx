@@ -8,8 +8,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
+import { useState, useEffect } from "react";
+import { client } from "@/sanity/lib/client";
+import { ASSOCIATES_QUERY, MEMBERS_PAGE_QUERY } from "@/sanity/lib/queries";
 
-const members = [
+const defaultMembers = [
     { name: "All India Management Association", href: "https://www.aima.in", logoUrl: "https://www.aima.in/img/logo.png", hint: "company logo" },
     { name: "Aranca", href: "https://www.aranca.com", logoUrl: "https://www.aranca.com/assets/images/icons/aranca-logo-0203.png", hint: "company logo" },
     { name: "AJU Hotels", href: "https://www.ajujapanesehotels.com/english/", logoUrl: "https://www.ajujapanesehotels.com/images/logo.png", hint: "company logo" },
@@ -44,6 +47,32 @@ const members = [
 
 export default function MembersPage() {
   const { t } = useTranslation();
+  const [cmsAssociates, setCmsAssociates] = useState<any[]>([]);
+  const [cmsPage, setCmsPage] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchMembers() {
+      try {
+        const [assocData, pageData] = await Promise.all([
+          client.fetch(ASSOCIATES_QUERY),
+          client.fetch(MEMBERS_PAGE_QUERY)
+        ]);
+        setCmsAssociates(assocData);
+        setCmsPage(pageData);
+      } catch (error) {
+        console.error("Failed to fetch members from Sanity", error);
+      }
+    }
+    fetchMembers();
+  }, []);
+
+  // Associate logos come from the CMS when available, otherwise defaults.
+  const members = (cmsAssociates.length > 0 ? cmsAssociates : defaultMembers).map((m: any) => ({
+    name: m.name,
+    href: m.website || m.href,
+    logoUrl: m.logoUrl,
+    className: m.cardClass || m.className || '',
+  }));
 
   return (
     <div className="container py-12">
@@ -61,10 +90,10 @@ export default function MembersPage() {
 
       <div className="space-y-4 my-20 text-center">
         <h2 className="text-4xl font-headline tracking-tighter sm:text-5xl text-primary">
-          {t('members_associatesTitle')}
+          {cmsPage?.associatesTitle || t('members_associatesTitle')}
         </h2>
         <p className="max-w-[900px] mx-auto text-muted-foreground md:text-xl font-medium">
-          {t('members_associatesDescription')}
+          {cmsPage?.associatesDescription || t('members_associatesDescription')}
         </p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center">

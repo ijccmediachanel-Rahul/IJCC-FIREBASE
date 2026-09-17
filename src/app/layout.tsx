@@ -1,14 +1,10 @@
 
 import type { Metadata } from 'next';
 import './globals.css';
-import { AppHeader } from '@/components/header';
-import { AppFooter } from '@/components/footer';
-import { Toaster } from '@/components/ui/toaster';
-import { CookieBanner } from '@/components/cookie-banner';
 import { AuthProvider } from '@/context/auth-context';
 import Script from 'next/script';
 import { LanguageProvider } from '@/components/language-provider';
-import ChatWidget from "@/components/ChatWidget";
+import { SiteChrome } from '@/components/site-chrome';
 
 export const metadata: Metadata = {
   title: 'Indo-Japan Chamber of Commerce',
@@ -34,14 +30,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <LanguageProvider>
-            <div className="flex min-h-screen flex-col">
-              <AppHeader />
-              <main className="flex-grow animate-fade-in">{children}</main>
-              <AppFooter />
-            </div>
-            <Toaster />
-            <CookieBanner />
-            <ChatWidget />
+            <SiteChrome>{children}</SiteChrome>
           </LanguageProvider>
         </AuthProvider>
         <Script

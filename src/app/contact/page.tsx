@@ -62,7 +62,7 @@ export default function ContactPage() {
           <ContactForm />
         </div>
         <div className="space-y-8">
-            <h2 className="text-2xl font-headline">{t('contact_officesTitle')}</h2>
+            <h2 className="text-2xl font-headline">{contactPage?.officesTitle || t('contact_officesTitle')}</h2>
             <div className="space-y-4">
                 <div className="flex items-start gap-4">
                     <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />

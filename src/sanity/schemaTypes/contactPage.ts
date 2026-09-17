@@ -63,6 +63,11 @@ export const contactPage = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'officesTitle',
+      title: 'Offices Block Title',
+      type: 'string',
+    }),
+    defineField({
       name: 'faqs',
       title: 'FAQs',
       type: 'array',
@@ -75,12 +80,6 @@ export const contactPage = defineType({
           ],
         },
       ],
-    }),
-    defineField({
-      name: 'mapCoordinates',
-      title: 'Google Maps Embed URL',
-      type: 'url',
-      description: 'The embed URL for the Google Maps iframe (if applicable).',
     }),
   ],
 });

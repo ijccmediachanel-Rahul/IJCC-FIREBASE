@@ -6,6 +6,12 @@ export const resourceItem = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'resourceId',
+      title: 'Resource ID (do not change)',
+      type: 'string',
+      description: 'Stable key: business-in-japan, jlpt-papers, magazines, self-study, learn-japanese, marugoto, cross-cultural, import-export.',
+    }),
+    defineField({
       name: 'title',
       title: 'Resource Title',
       type: 'string',
@@ -39,6 +45,25 @@ export const resourceItem = defineType({
       title: 'External Link',
       type: 'url',
       description: 'URL to the resource (if not a file upload)',
+    }),
+    defineField({
+      name: 'linkUrl',
+      title: 'Card Link URL',
+      type: 'string',
+      description: 'Where the card button goes (page route like /resources/jlpt or full https link). Empty = demo download button.',
+    }),
+    defineField({
+      name: 'isProtected',
+      title: 'Members Only',
+      type: 'boolean',
+      description: 'ON = only logged-in members with a tier can open it.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'order',
+      title: 'Display Order',
+      type: 'number',
+      initialValue: 99,
     }),
   ],
   preview: {

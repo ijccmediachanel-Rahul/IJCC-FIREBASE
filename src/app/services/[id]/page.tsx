@@ -36,7 +36,9 @@ import {
 } from "lucide-react";
 import { notFound, useParams } from "next/navigation";
 import { useTranslation } from "@/hooks/use-translation";
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import { client } from "@/sanity/lib/client";
+import { SERVICE_DETAIL_QUERY } from "@/sanity/lib/queries";
 
 type ServiceCategory = {
     titleKey: string;
@@ -208,12 +210,100 @@ const ServiceSection = ({ service }: { service: Service }) => {
     );
 };
 
+const sectionIcons = [
+    <Handshake className="h-8 w-8 text-primary" />,
+    <Briefcase className="h-8 w-8 text-primary" />,
+    <Target className="h-8 w-8 text-primary" />,
+    <FileSignature className="h-8 w-8 text-primary" />,
+    <Scale className="h-8 w-8 text-primary" />,
+    <Building2 className="h-8 w-8 text-primary" />,
+    <Globe className="h-8 w-8 text-primary" />,
+    <Lightbulb className="h-8 w-8 text-primary" />,
+    <Zap className="h-8 w-8 text-primary" />,
+    <Award className="h-8 w-8 text-primary" />,
+    <Users className="h-8 w-8 text-primary" />,
+    <GraduationCap className="h-8 w-8 text-primary" />,
+];
+
+// Renders a service from the CMS (title + accordion sections).
+const CmsServiceSection = ({ service }: { service: any }) => {
+    return (
+        <Card className="p-6">
+            <CardHeader className="text-center">
+                <CardTitle className="text-3xl font-headline">{service.title}</CardTitle>
+                {service.shortDescription ? (
+                    <CardDescription className="max-w-3xl mx-auto pt-4 text-base leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                        {service.shortDescription}
+                    </CardDescription>
+                ) : null}
+            </CardHeader>
+            <CardContent className="mt-8">
+                <Accordion type="single" collapsible className="w-full" defaultValue={service.sections?.[0]?.title}>
+                    {(service.sections || []).map((section: any, i: number) => (
+                        <AccordionItem value={section.title} key={section.title || i} className="border-b py-2">
+                            <AccordionTrigger className="text-xl font-headline hover:no-underline py-4">
+                                <div className="flex items-center gap-4 text-left">
+                                    <div className="bg-primary/5 p-2 rounded-lg">
+                                        {sectionIcons[i % sectionIcons.length]}
+                                    </div>
+                                    <span className="text-primary">{section.title}</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 pl-16">
+                                <ul className="list-disc space-y-3 text-muted-foreground text-base">
+                                    {(section.items || []).map((item: any, index: number) => (
+                                        <li key={index} className="pl-2">
+                                            {item.text}
+                                            {Array.isArray(item.subItems) && item.subItems.length > 0 && (
+                                                <ul className="list-circle pl-8 mt-3 space-y-2 text-sm text-foreground/80">
+                                                    {item.subItems.map((sub: string, subIndex: number) => (
+                                                        <li key={subIndex}>{sub}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </CardContent>
+        </Card>
+    );
+};
+
 export default function ServiceDetailPage() {
     const params = useParams();
+    const [cmsService, setCmsService] = useState<any>(null);
+    const [cmsLoaded, setCmsLoaded] = useState(false);
+
+    useEffect(() => {
+        client.fetch(SERVICE_DETAIL_QUERY, { slug: params.id })
+            .then((d) => { setCmsService(d); setCmsLoaded(true); })
+            .catch(() => setCmsLoaded(true));
+    }, [params.id]);
+
     const service = allServicesData.find(s => s.id === params.id);
 
-    if (!service) {
+    if (cmsLoaded && !cmsService && !service) {
         notFound();
+    }
+
+    // CMS version wins when the doc has sections; otherwise the built-in
+    // version below is shown (it stays as the fallback).
+    if (cmsService?.sections?.length) {
+        return (
+            <div className="container py-12">
+                <div className="max-w-5xl mx-auto space-y-12">
+                    <CmsServiceSection service={cmsService} />
+                </div>
+            </div>
+        );
+    }
+
+    if (!service) {
+        return null;
     }
 
   return (

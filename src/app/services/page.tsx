@@ -6,8 +6,21 @@ import { Handshake, School, Lightbulb, Briefcase, Building, Landmark, Globe, Zap
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState, useEffect } from "react";
+import type { ReactNode } from "react";
 import { client } from "@/sanity/lib/client";
 import { SERVICES_QUERY } from "@/sanity/lib/queries";
+
+export const serviceIconMap: Record<string, ReactNode> = {
+  School: <School className="h-10 w-10 text-primary" />,
+  University: <University className="h-10 w-10 text-primary" />,
+  Handshake: <Handshake className="h-10 w-10 text-primary" />,
+  Briefcase: <Briefcase className="h-10 w-10 text-primary" />,
+  Building: <Building className="h-10 w-10 text-primary" />,
+  Landmark: <Landmark className="h-10 w-10 text-primary" />,
+  Globe: <Globe className="h-10 w-10 text-primary" />,
+  Lightbulb: <Lightbulb className="h-10 w-10 text-primary" />,
+  Zap: <Zap className="h-10 w-10 text-primary" />,
+};
 
 const servicesListRaw = [
     { id: "indian-schools", icon: <School className="h-10 w-10 text-primary" /> },
@@ -54,11 +67,12 @@ export default function ServicesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {cmsServices.length > 0 ? cmsServices.map(service => (
+        {cmsServices.length > 0 ? cmsServices.map((service: any, i: number) => (
             <Link href={`/services/${service.slug}`} key={service._id}>
                 <Card className="h-full flex flex-col transform transition-transform duration-300 hover:-translate-y-2 cursor-pointer">
                     <CardHeader>
                         <div className="flex items-center gap-4 mb-2">
+                            {serviceIconMap[service.iconName] || Object.values(serviceIconMap)[i % 9]}
                             <CardTitle className="font-headline text-2xl">{service.title}</CardTitle>
                         </div>
                     </CardHeader>
