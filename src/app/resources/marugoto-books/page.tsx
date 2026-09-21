@@ -11,6 +11,7 @@ import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isPaidMember } from "@/lib/definitions";
 
 const marugotoBooks = [
   { level: "A1", title: "Marugoto A1 Rikai", description: "Focuses on understanding and comprehension for the A1 level.", file: "https://jumpshare.com/share/aufWQ9WfeAKcUb5Iv15R", isExternal: true },
@@ -50,7 +51,7 @@ export default function MarugotoBooksPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = profile?.membershipTier && profile.membershipTier !== "none";
+  const hasMembership = isPaidMember(profile);
   const isLoading = authLoading || loadingProfile;
 
   if (isLoading) {

@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Download, FileText, Presentation, BarChart, ArrowRight, BookOpen, Sparkles, Lock, Handshake } from "lucide-react";
+import { Download, FileText, Presentation, BarChart, ArrowRight, BookOpen, Sparkles, Lock, Handshake, Landmark } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState } from "react";
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
 import { client } from "@/sanity/lib/client";
 import { RESOURCES_QUERY, RESOURCES_PAGE_QUERY } from "@/sanity/lib/queries";
+import { isPaidMember } from "@/lib/definitions";
 
 const allResources = [
   {
@@ -22,6 +23,14 @@ const allResources = [
     icon: <Handshake className="h-8 w-8 text-primary" />,
     isLink: true,
     href: "/news",
+    isProtected: true,
+  },
+  {
+    id: "indian-states-policy-2026",
+    type: "Policy Documents",
+    icon: <Landmark className="h-8 w-8 text-primary" />,
+    isLink: true,
+    href: "/resources/indian-government-states-policy-2026",
     isProtected: true,
   },
   {
@@ -138,7 +147,7 @@ export default function ResourcesPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = profile?.membershipTier && profile.membershipTier !== "none";
+  const hasMembership = isPaidMember(profile);
 
   const cardIconPool = [
     <FileText key="r1" className="h-8 w-8 text-primary" />,
@@ -154,19 +163,31 @@ export default function ResourcesPage() {
   // Cards come from the CMS when available, otherwise built-in defaults.
   // CMS controls title, description, link and member-gating; icon/type shell stays in code.
   const hasAssociatesInCms = cmsResources.some((d: any) => d.resourceId === 'associates');
-  const cmsList = hasAssociatesInCms
-    ? cmsResources
-    : [
-        {
-          resourceId: "associates",
-          title: t('resource_associates_title') || "Associates",
-          description: t('resource_associates_description') || "Stay informed about latest developments, strategic alliances, and success stories in the India-Japan corridor.",
-          linkUrl: "/news",
-          isProtected: true,
-          order: 0,
-        },
-        ...cmsResources,
-      ];
+  const hasStatesPolicyInCms = cmsResources.some((d: any) => d.resourceId === 'indian-states-policy-2026');
+
+  const extraPrepend: any[] = [];
+  if (!hasAssociatesInCms) {
+    extraPrepend.push({
+      resourceId: "associates",
+      title: t('resource_associates_title') || "Associates",
+      description: t('resource_associates_description') || "Stay informed about latest developments, strategic alliances, and success stories in the India-Japan corridor.",
+      linkUrl: "/news",
+      isProtected: true,
+      order: 0,
+    });
+  }
+  if (!hasStatesPolicyInCms) {
+    extraPrepend.push({
+      resourceId: "indian-states-policy-2026",
+      title: t('resource_indian_states_policy_2026_title') !== 'resource_indian_states_policy_2026_title' ? t('resource_indian_states_policy_2026_title') : "Indian Government States Policy 2026",
+      description: t('resource_indian_states_policy_2026_description') !== 'resource_indian_states_policy_2026_description' ? t('resource_indian_states_policy_2026_description') : "Official industrial, tech, and investment policies for Haryana, Gujarat, Madhya Pradesh, and Tripura.",
+      linkUrl: "/resources/indian-government-states-policy-2026",
+      isProtected: true,
+      order: 1,
+    });
+  }
+
+  const cmsList = [...extraPrepend, ...cmsResources];
 
   const cards = (cmsResources.length > 0
     ? cmsList.map((d: any, i: number) => {

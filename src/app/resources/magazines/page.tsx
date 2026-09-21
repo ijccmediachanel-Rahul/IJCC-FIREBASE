@@ -10,8 +10,7 @@ import { useAuth } from "@/context/auth-context";
 import { useEffect, useState } from "react";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Skeleton } from "@/components/ui/skeleton";
-
+import { isPaidMember } from "@/lib/definitions";
 
 const magazines = [
   {
@@ -67,7 +66,7 @@ export default function MagazinesPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = profile?.membershipTier && profile.membershipTier !== "none";
+  const hasMembership = isPaidMember(profile);
   const isLoading = authLoading || loadingProfile;
 
   if (isLoading) {

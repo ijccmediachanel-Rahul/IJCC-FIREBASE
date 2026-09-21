@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
+import { isPaidMember } from "@/lib/definitions";
 
 export default function NewsLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -57,7 +58,7 @@ export default function NewsLayout({ children }: { children: React.ReactNode }) 
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = profile?.membershipTier && profile.membershipTier !== "none";
+  const hasMembership = isPaidMember(profile);
   const isLoading = authLoading || loadingProfile || loadingCMS;
 
   if (isLoading) {

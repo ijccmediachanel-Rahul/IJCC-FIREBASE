@@ -25,6 +25,29 @@ export const ContactFormSchema = z.object({
   message: z.string().min(10, { message: "contactForm_validation_message" }),
 });
 
+export const PAID_MEMBERSHIP_TIERS = [
+  "student",
+  "individual",
+  "startup",
+  "sme-standard",
+  "sme-plus",
+  "corporate-standard",
+  "corporate-premium",
+  "patron",
+  "strategic-platinum"
+] as const;
+
+export type PaidMembershipTier = typeof PAID_MEMBERSHIP_TIERS[number];
+
+export function isPaidMember(profile: { membershipTier?: string } | null | undefined): boolean {
+  if (!profile || !profile.membershipTier) return false;
+  const tier = String(profile.membershipTier).toLowerCase().trim();
+  if (tier === "none" || tier === "free" || tier === "" || tier === "null" || tier === "undefined") {
+    return false;
+  }
+  return (PAID_MEMBERSHIP_TIERS as readonly string[]).includes(tier);
+}
+
 export const MembershipFormSchema = z.object({
   // Part A
   legalCompanyName: z.string().min(2, "membershipForm_validation_legalCompanyName"),
@@ -43,17 +66,7 @@ export const MembershipFormSchema = z.object({
   primaryContactDesignation: z.string().min(2, "membershipForm_validation_primaryContactDesignation"),
   mobileNumber: z.string().min(10, "membershipForm_validation_mobileNumber"),
   emailAddress: z.string().email("membershipForm_validation_emailAddress"),
-  membershipTier: z.enum([
-    "student",
-    "individual",
-    "startup",
-    "sme-standard",
-    "sme-plus",
-    "corporate-standard",
-    "corporate-premium",
-    "patron",
-    "strategic-platinum"
-  ]),
+  membershipTier: z.enum(PAID_MEMBERSHIP_TIERS),
 
   // Part B
   coreBusinessActivity: z.enum([
