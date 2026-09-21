@@ -80,3 +80,21 @@
 body {
   top: 0px !important;
 }
+
+/* Fix decorative/cursive ampersand (&) in Playfair font */
+@font-face {
+  font-family: 'Playfair';
+  src: local('Georgia'), local('Times New Roman'), local('PT Sans'), local('Arial');
+  unicode-range: U+0026;
+  font-weight: 100 900;
+  font-style: normal italic;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: local('Georgia'), local('Times New Roman'), local('PT Sans'), local('Arial');
+  unicode-range: U+0026;
+  font-weight: 100 900;
+  font-style: normal italic;
+}
+

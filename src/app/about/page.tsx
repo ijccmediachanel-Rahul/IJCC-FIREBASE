@@ -352,21 +352,23 @@ export default function AboutPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-primary shrink-0">{v.icon}</div>
-                      <span className="text-xl font-headline">{t(v.titleKey)}</span>
+                      <span className="text-xl font-headline">{v.title}</span>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-8 pt-2 pl-12">
                   <div className="space-y-4">
-                    <p className="text-primary font-semibold">{t(v.descKey)}</p>
-                    <ul className="flex flex-col gap-y-3">
-                      {v.points.map((pointKey: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-muted-foreground text-sm">
-                          <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                          <span>{t(pointKey)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {v.description && <p className="text-primary font-semibold">{v.description}</p>}
+                    {v.points && v.points.length > 0 && (
+                      <ul className="flex flex-col gap-y-3">
+                        {v.points.map((point: string, idx: number) => (
+                          <li key={idx} className="flex items-start gap-2 text-muted-foreground text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
