@@ -212,6 +212,8 @@ export const CONTACT_PAGE_QUERY = groq`
     branchOfficeAddress,
     japanOfficeTitle,
     japanOfficeAddress,
+    contactEmail,
+    phoneIndia,
     phoneBranch,
     phoneJapan,
     faqTitle,

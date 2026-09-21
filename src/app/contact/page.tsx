@@ -89,11 +89,11 @@ export default function ContactPage() {
              <div className="space-y-4">
                 <div className="flex items-center gap-4">
                     <Mail className="h-6 w-6 text-primary flex-shrink-0" />
-                    <p className="text-muted-foreground">{settings?.contactEmail || "info@ijcc.in"}</p>
+                    <p className="text-muted-foreground">{contactPage?.contactEmail || settings?.contactEmail || "info@ijcc.in"}</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <Phone className="h-6 w-6 text-primary flex-shrink-0" />
-                    <p className="text-muted-foreground">{settings?.phoneNumber || t('contact_phone_india')}</p>
+                    <p className="text-muted-foreground">{contactPage?.phoneIndia || settings?.phoneNumber || t('contact_phone_india')}</p>
                 </div>
                  <div className="flex items-center gap-4">
                     <Phone className="h-6 w-6 text-primary flex-shrink-0" />
@@ -110,7 +110,7 @@ export default function ContactPage() {
       <div className="mt-24 max-w-4xl mx-auto">
         <h2 className="text-3xl font-headline text-center mb-12">{contactPage?.faqTitle || t('contact_faq_title')}</h2>
         <Accordion type="single" collapsible className="w-full">
-          {(contactPage?.faqs || faqData).map((faq: any, index: number) => (
+          {(contactPage?.faqs?.length ? contactPage.faqs : faqData).map((faq: any, index: number) => (
             <AccordionItem key={index} value={`item-${index}`}>
               <AccordionTrigger className="text-left font-semibold text-lg hover:no-underline hover:text-primary transition-colors">
                 {faq.question || faq.q}
