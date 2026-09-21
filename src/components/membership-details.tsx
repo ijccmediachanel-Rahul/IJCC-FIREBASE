@@ -227,9 +227,9 @@ export function MembershipDetails() {
     async function fetchData() {
       try {
         const [pData, sData, mpData] = await Promise.all([
-          client.fetch(MEMBERSHIP_PRICING_QUERY),
-          client.fetch(SITE_SETTINGS_QUERY),
-          client.fetch(MEMBERS_PAGE_QUERY)
+          client.fetch(MEMBERSHIP_PRICING_QUERY, {}, { cache: 'no-store' }),
+          client.fetch(SITE_SETTINGS_QUERY, {}, { cache: 'no-store' }),
+          client.fetch(MEMBERS_PAGE_QUERY, {}, { cache: 'no-store' })
         ]);
         if (pData && pData.length > 0) setPricingData(pData);
         if (sData) setSettings(sData);
@@ -250,6 +250,7 @@ export function MembershipDetails() {
   // otherwise the built-in list below is shown.
   const cards = pricingData.length > 0
     ? [...pricingData]
+        .filter((p: any) => p.tierId)
         .sort((a: any, b: any) => (a.order ?? 99) - (b.order ?? 99))
         .map((p: any, i: number) => {
           const base = membershipTiers.find((tier) => tier.priceId === (p.tierId || '').toLowerCase());

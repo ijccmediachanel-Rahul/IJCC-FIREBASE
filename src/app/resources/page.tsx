@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Download, FileText, Presentation, BarChart, ArrowRight, BookOpen, Sparkles, Lock } from "lucide-react";
+import { Download, FileText, Presentation, BarChart, ArrowRight, BookOpen, Sparkles, Lock, Handshake } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState } from "react";
@@ -16,6 +16,14 @@ import { client } from "@/sanity/lib/client";
 import { RESOURCES_QUERY, RESOURCES_PAGE_QUERY } from "@/sanity/lib/queries";
 
 const allResources = [
+  {
+    id: "associates",
+    type: "Associates",
+    icon: <Handshake className="h-8 w-8 text-primary" />,
+    isLink: true,
+    href: "/news",
+    isProtected: true,
+  },
   {
     id: "business-in-japan",
     type: "Document",
@@ -95,8 +103,8 @@ export default function ResourcesPage() {
     async function fetchResources() {
       try {
         const [resData, pageData] = await Promise.all([
-          client.fetch(RESOURCES_QUERY),
-          client.fetch(RESOURCES_PAGE_QUERY)
+          client.fetch(RESOURCES_QUERY, {}, { cache: 'no-store' }),
+          client.fetch(RESOURCES_PAGE_QUERY, {}, { cache: 'no-store' })
         ]);
         if (resData && resData.length > 0) setCmsResources(resData);
         if (pageData) setCmsPage(pageData);
@@ -145,26 +153,61 @@ export default function ResourcesPage() {
 
   // Cards come from the CMS when available, otherwise built-in defaults.
   // CMS controls title, description, link and member-gating; icon/type shell stays in code.
+  const hasAssociatesInCms = cmsResources.some((d: any) => d.resourceId === 'associates');
+  const cmsList = hasAssociatesInCms
+    ? cmsResources
+    : [
+        {
+          resourceId: "associates",
+          title: t('resource_associates_title') || "Associates",
+          description: t('resource_associates_description') || "Stay informed about latest developments, strategic alliances, and success stories in the India-Japan corridor.",
+          linkUrl: "/news",
+          isProtected: true,
+          order: 0,
+        },
+        ...cmsResources,
+      ];
+
   const cards = (cmsResources.length > 0
-    ? cmsResources.map((d: any, i: number) => {
+    ? cmsList.map((d: any, i: number) => {
         const base = allResources.find((r) => r.id === d.resourceId) ?? {
           id: d.resourceId, icon: cardIconPool[i % cardIconPool.length], type: "Document", href: "", isProtected: false,
         };
-        const linkUrl = d.linkUrl || "";
+        const linkUrl = d.linkUrl || d.fileUrl || d.externalLink || "";
+        const key = d.resourceId?.replace(/-/g, '_');
+        const fallbackTitle = t(`resource_${key}_title`) !== `resource_${key}_title` ? t(`resource_${key}_title`) : (t(`resource_${d.resourceId}_title`) !== `resource_${d.resourceId}_title` ? t(`resource_${d.resourceId}_title`) : d.title);
+        const fallbackDesc = t(`resource_${key}_description`) !== `resource_${key}_description` ? t(`resource_${key}_description`) : (t(`resource_${d.resourceId}_description`) !== `resource_${d.resourceId}_description` ? t(`resource_${d.resourceId}_description`) : "");
+
+        const isKebabCase = d.title && /^[a-z0-9]+(-[a-z0-9]+)+$/.test(d.title);
+        const displayTitle = isKebabCase
+          ? (fallbackTitle && fallbackTitle !== d.title ? fallbackTitle : d.title.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+          : (d.title || fallbackTitle);
+        const displayDesc = d.description?.trim() ? d.description : fallbackDesc;
+        const displayType = d.category ? (d.category.charAt(0).toUpperCase() + d.category.slice(1)) : base.type;
+
         return {
           ...base,
-          title: d.title,
-          description: d.description || "",
+          type: displayType,
+          title: displayTitle,
+          description: displayDesc,
           href: linkUrl || base.href,
-          isLink: linkUrl.length > 0,
+          isLink: (linkUrl || base.href).length > 0,
           isProtected: d.isProtected ?? base.isProtected,
         };
       })
-    : allResources.map((r) => ({
-        ...r,
-        title: t(`resource_${r.id}_title`),
-        description: t(`resource_${r.id}_description`),
-      })));
+    : allResources.map((r) => {
+        const key = r.id.replace(/-/g, '_');
+        const transTitle = t(`resource_${key}_title`);
+        const transDesc = t(`resource_${key}_description`);
+        const titleFallback = transTitle && transTitle !== `resource_${key}_title`
+          ? transTitle
+          : r.id.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        return {
+          ...r,
+          title: titleFallback,
+          description: (transDesc && transDesc !== `resource_${key}_description`) ? transDesc : (t(`resource_${r.id}_description`) || ""),
+        };
+      }));
 
   const handleDownload = (resourceTitle: string) => {
     toast({

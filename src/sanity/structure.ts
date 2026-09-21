@@ -35,11 +35,6 @@ export const structure: StructureResolver = (S) =>
         S.documentTypeListItem('associate').title('Associates & Logos'),
       ]),
 
-      group(S, 'Associates Page', [
-        singleton(S, 'Page Titles', 'newsPage', 'newsPage'),
-        S.documentTypeListItem('newsArticle').title('Associates Posts'),
-      ]),
-
       group(S, 'Events Page', [
         singleton(S, 'Page Titles', 'eventsPage', 'eventsPage'),
         S.documentTypeListItem('event').title('All Events'),
@@ -53,6 +48,8 @@ export const structure: StructureResolver = (S) =>
       group(S, 'Resources Page', [
         singleton(S, 'Page Titles', 'resourcesPage', 'resourcesPage'),
         S.documentTypeListItem('resourceItem').title('All Resources'),
+        singleton(S, 'Associates Page Titles', 'newsPage', 'newsPage'),
+        S.documentTypeListItem('newsArticle').title('Associates Posts'),
       ]),
 
       singleton(S, 'Contact Page', 'contactPage', 'contactPage'),

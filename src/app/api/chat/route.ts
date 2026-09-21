@@ -33,46 +33,74 @@ async function callGemini(messages: { role: string; content: string }[], apiKey:
     parts: [{ text: m.content }],
   }));
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 600,
-          topP: 0.9,
-        },
-      }),
-    }
-  );
+  const modelsToTry = ["gemini-flash-latest", "gemini-3.6-flash"];
+  let lastError = "";
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini ${response.status}: ${err}`);
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 600,
+              topP: 0.9,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      } else {
+        lastError = await response.text();
+      }
+    } catch (err: any) {
+      lastError = err?.message || String(err);
+    }
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Empty response from Gemini");
-  return text;
+  throw new Error(`Gemini API failed: ${lastError}`);
 }
 
 export async function POST(req: NextRequest) {
   let lastUserMessage = "";
 
+  let body: any = {};
   try {
-    const body = await req.json();
-    const messages: { role: string; content: string }[] = body.messages || [];
-
-    if (messages.length === 0) {
-      return NextResponse.json({ text: FALLBACK_RESPONSES.default });
+    const raw = await req.text();
+    if (raw && raw.trim()) {
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        // Fix bad escaped quotes from PowerShell/curl
+        try {
+          body = JSON.parse(raw.replace(/\\"/g, '"'));
+        } catch {
+          body = {};
+        }
+      }
     }
+  } catch {
+    body = {};
+  }
 
-    lastUserMessage = messages[messages.length - 1]?.content || "";
+  const messages: { role: string; content: string }[] = body?.messages || [];
+
+  if (messages.length === 0) {
+    return NextResponse.json({ text: FALLBACK_RESPONSES.default });
+  }
+
+  lastUserMessage = messages[messages.length - 1]?.content || "";
+
+  try {
 
     const apiKey = process.env.GEMINI_API_KEY;
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Landmark, Menu, Instagram, Linkedin, Facebook, ChevronDown, Mail, Handshake, Briefcase, FileSignature, Globe, Building, School, University, Lightbulb, Zap, LogOut, User } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -137,7 +137,6 @@ export function AppHeader() {
       submenu: servicesSubmenu
     },
     { href: "/members", label: t('navMembers') },
-    { href: "/news", label: t('navNews') },
     { href: "/events", label: t('navEvents') },
     { href: "/resources", label: t('navResources') },
     { href: "/contact", label: t('navContact') },
@@ -274,6 +273,8 @@ export function AppHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SheetDescription className="sr-only">Mobile site navigation links</SheetDescription>
               <Link href="/" className="mr-6 flex items-center gap-4 mb-6">
                 <Image src={logoUrl} alt="Indo-Japan Chamber of Commerce Logo" width={80} height={80} className="h-16 w-auto" />
               </Link>

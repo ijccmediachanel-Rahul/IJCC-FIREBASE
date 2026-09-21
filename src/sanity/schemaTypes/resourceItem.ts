@@ -9,7 +9,7 @@ export const resourceItem = defineType({
       name: 'resourceId',
       title: 'Resource ID (do not change)',
       type: 'string',
-      description: 'Stable key: business-in-japan, jlpt-papers, magazines, self-study, learn-japanese, marugoto, cross-cultural, import-export.',
+      description: 'Stable key: associates, business-in-japan, jlpt-papers, magazines, self-study, learn-japanese, marugoto, cross-cultural, import-export.',
     }),
     defineField({
       name: 'title',
@@ -23,6 +23,7 @@ export const resourceItem = defineType({
       type: 'string',
       options: {
         list: [
+          { title: 'Associates', value: 'associates' },
           { title: 'Document', value: 'document' },
           { title: 'Link', value: 'link' },
           { title: 'Video', value: 'video' },
