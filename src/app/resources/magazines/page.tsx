@@ -56,8 +56,8 @@ export default function MagazinesPage() {
         if (userDoc.exists()) {
           setProfile(userDoc.data());
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } catch (error: any) {
+        console.warn("Could not fetch user profile (Firestore permissions/offline):", error?.message || error);
       } finally {
         setLoadingProfile(false);
       }
