@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -14,12 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
-export default function SignupPage() {
+function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/profile';
   const { toast } = useToast();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -46,7 +48,7 @@ export default function SignupPage() {
       });
 
       toast({ title: 'Success', description: 'Account created successfully!' });
-      router.push('/profile');
+      router.push(redirectUrl);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -60,7 +62,7 @@ export default function SignupPage() {
 
   return (
     <div className="container flex min-h-[calc(100vh-200px)] items-center justify-center py-12">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-lg border-border/80">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-headline">Create an Account</CardTitle>
           <CardDescription>Enter your email and password to get started</CardDescription>
@@ -106,11 +108,26 @@ export default function SignupPage() {
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
             <p>Already have an account?&nbsp;</p>
-            <Link href="/login" className="font-semibold text-primary hover:underline">
+            <Link 
+              href={redirectUrl && redirectUrl !== '/profile' ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : '/login'} 
+              className="font-semibold text-primary hover:underline"
+            >
              Login
             </Link>
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

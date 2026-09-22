@@ -136,7 +136,11 @@ export function AppHeader() {
       label: t('navServices'),
       submenu: servicesSubmenu
     },
-    { href: "/members", label: t('navMembers') },
+    { 
+      href: user ? "/members" : "/login?redirect=/members&reason=members", 
+      activeHref: "/members",
+      label: t('navMembers') 
+    },
     { href: "/events", label: t('navEvents') },
     { href: "/resources", label: t('navResources') },
     { href: "/contact", label: t('navContact') },
@@ -167,7 +171,7 @@ export function AppHeader() {
         <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
                 {navLinks.map((link) => (
-                    <NavigationMenuItem key={link.href}>
+                    <NavigationMenuItem key={link.label}>
                         {link.submenu ? (
                             <>
                                 <NavigationMenuTrigger className={cn(
@@ -196,7 +200,7 @@ export function AppHeader() {
                           <NavigationMenuLink asChild className={cn(
                               navigationMenuTriggerStyle(),
                               "bg-transparent",
-                              pathname === link.href && "text-primary"
+                              (pathname === link.href || (link.activeHref && pathname === link.activeHref)) && "text-primary"
                           )}>
                               <Link href={link.href}>
                                 {link.label}
@@ -281,11 +285,11 @@ export function AppHeader() {
               <div className="flex flex-col gap-4">
                 {navLinks.map((link) => (
                   <Link
-                    key={link.href}
+                    key={link.label}
                     href={link.href}
                     className={cn(
                       "transition-colors hover:text-primary",
-                      pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
+                      (pathname === link.href || (link.activeHref && pathname === link.activeHref)) ? "text-primary font-semibold" : "text-muted-foreground"
                     )}
                   >
                     {link.label}

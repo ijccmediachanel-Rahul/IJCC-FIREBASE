@@ -3,12 +3,14 @@
 
 import { MembershipDetails } from "@/components/membership-details";
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 import { client } from "@/sanity/lib/client";
 import { ASSOCIATES_QUERY, MEMBERS_PAGE_QUERY } from "@/sanity/lib/queries";
 
@@ -47,10 +49,20 @@ const defaultMembers = [
 
 export default function MembersPage() {
   const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [cmsAssociates, setCmsAssociates] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<any>(null);
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login?redirect=/members&reason=members');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (!user) return;
     async function fetchMembers() {
       try {
         const [assocData, pageData] = await Promise.all([
@@ -64,7 +76,22 @@ export default function MembersPage() {
       }
     }
     fetchMembers();
-  }, []);
+  }, [user]);
+
+  if (authLoading || !user) {
+    return (
+      <div className="container py-28 flex min-h-[calc(100vh-300px)] flex-col items-center justify-center gap-4 text-center">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-2">
+          <Lock className="h-8 w-8 text-primary animate-pulse" />
+        </div>
+        <h2 className="text-2xl font-headline font-bold text-foreground">Login to see Members</h2>
+        <p className="text-muted-foreground text-sm max-w-md">
+          Accessing the members directory and membership plans requires logging in. Redirecting you to login...
+        </p>
+        <Loader2 className="h-6 w-6 animate-spin text-primary mt-2" />
+      </div>
+    );
+  }
 
   // Associate logos come from the CMS when available, otherwise defaults.
   const members = (cmsAssociates.length > 0 ? cmsAssociates : defaultMembers).map((m: any) => ({
