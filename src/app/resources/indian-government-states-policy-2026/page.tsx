@@ -15,6 +15,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { STATE_POLICIES, STATE_METADATA, TRIPURA_MEDIA, TRIPURA_QR_CODES, StatePolicy } from "@/data/state-policies";
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
@@ -77,8 +84,20 @@ export default function IndianStatePoliciesPage() {
   const isLoading = authLoading || loadingCMS || (isProtected && loadingProfile);
   const isLocked = isProtected === true && !hasMembership;
 
-  // Category list derived dynamically
-  const allCategories = ["all", ...Array.from(new Set(STATE_POLICIES.map((p) => p.category)))];
+  // Reset category filter when state changes
+  useEffect(() => {
+    setSelectedCategory("all");
+  }, [selectedState]);
+
+  // Category list derived dynamically from currently selected state policies
+  const relevantPolicies = selectedState === "all" 
+    ? STATE_POLICIES 
+    : STATE_POLICIES.filter((p) => p.stateId === selectedState);
+
+  const availableCategories = [
+    "all",
+    ...Array.from(new Set(relevantPolicies.map((p) => p.category))).sort()
+  ];
 
   // Filtered policies
   const filteredPolicies = STATE_POLICIES.filter((policy) => {
@@ -279,18 +298,32 @@ export default function IndianStatePoliciesPage() {
               />
             </div>
             <div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full h-11 px-3 py-2 bg-card border border-border/80 rounded-xl text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              <Select 
+                value={selectedCategory} 
+                onValueChange={(val) => setSelectedCategory(val)}
               >
-                <option value="all">All Categories ({STATE_POLICIES.length})</option>
-                {allCategories.filter((c) => c !== "all").map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-11 px-3.5 bg-card border border-border/80 rounded-xl text-sm font-medium shadow-sm hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all">
+                  <div className="flex items-center gap-2 truncate">
+                    <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <SelectValue placeholder="All Categories" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-80 rounded-xl border border-border/80 bg-popover shadow-xl z-50">
+                  <SelectItem value="all" className="font-semibold cursor-pointer rounded-lg">
+                    All Categories ({relevantPolicies.length})
+                  </SelectItem>
+                  {availableCategories
+                    .filter((c) => c !== "all")
+                    .map((cat) => {
+                      const count = relevantPolicies.filter((p) => p.category === cat).length;
+                      return (
+                        <SelectItem key={cat} value={cat} className="cursor-pointer rounded-lg">
+                          {cat} ({count})
+                        </SelectItem>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
