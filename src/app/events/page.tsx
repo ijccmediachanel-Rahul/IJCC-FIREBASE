@@ -53,7 +53,7 @@ const defaultEventsData = [
   {
     id: 9,
     date: "2026-06-21",
-    imageUrl: "https://i.ibb.co/7NyvHSWg/Whats-App-Image-2026-04-16-at-16-31-57.jpg",
+    imageUrl: "/images/events/agri-food-delegation.jpg",
     hint: "agri food processing delegation japan",
     isVertical: true,
     href: "/contact"
