@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { client } from '@/sanity/lib/client';
 import { GALLERY_QUERY, GALLERY_PAGE_QUERY } from '@/sanity/lib/queries';
 import { useTranslation } from "@/hooks/use-translation";
@@ -63,6 +63,7 @@ export default function GalleryPage() {
                                 </div>
                             </DialogTrigger>
                             <DialogContent className="max-w-3xl p-0">
+                                <DialogTitle className="sr-only">{altText || "Gallery Image"}</DialogTitle>
                                 <div className="relative aspect-video">
                                     <Image src={imgUrl} alt={altText} fill className="object-contain" />
                                 </div>

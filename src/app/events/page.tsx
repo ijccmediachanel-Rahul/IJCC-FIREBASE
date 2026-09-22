@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslation } from "@/hooks/use-translation";
 import placeholders from "@/app/lib/placeholder-images.json";
@@ -212,6 +213,7 @@ const modifiersStyles = {
                     </div>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl p-0">
+                    <DialogTitle className="sr-only">{event.title}</DialogTitle>
                     <div className={cn("relative", event.isVertical ? "aspect-[2/3] h-[80vh] mx-auto" : "aspect-video")}>
                         <Image src={event.imageUrl} alt={event.title} fill className="object-contain" />
                     </div>
