@@ -150,6 +150,169 @@ export async function submitMembershipForm(
   };
 }
 
+export async function logUserSignupToGoogleSheet(data: {
+  uid: string;
+  displayName: string;
+  email: string;
+  phoneNumber: string;
+  createdAt: string;
+  membershipTier: string;
+}) {
+  const GOOGLE_SHEET_URL = process.env.GOOGLE_SHEET_WEB_APP_URL;
+  if (!GOOGLE_SHEET_URL) {
+    console.warn("GOOGLE_SHEET_WEB_APP_URL not configured; skipping signup sheet sync.");
+    return { success: false, message: "Google Sheet URL not configured" };
+  }
+
+  try {
+    const payload = {
+      type: "USER_SIGNUP",
+      ...data,
+    };
+
+    const response = await fetch(GOOGLE_SHEET_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+      },
+      body: JSON.stringify(payload),
+      redirect: "follow",
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      console.warn(`Google Sheet signup sync returned status ${response.status}.`);
+      return { success: false };
+    }
+    console.log("User signup logged to Google Sheet successfully.");
+    return { success: true };
+  } catch (error: any) {
+    console.warn("Google Sheet signup sync failed (skipped to avoid blocking user):", error.message || error);
+    return { success: false };
+  }
+}
+
+const OTP_SECRET = process.env.SMTP_PASS || process.env.RAZORPAY_KEY_SECRET || "ijcc-otp-secret-key-2026";
+
+export async function sendSignupOTP(email: string) {
+  const trimmedEmail = email.trim().toLowerCase();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
+    return { success: false, message: "Please enter a valid email address." };
+  }
+
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("SMTP settings missing for OTP sending.");
+    return { success: false, message: "Email service is temporarily unavailable. Please try again later." };
+  }
+
+  // Generate secure 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  // Generate HMAC signature token
+  const payloadToSign = `${trimmedEmail}:${otp}:${expiresAt}`;
+  const hash = crypto.createHmac("sha256", OTP_SECRET).update(payloadToSign).digest("hex");
+  const token = Buffer.from(JSON.stringify({ email: trimmedEmail, expiresAt, hash })).toString("base64");
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: Number(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Indo-Japan Chamber of Commerce" <${process.env.SMTP_USER}>`,
+      to: trimmedEmail,
+      subject: `Your IJCC Account Verification Code: ${otp}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 550px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #990000; color: #fff; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 22px; font-weight: bold;">Indo-Japan Chamber of Commerce</h2>
+            <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.9;">Account Email Verification</p>
+          </div>
+          
+          <div style="padding: 28px 24px; text-align: center;">
+            <p style="font-size: 15px; margin-top: 0; color: #444;">
+              Thank you for signing up with IJCC. Use the following One-Time Password (OTP) to verify your email address:
+            </p>
+            
+            <div style="margin: 24px auto; padding: 14px 28px; background: #fff5f5; border: 2px dashed #990000; border-radius: 8px; display: inline-block;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #990000;">${otp}</span>
+            </div>
+            
+            <p style="font-size: 13px; color: #666; margin: 16px 0 0;">
+              This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.
+            </p>
+          </div>
+          
+          <div style="background-color: #f7f7f7; padding: 14px 20px; font-size: 12px; color: #888; text-align: center; border-top: 1px solid #eee;">
+            If you did not request this verification, you can safely ignore this email.
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`OTP sent successfully to: ${trimmedEmail}`);
+    return {
+      success: true,
+      token,
+      message: "A 6-digit OTP has been sent to your email address.",
+    };
+  } catch (error: any) {
+    console.error("Failed to send OTP email:", error);
+    return {
+      success: false,
+      message: "Could not send verification email. Please check your email address and try again.",
+    };
+  }
+}
+
+export async function verifySignupOTP(email: string, otp: string, token: string) {
+  const trimmedEmail = email.trim().toLowerCase();
+  const trimmedOtp = otp.trim();
+
+  if (!trimmedOtp || trimmedOtp.length !== 6) {
+    return { success: false, message: "Please enter a valid 6-digit OTP." };
+  }
+
+  if (!token) {
+    return { success: false, message: "Session expired. Please request a new OTP." };
+  }
+
+  try {
+    const decoded = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
+
+    if (decoded.email !== trimmedEmail) {
+      return { success: false, message: "Email mismatch. Please request a new OTP." };
+    }
+
+    if (Date.now() > decoded.expiresAt) {
+      return { success: false, message: "OTP has expired. Please request a new code." };
+    }
+
+    const payloadToSign = `${trimmedEmail}:${trimmedOtp}:${decoded.expiresAt}`;
+    const expectedHash = crypto.createHmac("sha256", OTP_SECRET).update(payloadToSign).digest("hex");
+
+    if (expectedHash !== decoded.hash) {
+      return { success: false, message: "Invalid OTP code. Please check and try again." };
+    }
+
+    return {
+      success: true,
+      message: "Email verified successfully!",
+    };
+  } catch (err: any) {
+    return { success: false, message: "Invalid or corrupted OTP session." };
+  }
+}
 
 export async function submitContactForm(
   prevState: ContactFormState,
