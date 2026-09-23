@@ -158,10 +158,10 @@ export async function logUserSignupToGoogleSheet(data: {
   createdAt: string;
   membershipTier: string;
 }) {
-  const GOOGLE_SHEET_URL = process.env.GOOGLE_SHEET_WEB_APP_URL;
+  const GOOGLE_SHEET_URL = process.env.GOOGLE_SHEET_USERS_WEB_APP_URL;
   if (!GOOGLE_SHEET_URL) {
-    console.warn("GOOGLE_SHEET_WEB_APP_URL not configured; skipping signup sheet sync.");
-    return { success: false, message: "Google Sheet URL not configured" };
+    console.warn("GOOGLE_SHEET_USERS_WEB_APP_URL not configured; skipping signup sheet sync.");
+    return { success: false, message: "GOOGLE_SHEET_USERS_WEB_APP_URL not configured" };
   }
 
   try {
