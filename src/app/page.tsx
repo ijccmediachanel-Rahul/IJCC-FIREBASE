@@ -264,9 +264,9 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center">
                 {partnerList.map((partner: any) => (
                     <Link href={partner.href} key={partner.name} target="_blank" rel="noopener noreferrer" className="block">
-                       <Card className="flex items-center justify-center p-6 h-40 transition-transform transform hover:scale-105 hover:shadow-lg">
+                       <Card className="flex items-center justify-center p-6 h-40 transition-transform transform hover:scale-105 hover:shadow-lg overflow-hidden">
                           <CardContent className="p-0 flex items-center justify-center">
-                            <Image src={partner.logoUrl} alt={partner.name} width={150} height={80} className="object-contain" />
+                            <Image src={partner.logoUrl} alt={partner.name} width={150} height={80} className="max-h-20 max-w-[130px] w-auto h-auto object-contain" style={{ maxHeight: '80px', maxWidth: '130px' }} />
                           </CardContent>
                        </Card>
                     </Link>

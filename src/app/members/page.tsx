@@ -25,7 +25,7 @@ const defaultMembers = [
     { name: "All Nippon Airways", href: "https://www.ana.co.jp/en/in/", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/8/8d/All_Nippon_Airways_Logo.svg", hint: "airline logo" },
     { name: "Indian Council for Cultural Relations", href: "https://iccr.gov.in/home", logoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEYuDws_3GHEcMoqAZ6w9ufbUWnwZcoKyTKg&s", hint: "organization logo" },
     { name: "Embassy of India, Tokyo", href: "https://www.indembassy-tokyo.gov.in/", logoUrl: "https://www.indembassy-tokyo.gov.in/public_files/assets/images/common_images/logo_english_2021.png", hint: "embassy logo" },
-    { name: "Consulate General of India, Osaka-Kobe", href: "https://www.indconosaka.gov.in/", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg", hint: "embassy logo" },
+    { name: "Consulate General of India, Osaka-Kobe", href: "https://www.indconosaka.gov.in/", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg", hint: "embassy logo", className: "p-2" },
     { name: "Government of Haryana", href: "https://haryana.gov.in/", logoUrl: "https://i.postimg.cc/j2qYy3HN/haryana-govt11.png", hint: "government logo", className: "p-2 bg-white rounded-md"},
     { name: "Government of Uttar Pradesh", href: "https://up.gov.in/en", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Seal_of_Uttar_Pradesh.svg", hint: "government logo" },
     { name: "Japan Chamber of Commerce and Industry in India", href: "https://jccii.in/english", logoUrl: "https://jccii.in/wp-content/uploads/2020/02/logo.png", hint: "organization logo" },
@@ -126,15 +126,15 @@ export default function MembersPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center">
           {members.map((member) => (
             <Link href={member.href} key={member.name} target="_blank" rel="noopener noreferrer" className="block">
-              <Card className="flex items-center justify-center p-6 h-40 transition-all transform hover:scale-105 hover:shadow-xl border-2 border-primary/5">
-                <CardContent className="p-0 flex items-center justify-center h-full w-full">
+              <Card className="flex items-center justify-center p-6 h-40 transition-all transform hover:scale-105 hover:shadow-xl border-2 border-primary/5 overflow-hidden">
+                <CardContent className="p-0 flex items-center justify-center h-full w-full overflow-hidden">
                     <Image 
                         src={member.logoUrl} 
                         alt={member.name} 
                         width={150} 
                         height={80} 
-                        className={`object-contain ${member.className || ''}`}
-                        
+                        className={`max-h-20 max-w-[130px] w-auto h-auto object-contain ${member.className || ''}`}
+                        style={{ maxHeight: '80px', maxWidth: '130px' }}
                     />
                 </CardContent>
               </Card>
