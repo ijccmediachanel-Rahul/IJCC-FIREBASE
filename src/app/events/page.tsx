@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import placeholders from "@/app/lib/placeholder-images.json";
 import { client } from "@/sanity/lib/client";
 import { EVENTS_QUERY, EVENTS_PAGE_QUERY } from "@/sanity/lib/queries";
@@ -121,6 +122,7 @@ export default function EventsPage() {
   const [cmsEvents, setCmsEvents] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<any>(null);
   const { t, language } = useTranslation();
+  const { tr, translateBatch } = useAutoTranslate();
 
   useEffect(() => {
     setIsClient(true);
@@ -141,6 +143,20 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
+  // Dynamically auto-translate CMS events into Japanese
+  useEffect(() => {
+    if (language !== 'ja' || !cmsEvents || cmsEvents.length === 0) return;
+    const texts: string[] = [];
+    cmsEvents.forEach((event: any) => {
+      if (event.title && !event.title_ja) texts.push(event.title);
+      if (event.description && !event.description_ja) texts.push(event.description);
+      if (event.location && !event.location_ja) texts.push(event.location);
+    });
+    if (texts.length > 0) {
+      translateBatch(texts);
+    }
+  }, [cmsEvents, language, translateBatch]);
+
   const defaultEvents = defaultEventsData.map(event => ({
     ...event,
     title: t(`event_${event.id}_title`),
@@ -151,21 +167,38 @@ export default function EventsPage() {
   }));
 
   // Events come from the CMS when available, otherwise built-in defaults.
-  const events = (cmsEvents.length > 0 && language !== 'ja'
-    ? cmsEvents.map((event: any) => ({
-        id: event._id,
-        date: event.date ? event.date.slice(0, 10) : "2026-01-01",
-        imageUrl: event.imageUrl,
-        isVertical: !!event.isVertical,
-        href: event.registrationLink || undefined,
-        title: event.title || "TBA",
-        displayDate: event.date
-          ? new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
-          : "TBA",
-        time: event.time || "TBA",
-        location: event.location || "TBA",
-        description: event.description || "",
-      }))
+  const events = (cmsEvents.length > 0
+    ? cmsEvents.map((event: any) => {
+        const title = language === 'ja'
+          ? (event.title_ja || tr(event.title) || event.title || "TBA")
+          : (event.title || "TBA");
+        const description = language === 'ja'
+          ? (event.description_ja || tr(event.description) || event.description || "")
+          : (event.description || "");
+        const location = language === 'ja'
+          ? (event.location_ja || tr(event.location) || event.location || "TBA")
+          : (event.location || "TBA");
+        const displayDate = event.date
+          ? new Date(event.date).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'en-US', {
+              day: 'numeric',
+              month: language === 'ja' ? 'short' : 'long',
+              year: 'numeric'
+            })
+          : "TBA";
+
+        return {
+          id: event._id,
+          date: event.date ? event.date.slice(0, 10) : "2026-01-01",
+          imageUrl: event.imageUrl,
+          isVertical: !!event.isVertical,
+          href: event.registrationLink || undefined,
+          title,
+          displayDate,
+          time: event.time || "TBA",
+          location,
+          description,
+        };
+      })
     : defaultEvents);
 
   const eventDates = events.map(event => new Date(event.date + 'T00:00:00'));

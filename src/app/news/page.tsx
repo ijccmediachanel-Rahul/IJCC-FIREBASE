@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Trophy, Star, ShieldCheck, Building2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { client } from "@/sanity/lib/client";
@@ -67,6 +68,7 @@ const newsArticlesData = [
 
 export default function NewsPage() {
   const { t, language } = useTranslation();
+  const { tr, translateBatch } = useAutoTranslate();
   const [cmsArticles, setCmsArticles] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<any>(null);
 
@@ -86,6 +88,19 @@ export default function NewsPage() {
     fetchNews();
   }, []);
 
+  // Dynamically auto-translate CMS news articles into Japanese
+  useEffect(() => {
+    if (language !== 'ja' || !cmsArticles || cmsArticles.length === 0) return;
+    const texts: string[] = [];
+    cmsArticles.forEach((a: any) => {
+      if (a.title && !a.title_ja) texts.push(a.title);
+      if (a.excerpt && !a.excerpt_ja) texts.push(a.excerpt);
+    });
+    if (texts.length > 0) {
+      translateBatch(texts);
+    }
+  }, [cmsArticles, language, translateBatch]);
+
   const iconForTag = (tag: string) => {
     if (tag?.includes('NEW')) return <Star className="h-3 w-3" />;
     if (tag?.includes('FEATURED')) return <Trophy className="h-3 w-3" />;
@@ -94,18 +109,27 @@ export default function NewsPage() {
   };
 
   // Articles come from the CMS when available, otherwise built-in defaults.
-  const newsArticles = (cmsArticles.length > 0 && language !== 'ja'
-    ? cmsArticles.map((a: any) => ({
-        id: a.slug,
-        date: a.publishDate,
-        imageUrl: a.featuredImageUrl,
-        href: `/news/${a.slug}`,
-        isSpecial: !!a.tag,
-        tag: a.tag,
-        icon: iconForTag(a.tag),
-        title: a.title,
-        description: a.excerpt,
-      }))
+  const newsArticles = (cmsArticles.length > 0
+    ? cmsArticles.map((a: any) => {
+        const title = language === 'ja'
+          ? (a.title_ja || tr(a.title) || a.title)
+          : a.title;
+        const description = language === 'ja'
+          ? (a.excerpt_ja || tr(a.excerpt) || a.excerpt)
+          : a.excerpt;
+
+        return {
+          id: a.slug,
+          date: a.publishDate,
+          imageUrl: a.featuredImageUrl,
+          href: `/news/${a.slug}`,
+          isSpecial: !!a.tag,
+          tag: a.tag,
+          icon: iconForTag(a.tag),
+          title,
+          description,
+        };
+      })
     : newsArticlesData.map(article => ({
         ...article,
         title: t(`news_article_${article.id}_title`),

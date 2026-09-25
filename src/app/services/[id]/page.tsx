@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { notFound, useParams } from "next/navigation";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { ReactNode, useState, useEffect } from "react";
 import { client } from "@/sanity/lib/client";
 import { SERVICE_DETAIL_QUERY } from "@/sanity/lib/queries";
@@ -227,46 +228,74 @@ const sectionIcons = [
 
 // Renders a service from the CMS (title + accordion sections).
 const CmsServiceSection = ({ service }: { service: any }) => {
+    const { language } = useTranslation();
+    const { tr, translateBatch } = useAutoTranslate();
+
+    useEffect(() => {
+        if (language !== 'ja' || !service) return;
+        const texts: string[] = [];
+        if (service.title) texts.push(service.title);
+        if (service.shortDescription) texts.push(service.shortDescription);
+        (service.sections || []).forEach((sec: any) => {
+            if (sec.title) texts.push(sec.title);
+            (sec.items || []).forEach((item: any) => {
+                if (item.text) texts.push(item.text);
+                if (Array.isArray(item.subItems)) {
+                    item.subItems.forEach((sub: string) => texts.push(sub));
+                }
+            });
+        });
+        if (texts.length > 0) {
+            translateBatch(texts);
+        }
+    }, [service, language, translateBatch]);
+
+    const title = language === 'ja' ? tr(service.title) : service.title;
+    const shortDesc = language === 'ja' ? tr(service.shortDescription) : service.shortDescription;
+
     return (
         <Card className="p-6">
             <CardHeader className="text-center">
-                <CardTitle className="text-3xl font-headline">{service.title}</CardTitle>
-                {service.shortDescription ? (
+                <CardTitle className="text-3xl font-headline">{title}</CardTitle>
+                {shortDesc ? (
                     <CardDescription className="max-w-3xl mx-auto pt-4 text-base leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                        {service.shortDescription}
+                        {shortDesc}
                     </CardDescription>
                 ) : null}
             </CardHeader>
             <CardContent className="mt-8">
                 <Accordion type="single" collapsible className="w-full" defaultValue={service.sections?.[0]?.title}>
-                    {(service.sections || []).map((section: any, i: number) => (
-                        <AccordionItem value={section.title} key={section.title || i} className="border-b py-2">
-                            <AccordionTrigger className="text-xl font-headline hover:no-underline py-4">
-                                <div className="flex items-center gap-4 text-left">
-                                    <div className="bg-primary/5 p-2 rounded-lg">
-                                        {sectionIcons[i % sectionIcons.length]}
+                    {(service.sections || []).map((section: any, i: number) => {
+                        const secTitle = language === 'ja' ? tr(section.title) : section.title;
+                        return (
+                            <AccordionItem value={section.title} key={section.title || i} className="border-b py-2">
+                                <AccordionTrigger className="text-xl font-headline hover:no-underline py-4">
+                                    <div className="flex items-center gap-4 text-left">
+                                        <div className="bg-primary/5 p-2 rounded-lg">
+                                            {sectionIcons[i % sectionIcons.length]}
+                                        </div>
+                                        <span className="text-primary">{secTitle}</span>
                                     </div>
-                                    <span className="text-primary">{section.title}</span>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pt-4 pl-16">
-                                <ul className="list-disc space-y-3 text-muted-foreground text-base">
-                                    {(section.items || []).map((item: any, index: number) => (
-                                        <li key={index} className="pl-2">
-                                            {item.text}
-                                            {Array.isArray(item.subItems) && item.subItems.length > 0 && (
-                                                <ul className="list-circle pl-8 mt-3 space-y-2 text-sm text-foreground/80">
-                                                    {item.subItems.map((sub: string, subIndex: number) => (
-                                                        <li key={subIndex}>{sub}</li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-4 pl-16">
+                                    <ul className="list-disc space-y-3 text-muted-foreground text-base">
+                                        {(section.items || []).map((item: any, index: number) => (
+                                            <li key={index} className="pl-2">
+                                                {language === 'ja' ? tr(item.text) : item.text}
+                                                {Array.isArray(item.subItems) && item.subItems.length > 0 && (
+                                                    <ul className="list-circle pl-8 mt-3 space-y-2 text-sm text-foreground/80">
+                                                        {item.subItems.map((sub: string, subIndex: number) => (
+                                                            <li key={subIndex}>{language === 'ja' ? tr(sub) : sub}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                        );
+                    })}
                 </Accordion>
             </CardContent>
         </Card>
@@ -291,9 +320,19 @@ export default function ServiceDetailPage() {
         notFound();
     }
 
-    // CMS version wins when the doc has sections; otherwise the built-in
-    // version below is shown (it stays as the fallback).
-    if (cmsService?.sections?.length && language !== 'ja') {
+    // If Japanese and we have predefined translated service, use ServiceSection
+    if (language === 'ja' && service) {
+        return (
+            <div className="container py-12">
+                <div className="max-w-5xl mx-auto space-y-12">
+                    <ServiceSection service={service} />
+                </div>
+            </div>
+        );
+    }
+
+    // CMS version wins when the doc has sections
+    if (cmsService?.sections?.length) {
         return (
             <div className="container py-12">
                 <div className="max-w-5xl mx-auto space-y-12">
@@ -303,15 +342,15 @@ export default function ServiceDetailPage() {
         );
     }
 
-    if (!service) {
-        return null;
+    if (service) {
+        return (
+            <div className="container py-12">
+                <div className="max-w-5xl mx-auto space-y-12">
+                    <ServiceSection service={service} />
+                </div>
+            </div>
+        );
     }
 
-  return (
-    <div className="container py-12">
-      <div className="max-w-5xl mx-auto space-y-12">
-        <ServiceSection service={service} />
-      </div>
-    </div>
-  );
+    return null;
 }

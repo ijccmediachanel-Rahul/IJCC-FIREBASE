@@ -34,6 +34,7 @@ import {
   Facebook
 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
@@ -58,6 +59,7 @@ const verticals = [
 
 export default function AboutPage() {
   const { t, language } = useTranslation();
+  const { tr, translateBatch } = useAutoTranslate();
   const [cmsMembers, setCmsMembers] = useState<any[]>([]);
   const [cmsAbout, setCmsAbout] = useState<any>(null);
   const [siteSettings, setSiteSettings] = useState<any>(null);
@@ -79,6 +81,20 @@ export default function AboutPage() {
     };
     fetchData();
   }, []);
+
+  // Dynamically auto-translate any newly added CMS member names, roles, and bios
+  useEffect(() => {
+    if (language !== 'ja' || !cmsMembers || cmsMembers.length === 0) return;
+    const textsToTranslate: string[] = [];
+    cmsMembers.forEach((m) => {
+      if (m.name) textsToTranslate.push(m.name);
+      if (m.role) textsToTranslate.push(m.role);
+      if (m.bio) textsToTranslate.push(m.bio);
+    });
+    if (textsToTranslate.length > 0) {
+      translateBatch(textsToTranslate);
+    }
+  }, [cmsMembers, language, translateBatch]);
 
   // Team Japanese translations map
   const MEMBER_JA_MAP: Record<string, { name: string; role: string; bio?: string }> = {
@@ -182,6 +198,14 @@ export default function AboutPage() {
     { match: (n) => /pdsharma/i.test(n) || /p\.\s*d\.\s*sharma/i.test(n) || (/sharma/i.test(n) && /p/i.test(n)), data: { name: "P・D・シャルマ氏", role: "インド最高裁判所 上級弁護士" } },
     { match: (n) => /anjali/i.test(n), data: { name: "アンジャリ・シャルマ氏", role: "インド最高裁判所 弁護士" } },
     { match: (n) => /^raj\b/i.test(n.trim()), data: { name: "ラジ氏", role: "諮問委員" } },
+    {
+      match: (n) => /palash/i.test(n) || /sen/i.test(n),
+      data: {
+        name: "パラッシュ・セン氏",
+        role: "プリンシパルコンサルタント – 企業関係および事業開発",
+        bio: "パラッシュ・セン氏は、企業関係、事業開発、業界提携において33年以上の豊富な経験を有しています。"
+      }
+    },
   ];
 
   const pickLang = (m: any, base: 'name' | 'role' | 'bio') => {
@@ -203,7 +227,13 @@ export default function AboutPage() {
         if (val) return val;
       }
 
-      // 3. Fallback to locale dictionary keys
+      // 3. Dynamic auto-translation hook cache
+      if (m[base]) {
+        const translated = tr(m[base]);
+        if (translated && translated !== m[base]) return translated;
+      }
+
+      // 4. Fallback to locale dictionary keys
       const normalizedName = (m.name || '').replace(/^(Mr\.|Ms\.|Dr\.)\s*/i, '').replace(/[^a-zA-Z]/g, '');
       const teamKey = `team_${normalizedName}_${base === 'role' ? 'title' : base}`;
       const teamVal = t(teamKey);
@@ -216,6 +246,11 @@ export default function AboutPage() {
       const advKey = `advisor_${normalizedName.toLowerCase()}_${base}`;
       const advVal = t(advKey);
       if (advVal && advVal !== advKey) return advVal;
+
+      // 5. Final fallback to dynamic auto-translation
+      if (m[base]) {
+        return tr(m[base]);
+      }
     }
     return m[base];
   };

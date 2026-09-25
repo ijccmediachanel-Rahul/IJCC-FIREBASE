@@ -12,6 +12,7 @@ import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { client } from "@/sanity/lib/client";
 import { RESOURCES_QUERY, RESOURCES_PAGE_QUERY } from "@/sanity/lib/queries";
 import { isPaidMember } from "@/lib/definitions";
@@ -101,6 +102,7 @@ const allResources = [
 
 export default function ResourcesPage() {
   const { t, language } = useTranslation();
+  const { tr, translateBatch } = useAutoTranslate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<DocumentData | null>(null);
@@ -123,6 +125,19 @@ export default function ResourcesPage() {
     }
     fetchResources();
   }, []);
+
+  // Dynamically auto-translate CMS resources into Japanese
+  useEffect(() => {
+    if (language !== 'ja' || !cmsResources || cmsResources.length === 0) return;
+    const texts: string[] = [];
+    cmsResources.forEach((d: any) => {
+      if (d.title && !d.title_ja) texts.push(d.title);
+      if (d.description && !d.description_ja) texts.push(d.description);
+    });
+    if (texts.length > 0) {
+      translateBatch(texts);
+    }
+  }, [cmsResources, language, translateBatch]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -201,12 +216,12 @@ export default function ResourcesPage() {
 
         const isKebabCase = d.title && /^[a-z0-9]+(-[a-z0-9]+)+$/.test(d.title);
         const displayTitle = language === 'ja'
-          ? (fallbackTitle || d.title)
+          ? (d.title_ja || (fallbackTitle && fallbackTitle !== d.title ? fallbackTitle : tr(d.title)))
           : (isKebabCase
               ? (fallbackTitle && fallbackTitle !== d.title ? fallbackTitle : d.title.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
               : (d.title || fallbackTitle));
         const displayDesc = language === 'ja'
-          ? (fallbackDesc || d.description)
+          ? (d.description_ja || (fallbackDesc && fallbackDesc !== d.description ? fallbackDesc : tr(d.description)))
           : (d.description?.trim() ? d.description : fallbackDesc);
         const displayType = d.category ? (d.category.charAt(0).toUpperCase() + d.category.slice(1)) : base.type;
 

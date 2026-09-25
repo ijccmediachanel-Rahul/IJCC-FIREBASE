@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Handshake, School, Lightbulb, Briefcase, Building, Landmark, Globe, Zap, University, Plane } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { client } from "@/sanity/lib/client";
@@ -37,6 +38,7 @@ const servicesListRaw = [
 
 export default function ServicesPage() {
   const { t, language } = useTranslation();
+  const { tr, translateBatch } = useAutoTranslate();
   const [cmsServices, setCmsServices] = useState<any[]>([]);
 
   useEffect(() => {
@@ -50,6 +52,19 @@ export default function ServicesPage() {
     }
     fetchServices();
   }, []);
+
+  // Dynamically auto-translate CMS services into Japanese
+  useEffect(() => {
+    if (language !== 'ja' || !cmsServices || cmsServices.length === 0) return;
+    const texts: string[] = [];
+    cmsServices.forEach((s: any) => {
+      if (s.title && !s.title_ja) texts.push(s.title);
+      if (s.shortDescription && !s.shortDescription_ja) texts.push(s.shortDescription);
+    });
+    if (texts.length > 0) {
+      translateBatch(texts);
+    }
+  }, [cmsServices, language, translateBatch]);
 
   const servicesList = servicesListRaw.map(service => ({
     ...service,
@@ -67,21 +82,37 @@ export default function ServicesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {cmsServices.length > 0 && language !== 'ja' ? cmsServices.map((service: any, i: number) => (
-            <Link href={`/services/${service.slug}`} key={service._id}>
-                <Card className="h-full flex flex-col transform transition-transform duration-300 hover:-translate-y-2 cursor-pointer">
-                    <CardHeader>
-                        <div className="flex items-center gap-4 mb-2">
-                            {serviceIconMap[service.iconName] || Object.values(serviceIconMap)[i % 9]}
-                            <CardTitle className="font-headline text-2xl">{service.title}</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                        <CardDescription>{service.shortDescription}</CardDescription>
-                    </CardContent>
-                </Card>
-            </Link>
-        )) : servicesList.map(service => (
+        {cmsServices.length > 0 ? cmsServices.map((service: any, i: number) => {
+            const rawTitle = service.title || "";
+            const rawDesc = service.shortDescription || "";
+            const dictKeyTitle = `service_${service.slug || service._id}_title`;
+            const dictTitle = t(dictKeyTitle);
+            const title = language === 'ja'
+              ? (service.title_ja || (dictTitle !== dictKeyTitle ? dictTitle : tr(rawTitle)))
+              : rawTitle;
+
+            const dictKeyDesc = `service_${service.slug || service._id}_description`;
+            const dictDesc = t(dictKeyDesc);
+            const description = language === 'ja'
+              ? (service.shortDescription_ja || (dictDesc !== dictKeyDesc ? dictDesc : tr(rawDesc)))
+              : rawDesc;
+
+            return (
+              <Link href={`/services/${service.slug}`} key={service._id}>
+                  <Card className="h-full flex flex-col transform transition-transform duration-300 hover:-translate-y-2 cursor-pointer">
+                      <CardHeader>
+                          <div className="flex items-center gap-4 mb-2">
+                              {serviceIconMap[service.iconName] || Object.values(serviceIconMap)[i % 9]}
+                              <CardTitle className="font-headline text-2xl">{title}</CardTitle>
+                          </div>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                          <CardDescription>{description}</CardDescription>
+                      </CardContent>
+                  </Card>
+              </Link>
+            );
+        }) : servicesList.map(service => (
             <Link href={`/services/${service.id}`} key={service.id}>
                 <Card className="h-full flex flex-col transform transition-transform duration-300 hover:-translate-y-2 cursor-pointer">
                     <CardHeader>
