@@ -243,6 +243,17 @@ export const SUGGESTED_QUESTIONS = [
   "What is the membership fee for IJCC?",
 ];
 
+export const SUGGESTED_QUESTIONS_JA = [
+  "IJCCの会員になるにはどうすればよいですか？",
+  "近日開催予定のイベントやセミナーはありますか？",
+  "日本への事業進出をどのようにサポートしてくれますか？",
+  "日印間にはどのような貿易機会がありますか？",
+  "日本のビジネスパートナーを見つけるにはどうすればよいですか？",
+  "IJCCはどのようなサービスを提供していますか？",
+  "IJCCの提携機関やアソシエイトは誰ですか？",
+  "IJCCの会費・メンバーシップ料金はいくらですか？",
+];
+
 export type Message = {
   id: string;
   role: "user" | "assistant";

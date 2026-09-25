@@ -275,6 +275,7 @@ const CmsServiceSection = ({ service }: { service: any }) => {
 
 export default function ServiceDetailPage() {
     const params = useParams();
+    const { language } = useTranslation();
     const [cmsService, setCmsService] = useState<any>(null);
     const [cmsLoaded, setCmsLoaded] = useState(false);
 
@@ -292,7 +293,7 @@ export default function ServiceDetailPage() {
 
     // CMS version wins when the doc has sections; otherwise the built-in
     // version below is shown (it stays as the fallback).
-    if (cmsService?.sections?.length) {
+    if (cmsService?.sections?.length && language !== 'ja') {
         return (
             <div className="container py-12">
                 <div className="max-w-5xl mx-auto space-y-12">

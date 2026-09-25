@@ -42,7 +42,7 @@ const defaultHeroSlides = [
 ];
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [cmsHome, setCmsHome] = useState<any>(null);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function Home() {
       link: "/contact",
     },
   ];
-  const features = (cmsHome?.featureCards?.length ? cmsHome.featureCards : defaultFeatureCards).map((f: any, i: number) => ({
+  const features = ((language === 'ja' || !cmsHome?.featureCards?.length) ? defaultFeatureCards : cmsHome.featureCards).map((f: any, i: number) => ({
     icon: featureIcons[i % featureIcons.length],
     title: f.title,
     description: f.description,
@@ -149,14 +149,14 @@ export default function Home() {
         <div className="relative z-10 container px-4 md:px-6">
            <div className="space-y-6 max-w-4xl mx-auto">
               <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                {cmsHome?.heroTitle ? cmsHome.heroTitle : (
+                {language === 'ja' || !cmsHome?.heroTitle ? (
                   <>
                     {t('heroTitlePart1')} <span className="text-accent">{t('heroTitleIndia')}</span> & <span className="text-accent">{t('heroTitleJapan')}</span> {t('heroTitlePart2')}
                   </>
-                )}
+                ) : cmsHome.heroTitle}
               </h1>
               <p className="max-w-2xl mx-auto text-lg md:text-xl">
-                {cmsHome?.heroSubtitle || t('heroDescription')}
+                {language === 'ja' ? t('heroDescription') : (cmsHome?.heroSubtitle || t('heroDescription'))}
               </p>
               <div className="flex flex-col gap-4 sm:flex-row justify-center">
                 <Button asChild size="lg" className="rounded-full">
@@ -195,11 +195,11 @@ export default function Home() {
           </div>
           <div className="space-y-6">
             <div className="space-y-2">
-              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">{cmsHome?.aboutBadge || t('homeAboutUsBadge')}</div>
-              <h2 className="text-3xl font-headline sm:text-4xl">{cmsHome?.aboutTitle || t('homeAboutUsTitle')}</h2>
+              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">{language === 'ja' ? t('homeAboutUsBadge') : (cmsHome?.aboutBadge || t('homeAboutUsBadge'))}</div>
+              <h2 className="text-3xl font-headline sm:text-4xl">{language === 'ja' ? t('homeAboutUsTitle') : (cmsHome?.aboutTitle || t('homeAboutUsTitle'))}</h2>
             </div>
             <p className="text-muted-foreground md:text-lg">
-              {cmsHome?.aboutDescription || t('homeAboutUsDescription')}
+              {language === 'ja' ? t('homeAboutUsDescription') : (cmsHome?.aboutDescription || t('homeAboutUsDescription'))}
             </p>
             <Button asChild size="lg" className="rounded-full">
               <Link href={cmsHome?.aboutButtonLink || "/about"}>
@@ -218,10 +218,10 @@ export default function Home() {
         <div className="container px-4 md:px-6 relative">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">{cmsHome?.featuresBadge || t('keyFeaturesBadge')}</div>
-              <h2 className="text-3xl font-headline sm:text-5xl">{cmsHome?.featuresTitle || t('whyJoinUsTitle')}</h2>
+              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">{language === 'ja' ? t('keyFeaturesBadge') : (cmsHome?.featuresBadge || t('keyFeaturesBadge'))}</div>
+              <h2 className="text-3xl font-headline sm:text-5xl">{language === 'ja' ? t('whyJoinUsTitle') : (cmsHome?.featuresTitle || t('whyJoinUsTitle'))}</h2>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                {cmsHome?.featuresDescription || t('whyJoinUsDescription')}
+                {language === 'ja' ? t('whyJoinUsDescription') : (cmsHome?.featuresDescription || t('whyJoinUsDescription'))}
               </p>
             </div>
           </div>
@@ -254,9 +254,9 @@ export default function Home() {
         <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-headline sm:text-5xl">{cmsHome?.partnersTitle || t('associatePartnersTitle')}</h2>
+                    <h2 className="text-3xl font-headline sm:text-5xl">{language === 'ja' ? t('associatePartnersTitle') : (cmsHome?.partnersTitle || t('associatePartnersTitle'))}</h2>
                     <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        {cmsHome?.partnersDescription || t('associatePartnersDescription')}
+                        {language === 'ja' ? t('associatePartnersDescription') : (cmsHome?.partnersDescription || t('associatePartnersDescription'))}
                     </p>
                 </div>
             </div>
@@ -280,10 +280,10 @@ export default function Home() {
         <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
           <div className="space-y-3">
             <h2 className="text-3xl font-headline tracking-tighter md:text-4xl/tight">
-              {cmsHome?.ctaTitle || t('ctaTitle')}
+              {language === 'ja' ? t('ctaTitle') : (cmsHome?.ctaTitle || t('ctaTitle'))}
             </h2>
             <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              {cmsHome?.ctaDescription || t('ctaDescription')}
+              {language === 'ja' ? t('ctaDescription') : (cmsHome?.ctaDescription || t('ctaDescription'))}
             </p>
           </div>
           <div className="mx-auto w-full max-w-sm space-y-2">

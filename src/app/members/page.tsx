@@ -48,7 +48,7 @@ const defaultMembers = [
 
 
 export default function MembersPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -117,10 +117,10 @@ export default function MembersPage() {
 
       <div className="space-y-4 my-20 text-center">
         <h2 className="text-4xl font-headline tracking-tighter sm:text-5xl text-primary">
-          {cmsPage?.associatesTitle || t('members_associatesTitle')}
+          {language === 'ja' ? t('members_associatesTitle') : (cmsPage?.associatesTitle || t('members_associatesTitle'))}
         </h2>
         <p className="max-w-[900px] mx-auto text-muted-foreground md:text-xl font-medium">
-          {cmsPage?.associatesDescription || t('members_associatesDescription')}
+          {language === 'ja' ? t('members_associatesDescription') : (cmsPage?.associatesDescription || t('members_associatesDescription'))}
         </p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center">

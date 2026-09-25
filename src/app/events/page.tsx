@@ -120,7 +120,7 @@ export default function EventsPage() {
   const [isClient, setIsClient] = useState(false);
   const [cmsEvents, setCmsEvents] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<any>(null);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   useEffect(() => {
     setIsClient(true);
@@ -151,7 +151,7 @@ export default function EventsPage() {
   }));
 
   // Events come from the CMS when available, otherwise built-in defaults.
-  const events = (cmsEvents.length > 0
+  const events = (cmsEvents.length > 0 && language !== 'ja'
     ? cmsEvents.map((event: any) => ({
         id: event._id,
         date: event.date ? event.date.slice(0, 10) : "2026-01-01",
@@ -185,9 +185,9 @@ const modifiersStyles = {
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('events_page_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('events_page_title') : (cmsPage?.title || t('events_page_title'))}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {cmsPage?.description || t('events_page_subtitle')}
+          {language === 'ja' ? t('events_page_subtitle') : (cmsPage?.description || t('events_page_subtitle'))}
         </p>
       </div>
 
@@ -245,7 +245,9 @@ const modifiersStyles = {
                     {event.href && (
                       <div className="mt-6">
                         <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-5 py-2 text-sm font-bold text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
-                          {event.href.includes('/events/') ? 'Explore Program' : 'Learn More'} 
+                          {language === 'ja'
+                            ? (event.href.includes('/events/') ? 'プログラムを見る' : '詳細を見る')
+                            : (event.href.includes('/events/') ? 'Explore Program' : 'Learn More')} 
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </span>
                       </div>
@@ -259,7 +261,9 @@ const modifiersStyles = {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">{cmsPage?.calendarTitle || t('events_calendar_title')}</CardTitle>
+                <CardTitle className="font-headline text-2xl">
+                  {language === 'ja' ? t('events_calendar_title') : (cmsPage?.calendarTitle || t('events_calendar_title'))}
+                </CardTitle>
             </CardHeader>
             <CardContent>
               {isClient ? (

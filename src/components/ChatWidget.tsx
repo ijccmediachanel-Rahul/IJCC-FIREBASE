@@ -1,19 +1,30 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { type Message, SUGGESTED_QUESTIONS } from "@/lib/ijccKnowledge";
+import { type Message, SUGGESTED_QUESTIONS, SUGGESTED_QUESTIONS_JA } from "@/lib/ijccKnowledge";
 import MessageBubble from "./MessageBubble";
+import { useTranslation } from "@/hooks/use-translation";
 
-const WELCOME: Message = {
+const WELCOME_EN: Message = {
   id: "welcome",
   role: "assistant",
   content: "Namaste! 🇮🇳🤝🇯🇵 Welcome to **Indo-Japan Chamber of Commerce**!\n\nI can help you with:\n- Membership information\n- Upcoming events & seminars\n- India-Japan trade opportunities\n- Business networking & partnerships\n\nHow can I assist you today?",
   timestamp: new Date(),
 };
 
+const WELCOME_JA: Message = {
+  id: "welcome",
+  role: "assistant",
+  content: "こんにちは！🇮🇳🤝🇯🇵 **印日商工会議所（IJCC）**へようこそ！\n\n以下についてご案内できます：\n- 会員・メンバーシップ情報\n- 今後のイベント＆セミナー\n- 日印間の貿易・ビジネス機会\n- ネットワーキング＆事業提携\n\nどのようなご用件でしょうか？",
+  timestamp: new Date(),
+};
+
 export default function ChatWidget() {
+  const { language } = useTranslation();
+  const isJa = language === "ja";
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  const [messages, setMessages] = useState<Message[]>([isJa ? WELCOME_JA : WELCOME_EN]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -22,6 +33,16 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
+
+  // Dynamically update initial welcome message when language toggles in the header
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === "welcome") {
+        return [isJa ? WELCOME_JA : WELCOME_EN];
+      }
+      return prev;
+    });
+  }, [isJa]);
 
   // Auto-minimize when clicking outside
   useEffect(() => {
@@ -82,7 +103,7 @@ export default function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: allMsgs }),
+        body: JSON.stringify({ messages: allMsgs, language }),
         signal: controller.signal,
       });
 
@@ -93,10 +114,18 @@ export default function ChatWidget() {
       try {
         data = await res.json();
       } catch {
-        data = { text: "I am having trouble right now. Please visit ijcc.in for assistance." };
+        data = { 
+          text: isJa 
+            ? "現在一時的な問題が発生しています。詳細については ijcc.in をご覧ください。"
+            : "I am having trouble right now. Please visit ijcc.in for assistance." 
+        };
       }
 
-      const responseText = data.text || data.error || "I am having trouble right now. Please visit ijcc.in for assistance.";
+      const responseText = data.text || data.error || (
+        isJa 
+          ? "現在一時的な問題が発生しています。詳細については ijcc.in をご覧ください。"
+          : "I am having trouble right now. Please visit ijcc.in for assistance."
+      );
 
       setMessages(p =>
         p.map(m => m.id === aId ? { ...m, content: responseText } : m)
@@ -106,8 +135,8 @@ export default function ChatWidget() {
 
     } catch (error) {
       const msg = error instanceof Error && error.name === "AbortError"
-        ? "Request timed out. Please try again."
-        : "I am having trouble right now. Please visit ijcc.in for assistance.";
+        ? (isJa ? "リクエストがタイムアウトしました。もう一度お試しください。" : "Request timed out. Please try again.")
+        : (isJa ? "現在一時的な問題が発生しています。詳細については ijcc.in をご覧ください。" : "I am having trouble right now. Please visit ijcc.in for assistance.");
 
       setMessages(p =>
         p.map(m => m.id === aId ? { ...m, content: msg } : m)
@@ -115,13 +144,15 @@ export default function ChatWidget() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, messages, isOpen]);
+  }, [isLoading, messages, isOpen, language, isJa]);
 
   const reset = () => { 
-    setMessages([WELCOME]); 
+    setMessages([isJa ? WELCOME_JA : WELCOME_EN]); 
     setShowSuggestions(true); 
     setInput(""); 
   };
+
+  const currentSuggestions = isJa ? SUGGESTED_QUESTIONS_JA : SUGGESTED_QUESTIONS;
 
   const S = {
     btn: { position:"fixed" as const, bottom:"24px", right:"24px", zIndex:9999, width:"60px", height:"60px", borderRadius:"50%", background:"linear-gradient(135deg,#C8102E,#8B0A1F)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 32px rgba(200,16,46,0.4)" },
@@ -147,7 +178,7 @@ export default function ChatWidget() {
       `}</style>
 
       {!isOpen && (
-        <button style={{...S.btn, animation:"pulse 2s ease-in-out infinite"}} onClick={() => setIsOpen(true)} aria-label="Open chat">
+        <button style={{...S.btn, animation:"pulse 2s ease-in-out infinite"}} onClick={() => setIsOpen(true)} aria-label={isJa ? "チャットを開く" : "Open chat"}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           {hasNew && <span style={{ position:"absolute", top:"4px", right:"4px", width:"12px", height:"12px", background:"#facc15", borderRadius:"50%", border:"2px solid #fff" }} />}
         </button>
@@ -161,21 +192,23 @@ export default function ChatWidget() {
                 <span style={{ color:"#C8102E", fontWeight:900, fontSize:"16px" }}>I</span>
               </div>
               <div>
-                <div style={{ color:"#fff", fontWeight:700, fontSize:"14px" }}>IJCC Assistant</div>
+                <div style={{ color:"#fff", fontWeight:700, fontSize:"14px" }}>
+                  {isJa ? "IJCC アシスタント" : "IJCC Assistant"}
+                </div>
                 <div style={{ color:"rgba(255,255,255,0.7)", fontSize:"11px", display:"flex", alignItems:"center", gap:"4px" }}>
                   <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#4ade80", display:"inline-block" }}/>
-                  Indo-Japan Chamber of Commerce
+                  {isJa ? "印日商工会議所" : "Indo-Japan Chamber of Commerce"}
                 </div>
               </div>
             </div>
             <div style={{ display:"flex", gap:"2px" }} onClick={e => e.stopPropagation()}>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={reset} title="Reset">
+              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={reset} title={isJa ? "会話をリセット" : "Reset"}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.75"/></svg>
               </button>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => setIsMinimized(!isMinimized)}>
+              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => setIsMinimized(!isMinimized)} title={isJa ? "最小化" : "Minimize"}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points={isMinimized?"18 15 12 9 6 15":"18 9 12 15 6 9"}/></svg>
               </button>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => { setIsOpen(false); setIsMinimized(false); }}>
+              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => { setIsOpen(false); setIsMinimized(false); }} title={isJa ? "閉じる" : "Close"}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -192,8 +225,10 @@ export default function ChatWidget() {
               ))}
               {showSuggestions && messages.length === 1 && (
                 <div style={{ marginTop:"8px" }}>
-                  <p style={{ fontSize:"11px", color:"#9ca3af", marginBottom:"6px", paddingLeft:"4px" }}>Suggested questions:</p>
-                  {SUGGESTED_QUESTIONS.slice(0,4).map(q => (
+                  <p style={{ fontSize:"11px", color:"#9ca3af", marginBottom:"6px", paddingLeft:"4px" }}>
+                    {isJa ? "よくある質問：" : "Suggested questions:"}
+                  </p>
+                  {currentSuggestions.slice(0,4).map(q => (
                     <button key={q} className="ijcc-suggest" onClick={() => send(q)}
                       style={{ width:"100%", textAlign:"left", fontSize:"12px", padding:"8px 12px", marginBottom:"6px", borderRadius:"10px", background:"#fff", border:"1px solid #e5e7eb", cursor:"pointer", color:"#374151", display:"block" }}>
                       {q}
@@ -210,13 +245,15 @@ export default function ChatWidget() {
               <div style={S.inputRow}>
                 <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); }}}
-                  placeholder="Ask about India-Japan trade..." disabled={isLoading}
+                  placeholder={isJa ? "日印貿易やIJCCについて質問する..." : "Ask about India-Japan trade..."} disabled={isLoading}
                   style={{ flex:1, background:"transparent", border:"none", outline:"none", fontSize:"13px", color:"#374151" }} />
                 <button style={{...S.sendBtn, opacity:(!input.trim()||isLoading)?0.4:1}} disabled={!input.trim()||isLoading} onClick={() => send(input)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </div>
-              <p style={{ textAlign:"center", fontSize:"10px", color:"#d1d5db", marginTop:"6px" }}>Powered by Gemini AI • IJCC © {new Date().getFullYear()}</p>
+              <p style={{ textAlign:"center", fontSize:"10px", color:"#d1d5db", marginTop:"6px" }}>
+                {isJa ? `Gemini AI 搭載 • IJCC © ${new Date().getFullYear()}` : `Powered by Gemini AI • IJCC © ${new Date().getFullYear()}`}
+              </p>
             </div>
           )}
         </div>

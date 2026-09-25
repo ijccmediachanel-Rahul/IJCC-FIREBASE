@@ -218,7 +218,7 @@ const TierCard = ({ tier }: { tier: any }) => {
 };
 
 export function MembershipDetails() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [pricingData, setPricingData] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [mp, setMp] = useState<any>(null);
@@ -248,7 +248,7 @@ export function MembershipDetails() {
 
   // Tiers come from the CMS (matched by tierId) when available,
   // otherwise the built-in list below is shown.
-  const cards = pricingData.length > 0
+  const cards = (pricingData.length > 0 && language !== 'ja')
     ? [...pricingData]
         .filter((p: any) => p.tierId)
         .sort((a: any, b: any) => (a.order ?? 99) - (b.order ?? 99))
@@ -272,7 +272,7 @@ export function MembershipDetails() {
         price: tier.price,
       }));
 
-  const rulesList = mp?.rules?.length
+  const rulesList = (mp?.rules?.length && language !== 'ja')
     ? mp.rules
     : [1, 2, 3, 4, 5].map((n) => t(`membershipRules_rule${n}`));
 
@@ -284,31 +284,31 @@ export function MembershipDetails() {
         ))}
           <Card className="lg:col-span-2 border-2 border-primary/20 bg-primary/5 shadow-xl">
             <CardHeader className="text-center sm:text-left">
-                <CardTitle className="font-headline text-3xl text-primary">{mp?.paymentTitle || t('membershipDetails_paymentTitle')}</CardTitle>
-                <CardDescription className="text-base font-medium">{mp?.paymentSubtitle || t('membershipDetails_paymentSubtitle')}</CardDescription>
+                <CardTitle className="font-headline text-3xl text-primary">{language === 'ja' ? t('membershipDetails_paymentTitle') : (mp?.paymentTitle || t('membershipDetails_paymentTitle'))}</CardTitle>
+                <CardDescription className="text-base font-medium">{language === 'ja' ? t('membershipDetails_paymentSubtitle') : (mp?.paymentSubtitle || t('membershipDetails_paymentSubtitle'))}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-12 pb-10">
                 <div className="space-y-4 text-muted-foreground flex-1 text-center sm:text-left">
                     <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-x-4 gap-y-2 text-sm">
-                        <span className="font-bold text-foreground">{mp?.accountNameLabel || t('membershipDetails_accountNameLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_accountNameLabel') : (mp?.accountNameLabel || t('membershipDetails_accountNameLabel'))}:</span>
                         <span className="font-medium">{mp?.accountName || "INDO JAPAN CHAMBER OF COMMERCE"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.bankNameLabel || t('membershipDetails_bankNameLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_bankNameLabel') : (mp?.bankNameLabel || t('membershipDetails_bankNameLabel'))}:</span>
                         <span className="font-medium">{mp?.bankName || "IDFC First Bank"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.accountNoLabel || t('membershipDetails_accountNoLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_accountNoLabel') : (mp?.accountNoLabel || t('membershipDetails_accountNoLabel'))}:</span>
                         <span className="font-bold text-logo-blue text-lg">{mp?.accountNo || "10226043148"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.branchLabel || t('membershipDetails_branchLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_branchLabel') : (mp?.branchLabel || t('membershipDetails_branchLabel'))}:</span>
                         <span className="font-medium">{mp?.branch || "Crossing Republic-Ghaziabad"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.ifscCodeLabel || t('membershipDetails_ifscCodeLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_ifscCodeLabel') : (mp?.ifscCodeLabel || t('membershipDetails_ifscCodeLabel'))}:</span>
                         <span className="font-bold tracking-wider text-logo-blue">{mp?.ifscCode || "IDFB0021413"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.micrCodeLabel || t('membershipDetails_micrCodeLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_micrCodeLabel') : (mp?.micrCodeLabel || t('membershipDetails_micrCodeLabel'))}:</span>
                         <span className="font-medium">{mp?.micrCode || "110751034"}</span>
                         
-                        <span className="font-bold text-foreground">{mp?.branchCodeLabel || t('membershipDetails_branchCodeLabel')}:</span>
+                        <span className="font-bold text-foreground">{language === 'ja' ? t('membershipDetails_branchCodeLabel') : (mp?.branchCodeLabel || t('membershipDetails_branchCodeLabel'))}:</span>
                         <span className="font-medium">{mp?.branchCode || "21413"}</span>
                     </div>
                 </div>
@@ -324,7 +324,7 @@ export function MembershipDetails() {
                         />
                     </div>
                     <div className="flex flex-col items-center gap-1">
-                        <span className="text-[10px] uppercase font-black text-primary tracking-[0.2em]">{mp?.scanLabel || t('membershipDetails_scanToPay')}</span>
+                        <span className="text-[10px] uppercase font-black text-primary tracking-[0.2em]">{language === 'ja' ? t('membershipDetails_scanToPay') : (mp?.scanLabel || t('membershipDetails_scanToPay'))}</span>
                         <span className="text-[9px] text-muted-foreground font-bold italic">{mp?.supportText || `${t('membershipDetails_support')} +91-92679 19281`}</span>
                     </div>
                 </div>
@@ -338,7 +338,7 @@ export function MembershipDetails() {
       {/* Membership Rules */}
       <Card className="border-2 border-primary/10 shadow-lg mt-8 mb-16">
         <CardHeader>
-          <CardTitle className="font-headline text-3xl text-primary">{mp?.rulesTitle || t('membershipRules_title')}</CardTitle>
+          <CardTitle className="font-headline text-3xl text-primary">{language === 'ja' ? t('membershipRules_title') : (mp?.rulesTitle || t('membershipRules_title'))}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-4">
@@ -355,16 +355,16 @@ export function MembershipDetails() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         <Card className="border-none bg-muted/30 shadow-inner">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl text-primary">{mp?.enrollmentTitle || t('membershipDetails_enrollmentTitle')}</CardTitle>
+                <CardTitle className="font-headline text-2xl text-primary">{language === 'ja' ? t('membershipDetails_enrollmentTitle') : (mp?.enrollmentTitle || t('membershipDetails_enrollmentTitle'))}</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground leading-relaxed font-medium">{mp?.enrollmentDescription || t('membershipDetails_enrollmentDescription')}</p>
+                <p className="text-muted-foreground leading-relaxed font-medium">{language === 'ja' ? t('membershipDetails_enrollmentDescription') : (mp?.enrollmentDescription || t('membershipDetails_enrollmentDescription'))}</p>
             </CardContent>
         </Card>
         
         <Card className="text-center border-none bg-primary text-primary-foreground shadow-xl flex flex-col justify-center">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">{mp?.contactTitle || t('membershipDetails_contactTitle')}</CardTitle>
+                <CardTitle className="font-headline text-2xl">{language === 'ja' ? t('membershipDetails_contactTitle') : (mp?.contactTitle || t('membershipDetails_contactTitle'))}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap justify-center gap-8">
                  <div className="flex flex-col items-center gap-2 group">

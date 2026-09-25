@@ -310,6 +310,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/resources/self_study',
+        destination: '/resources/self-study',
+      },
+    ];
+  },
   env: {
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
   }

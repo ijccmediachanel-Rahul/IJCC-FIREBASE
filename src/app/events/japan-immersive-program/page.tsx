@@ -26,7 +26,7 @@ import Link from "next/link";
 import placeholders from "@/app/lib/placeholder-images.json";
 
 export default function JapanImmersiveProgramPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   return (
     <div className="min-h-screen bg-sakura-pink/5">
@@ -54,7 +54,9 @@ export default function JapanImmersiveProgramPage() {
               </div>
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full border border-white/20">
                 <Navigation className="h-5 w-5 text-accent" />
-                <span className="font-semibold text-lg">Japan (Multiple Cities)</span>
+                <span className="font-semibold text-lg">
+                  {language === 'ja' ? '日本（複数都市）' : 'Japan (Multiple Cities)'}
+                </span>
               </div>
             </div>
           </div>

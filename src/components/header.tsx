@@ -72,7 +72,7 @@ ListItem.displayName = "ListItem";
 export function AppHeader() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const [cmsServices, setCmsServices] = useState<any[]>([]);
   const [socialLinks, setSocialLinks] = useState({ instagram: "", linkedin: "", facebook: "" });
@@ -113,7 +113,7 @@ export function AppHeader() {
     "management-training",
   ];
   // Services menu comes from the CMS when available, otherwise the built-in list.
-  const servicesSubmenu = (cmsServices.length > 0
+  const servicesSubmenu = (cmsServices.length > 0 && language !== 'ja'
     ? cmsServices.map((s: any, i: number) => ({
         href: `/services/${s.slug}`,
         title: s.title,
@@ -315,17 +315,17 @@ export function AppHeader() {
                   <div className="flex items-center gap-2">
                     <Button asChild variant="ghost">
                       <Link href={socialLinks.instagram || "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y"} target="_blank" rel="noopener noreferrer">
-                        <Instagram className="mr-2"/> Instagram
+                        <Instagram className="mr-2"/> {language === 'ja' ? 'インスタグラム' : 'Instagram'}
                       </Link>
                     </Button>
                     <Button asChild variant="ghost">
                       <Link href={socialLinks.linkedin || "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/"} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="mr-2"/> LinkedIn
+                        <Linkedin className="mr-2"/> {language === 'ja' ? 'リンクトイン' : 'LinkedIn'}
                       </Link>
                     </Button>
                      <Button asChild variant="ghost">
                       <Link href={socialLinks.facebook || "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/"} target="_blank" rel="noopener noreferrer">
-                        <Facebook className="mr-2"/> Facebook
+                        <Facebook className="mr-2"/> {language === 'ja' ? 'フェイスブック' : 'Facebook'}
                       </Link>
                     </Button>
                   </div>

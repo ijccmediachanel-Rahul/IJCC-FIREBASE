@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 import { client } from "@/sanity/lib/client";
 import { SERVICES_QUERY } from "@/sanity/lib/queries";
 
-export const serviceIconMap: Record<string, ReactNode> = {
+const serviceIconMap: Record<string, ReactNode> = {
   School: <School className="h-10 w-10 text-primary" />,
   University: <University className="h-10 w-10 text-primary" />,
   Handshake: <Handshake className="h-10 w-10 text-primary" />,
@@ -36,7 +36,7 @@ const servicesListRaw = [
 
 
 export default function ServicesPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [cmsServices, setCmsServices] = useState<any[]>([]);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function ServicesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {cmsServices.length > 0 ? cmsServices.map((service: any, i: number) => (
+        {cmsServices.length > 0 && language !== 'ja' ? cmsServices.map((service: any, i: number) => (
             <Link href={`/services/${service.slug}`} key={service._id}>
                 <Card className="h-full flex flex-col transform transition-transform duration-300 hover:-translate-y-2 cursor-pointer">
                     <CardHeader>

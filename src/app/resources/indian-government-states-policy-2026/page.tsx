@@ -26,8 +26,10 @@ import { STATE_POLICIES, STATE_METADATA, TRIPURA_MEDIA, TRIPURA_QR_CODES, StateP
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
 import { isPaidMember } from "@/lib/definitions";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function IndianStatePoliciesPage() {
+  const { language } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<DocumentData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -132,7 +134,9 @@ export default function IndianStatePoliciesPage() {
       <div className="container py-24">
         <div className="flex min-h-[calc(100vh-300px)] flex-col items-center justify-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium animate-pulse">Verifying Membership Access...</p>
+          <p className="text-muted-foreground font-medium animate-pulse">
+            {language === 'ja' ? '会員権を確認中...' : 'Verifying Membership Access...'}
+          </p>
         </div>
       </div>
     );
@@ -147,24 +151,29 @@ export default function IndianStatePoliciesPage() {
             <Lock className="h-10 w-10 text-primary" />
           </div>
           <Badge variant="outline" className="mb-4 text-xs font-semibold uppercase tracking-wider">
-            Members-Only Exclusive
+            {language === 'ja' ? '会員限定コンテンツ' : 'Members-Only Exclusive'}
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-headline font-bold text-foreground mb-4">
-            Indian Government States Policy 2026
+            {language === 'ja' ? 'インド各州政府政策 2026' : 'Indian Government States Policy 2026'}
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg mb-8 leading-relaxed">
-            This repository contains confidential state policy documents, official incentive frameworks, and investment compendiums from Haryana, Gujarat, Madhya Pradesh, and Tripura. Access is reserved exclusively for registered IJCC Corporate and Standard Members.
+            {language === 'ja'
+              ? 'このリポジトリには、ハリヤナ州、グジャラート州、マディヤ・プラデーシュ州、トリプラ州の公式産業政策文書や優遇措置ガイドラインが収録されています。アクセスはIJCC会員限定です。'
+              : 'This repository contains confidential state policy documents, official incentive frameworks, and investment compendiums from Haryana, Gujarat, Madhya Pradesh, and Tripura. Access is reserved exclusively for registered IJCC Corporate and Standard Members.'}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button asChild size="lg" className="w-full sm:w-auto font-bold px-8 shadow-md">
               <Link href={user ? "/pricing" : "/login"}>
-                {user ? "Upgrade to Member Access" : "Log In to Access"}
+                {language === 'ja'
+                  ? (user ? "会員権をアップグレード" : "ログインしてアクセス")
+                  : (user ? "Upgrade to Member Access" : "Log In to Access")}
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/resources">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Resources
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {language === 'ja' ? 'リソース一覧に戻る' : 'Back to Resources'}
               </Link>
             </Button>
           </div>
@@ -198,9 +207,13 @@ export default function IndianStatePoliciesPage() {
       {/* Breadcrumb & Top Bar */}
       <div className="border-b bg-muted/30">
         <div className="container py-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/resources" className="hover:text-primary transition-colors">Resources</Link>
+          <Link href="/resources" className="hover:text-primary transition-colors">
+            {language === 'ja' ? 'リソース' : 'Resources'}
+          </Link>
           <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground font-medium truncate">Indian Government States Policy 2026</span>
+          <span className="text-foreground font-medium truncate">
+            {language === 'ja' ? 'インド各州政府政策 2026' : 'Indian Government States Policy 2026'}
+          </span>
         </div>
       </div>
 
@@ -209,18 +222,20 @@ export default function IndianStatePoliciesPage() {
         <div className="container max-w-6xl">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-3 py-1 font-semibold rounded-full shadow-sm">
-              🇮🇳 Official Policy Repository 2026
+              {language === 'ja' ? '🇮🇳 公式政策リポジトリ 2026' : '🇮🇳 Official Policy Repository 2026'}
             </Badge>
             <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50 dark:bg-green-950/40 text-xs px-2.5 py-0.5 font-medium rounded-full">
-              Member Access Active
+              {language === 'ja' ? '会員アクセス有効' : 'Member Access Active'}
             </Badge>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-headline font-bold text-foreground tracking-tight leading-tight">
-            Indian Government States Policy 2026
+            {language === 'ja' ? 'インド各州政府政策 2026' : 'Indian Government States Policy 2026'}
           </h1>
           <p className="mt-4 text-base sm:text-xl text-muted-foreground max-w-3xl leading-relaxed">
-            Authoritative industrial blueprints, state incentive schemes, and regulatory guidelines across Haryana, Gujarat, Madhya Pradesh, and Tripura to assist Japanese companies and investors with market entry and site selection.
+            {language === 'ja'
+              ? '日本企業や投資家の市場参入や立地選定を支援する、ハリヤナ州、グジャラート州、マディヤ・プラデーシュ州、トリプラ州の公式産業青写真、優遇措置、規制ガイドライン。'
+              : 'Authoritative industrial blueprints, state incentive schemes, and regulatory guidelines across Haryana, Gujarat, Madhya Pradesh, and Tripura to assist Japanese companies and investors with market entry and site selection.'}
           </p>
 
           {/* Quick Overview Cards */}
@@ -410,12 +425,14 @@ export default function IndianStatePoliciesPage() {
                 <CardFooter className="pt-3 border-t bg-muted/20 flex items-center gap-2">
                   <Button asChild size="sm" className="flex-1 text-xs font-semibold rounded-lg shadow-sm">
                     <a href={encodeURI(policy.filePath)} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View PDF
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      {language === 'ja' ? 'PDFを閲覧' : 'View PDF'}
                     </a>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="text-xs font-semibold rounded-lg">
                     <a href={encodeURI(policy.filePath)} download>
-                      <Download className="h-3.5 w-3.5 mr-1.5" /> Download
+                      <Download className="h-3.5 w-3.5 mr-1.5" />
+                      {language === 'ja' ? 'ダウンロード' : 'Download'}
                     </a>
                   </Button>
                 </CardFooter>

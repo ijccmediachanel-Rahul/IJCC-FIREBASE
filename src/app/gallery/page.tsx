@@ -8,7 +8,7 @@ import { GALLERY_QUERY, GALLERY_PAGE_QUERY } from '@/sanity/lib/queries';
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function GalleryPage() {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [images, setImages] = useState<any[]>([]);
     const [cmsPage, setCmsPage] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -34,9 +34,9 @@ export default function GalleryPage() {
     return (
         <div className="container py-12">
             <div className="space-y-4 mb-12 text-center">
-                <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('gallery_title')}</h1>
+                <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('gallery_title') : (cmsPage?.title || t('gallery_title'))}</h1>
                 <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-                    {cmsPage?.description || t('gallery_description')}
+                    {language === 'ja' ? t('gallery_description') : (cmsPage?.description || t('gallery_description'))}
                 </p>
             </div>
 

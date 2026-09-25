@@ -80,11 +80,145 @@ export default function AboutPage() {
     fetchData();
   }, []);
 
-  // Team data comes 100% from Sanity CMS (member docs with
-  // category Board / Advisory). Editing a name/role/bio/photo in the
-  // Studio reflects on the site after refresh — no code change needed.
-  const pickLang = (m: any, base: 'name' | 'role' | 'bio') =>
-    language === 'ja' && m[`${base}_ja`] ? m[`${base}_ja`] : m[base];
+  // Team Japanese translations map
+  const MEMBER_JA_MAP: Record<string, { name: string; role: string; bio?: string }> = {
+    // Board Members
+    "team-rahulMishra": { name: "ラフル・ミシュラ氏", role: "IJCC会長" },
+    "c7170645-6f43-4eca-94bd-372085cc29ab": {
+      name: "ジシュヌ・マダヴァン氏",
+      role: "日本支部長",
+      bio: "ジシュヌ・マダヴァン氏は、日本での20年以上の経験を持つ熟練したビジネスリーダーであり連続起業家です。"
+    },
+    "team-gajendraBadgujar": { name: "ガジェンドラ・バドグジャール氏", role: "副会長（戦略担当）" },
+    "team-prakashYadav": { name: "プラカシュ・ヤダブ氏", role: "副会長（企業担当）" },
+    "team-neelamRamaiah": { name: "ニーラム・ラマイア博士", role: "副会長（教育担当）" },
+    "cbd809aa-a3b7-4cf0-8617-63f2d99ff04d": {
+      name: "クリシャン・クマール・カタリア博士",
+      role: "副会長（スキル開発・技術教育担当）",
+      bio: "クリシャン・クマール・カタリア博士は、公共部門において35年以上の実績を持つ先見的なリーダーです。"
+    },
+    "team-sushilKumarChauhan": {
+      name: "スシル・クマール・チャウハン氏",
+      role: "副会長（製造エクセレンス・TQM・日印産業連携担当）",
+      bio: "スシル・チャウハン氏は、グローバルな自動車製造において32年以上の豊富な経験を持つ戦略コンサルタントであり、ホンダ・カーズ・インディアで29年間の輝かしいキャリアを有します。TQM、TPM、リーン手法といった日本の経営哲学をシームレスに統合し、インドの製造現場を世界水準へと引き上げてきた実績を誇ります。"
+    },
+    "team-krishnanNarayanan": {
+      name: "クリシュナン・ナラヤナン博士",
+      role: "常務理事（人的資本・労働力戦略担当）",
+      bio: "クリシュナン博士は、金融サービス技術分野で25年以上の経験を持つテクノロジーおよび教育起業家であり、シティバンク東京（副社長）、UBSインベストメント・バンク・ジャパン（ディレクター）などの要職を歴任しました。現在、Nihon EdutechのCEOを務めています。"
+    },
+    "30fd728e-5d09-43aa-8190-b25ae46d982a": {
+      name: "C・V・カメシュ氏",
+      role: "副会長（文化事業・交流担当）",
+      bio: "Ganesa Natyalaya CEOであるC・V・カメシュ氏は、30年以上にわたる業界を超えたリーダーシップを持ち、インドと日本の文化交流および芸術振興に尽力しています。"
+    },
+    "team-parijatTiwari": {
+      name: "パリジャット・ティワリ氏",
+      role: "シニアコンサルタント（日印二国間貿易・経済関係担当）",
+      bio: "パリジャット氏は、日本語通訳、企業事業開発、ITシステム分析において29年近くの経験を持つトライリンガルの専門家です。英語、ヒンディー語、日本語に堪能で、日立インディアでの11年間の勤務を経て、数多くの日本企業とインド市場を結ぶ架け橋となっています。"
+    },
+    "team-nidhi": { name: "ニディ・プリ氏", role: "法人税・移転価格リード" },
+    "team-mukeshRanjan": { name: "ムケシュ・ランジャン氏", role: "人事・戦略ディレクター" },
+    "team-yokoTorii": { name: "鳥居 陽子氏", role: "国際プログラム・コーディネーター" },
+    "team-dhruvHans": { name: "ドゥルヴ氏", role: "プログラム・コーディネーター" },
+    "team-muazAhmed": { name: "ムアズ・アフメド氏", role: "地域コーディネーター" },
+    "team-surajitKalita": { name: "スラジット・カリタ氏", role: "共同創設者 兼 副会長" },
+
+    // Advisory Board Members
+    "team-tomoyuki": { name: "岩間 智行氏", role: "ヤクルト・インド 取締役" },
+    "team-naveen": { name: "ナヴィーン・ヴェルマ氏", role: "RERAビハール州会長 (元IAS)" },
+    "team-randeep": { name: "ランディープ・ラクワル博士", role: "筑波大学 教授" },
+    "team-kenichiro": { name: "岩堀 健一郎氏", role: "顧問、笹川平和財団" },
+    "team-supratic": { name: "スプラティック・グプタ博士", role: "IITデリー 教授" },
+    "team-markus": { name: "マーカス氏", role: "アサヒ・トラベル・ジャパン 代表取締役" },
+    "team-anil": { name: "アニル・K・カンデルワル氏", role: "元東中央鉄道 総支配人" },
+    "team-lctrivedi": {
+      name: "L・C・トリヴェディ氏",
+      role: "元インド鉄道総支配人（アペックス・グレード）",
+      bio: "ラリット・チャンドラ・トリヴェディ氏は、インド鉄道で約40年にわたるリーダーシップを発揮した最高幹部の一人であり、東中央鉄道の総支配人（最高職位アペックス・グレード）を務めました。"
+    },
+    "team-jatinder": { name: "ジャティンダー・カンナ博士", role: "教育・文化政策立案者" },
+    "team-maushumi": { name: "モウシュミ・バルア博士", role: "元アッサム州技術教育局長" },
+    "team-rajesh": { name: "ラジェシュ・メータ氏", role: "サンデー・ガーディアン 編集者" },
+    "team-vinod": { name: "ヴィノド・K・ヤダヴェンドゥ博士", role: "元ビハール州議会議員" },
+    "team-pdsharma": { name: "P・D・シャルマ氏", role: "インド最高裁判所 上級弁護士" },
+    "team-anjali": { name: "アンジャリ・シャルマ氏", role: "インド最高裁判所 弁護士" },
+    "team-raj": { name: "ラジ氏", role: "諮問委員" },
+  };
+
+  const MEMBER_NAME_MATCHERS: Array<{
+    match: (name: string) => boolean;
+    data: { name: string; role: string; bio?: string };
+  }> = [
+    { match: (n) => /rahul/i.test(n) && /mishra/i.test(n), data: { name: "ラフル・ミシュラ氏", role: "IJCC会長" } },
+    { match: (n) => /jishnu/i.test(n) || /madhavan/i.test(n), data: { name: "ジシュヌ・マダヴァン氏", role: "日本支部長", bio: "ジシュヌ・マダヴァン氏は、日本での20年以上の経験を持つ熟練したビジネスリーダーであり連続起業家です。" } },
+    { match: (n) => /gajendra/i.test(n) || /badgujar/i.test(n), data: { name: "ガジェンドラ・バドグジャール氏", role: "副会長（戦略担当）" } },
+    { match: (n) => /prakash/i.test(n) && /yadav/i.test(n), data: { name: "プラカシュ・ヤダブ氏", role: "副会長（企業担当）" } },
+    { match: (n) => /neelam/i.test(n) || /ramaiah/i.test(n), data: { name: "ニーラム・ラマイア博士", role: "副会長（教育担当）" } },
+    { match: (n) => /kataria/i.test(n), data: { name: "クリシャン・クマール・カタリア博士", role: "副会長（スキル開発・技術教育担当）", bio: "クリシャン・クマール・カタリア博士は、公共部門において35年以上の実績を持つ先見的なリーダーです。" } },
+    { match: (n) => /sushil/i.test(n) || /chauhan/i.test(n), data: { name: "スシル・クマール・チャウハン氏", role: "副会長（製造エクセレンス・TQM・日印産業連携担当）", bio: "スシル・チャウハン氏は、グローバルな自動車製造において32年以上の豊富な経験を持つ戦略コンサルタントであり、ホンダ・カーズ・インディアで29年間の輝かしいキャリアを有します。" } },
+    { match: (n) => /krishnan/i.test(n) || /narayanan/i.test(n), data: { name: "クリシュナン・ナラヤナン博士", role: "常務理事（人的資本・労働力戦略担当）", bio: "クリシュナン博士は、金融サービス技術分野で25年以上の経験を持つテクノロジーおよび教育起業家であり、シティバンク東京（副社長）、UBSインベストメント・バンク・ジャパン（ディレクター）などの要職を歴任しました。" } },
+    { match: (n) => /kamesh/i.test(n), data: { name: "C・V・カメシュ氏", role: "副会長（文化事業・交流担当）", bio: "Ganesa Natyalaya CEOであるC・V・カメシュ氏は、30年以上にわたる業界を超えたリーダーシップを持ち、インドと日本の文化交流および芸術振興に尽力しています。" } },
+    { match: (n) => /parijat/i.test(n) || /tiwari/i.test(n), data: { name: "パリジャット・ティワリ氏", role: "シニアコンサルタント（日印二国間貿易・経済関係担当）", bio: "パリジャット氏は、日本語通訳、企業事業開発、ITシステム分析において29年近くの経験を持つトライリンガルの専門家です。" } },
+    { match: (n) => /nidhi/i.test(n) || /puri/i.test(n), data: { name: "ニディ・プリ氏", role: "法人税・移転価格リード" } },
+    { match: (n) => /mukesh/i.test(n) || /ranjan/i.test(n), data: { name: "ムケシュ・ランジャン氏", role: "人事・戦略ディレクター" } },
+    { match: (n) => /yoko/i.test(n) || /torii/i.test(n), data: { name: "鳥居 陽子氏", role: "国際プログラム・コーディネーター" } },
+    { match: (n) => /dhruv/i.test(n) || /hans/i.test(n), data: { name: "ドゥルヴ氏", role: "プログラム・コーディネーター" } },
+    { match: (n) => /muaz/i.test(n) || /ahmed/i.test(n), data: { name: "ムアズ・アフメド氏", role: "地域コーディネーター" } },
+    { match: (n) => /surajit/i.test(n) || /kalita/i.test(n), data: { name: "スラジット・カリタ氏", role: "共同創設者 兼 副会長" } },
+    // Advisory
+    { match: (n) => /tomoyuki/i.test(n) || /iwama/i.test(n), data: { name: "岩間 智行氏", role: "ヤクルト・インド 取締役" } },
+    { match: (n) => /naveen/i.test(n) || /verma/i.test(n), data: { name: "ナヴィーン・ヴェルマ氏", role: "RERAビハール州会長 (元IAS)" } },
+    { match: (n) => /randeep/i.test(n) || /rakwal/i.test(n), data: { name: "ランディープ・ラクワル博士", role: "筑波大学 教授" } },
+    { match: (n) => /kenichiro/i.test(n) || /iwahori/i.test(n), data: { name: "岩堀 健一郎氏", role: "顧問、笹川平和財団" } },
+    { match: (n) => /supratic/i.test(n) || /gupta/i.test(n), data: { name: "スプラティック・グプタ博士", role: "IITデリー 教授" } },
+    { match: (n) => /markus/i.test(n), data: { name: "マーカス氏", role: "アサヒ・トラベル・ジャパン 代表取締役" } },
+    { match: (n) => /khandelwal/i.test(n), data: { name: "アニル・K・カンデルワル氏", role: "元東中央鉄道 総支配人" } },
+    { match: (n) => /trivedi/i.test(n), data: { name: "L・C・トリヴェディ氏", role: "元インド鉄道総支配人（アペックス・グレード）", bio: "ラリット・チャンドラ・トリヴェディ氏は、インド鉄道で約40年にわたるリーダーシップを発揮した最高幹部の一人であり、東中央鉄道の総支配人を務めました。" } },
+    { match: (n) => /jatinder/i.test(n) || /khanna/i.test(n), data: { name: "ジャティンダー・カンナ博士", role: "教育・文化政策立案者" } },
+    { match: (n) => /maushumi/i.test(n) || /barooah/i.test(n), data: { name: "モウシュミ・バルア博士", role: "元アッサム州技術教育局長" } },
+    { match: (n) => /rajesh/i.test(n) || /mehta/i.test(n), data: { name: "ラジェシュ・メータ氏", role: "サンデー・ガーディアン 編集者" } },
+    { match: (n) => /yadavendu/i.test(n) || /vinod/i.test(n), data: { name: "ヴィノド・K・ヤダヴェンドゥ博士", role: "元ビハール州議会議員" } },
+    { match: (n) => /pdsharma/i.test(n) || /p\.\s*d\.\s*sharma/i.test(n) || (/sharma/i.test(n) && /p/i.test(n)), data: { name: "P・D・シャルマ氏", role: "インド最高裁判所 上級弁護士" } },
+    { match: (n) => /anjali/i.test(n), data: { name: "アンジャリ・シャルマ氏", role: "インド最高裁判所 弁護士" } },
+    { match: (n) => /^raj\b/i.test(n.trim()), data: { name: "ラジ氏", role: "諮問委員" } },
+  ];
+
+  const pickLang = (m: any, base: 'name' | 'role' | 'bio') => {
+    if (language === 'ja') {
+      if (m[`${base}_ja`]) return m[`${base}_ja`];
+
+      // 1. Check MEMBER_JA_MAP by _id
+      if (m._id && MEMBER_JA_MAP[m._id]) {
+        const item = MEMBER_JA_MAP[m._id];
+        const val = base === 'bio' ? item.bio : item[base];
+        if (val) return val;
+      }
+
+      // 2. Check MEMBER_NAME_MATCHERS by m.name or m._id
+      const rawName = m.name || m._id || '';
+      const matched = MEMBER_NAME_MATCHERS.find((matcher) => matcher.match(rawName));
+      if (matched) {
+        const val = base === 'bio' ? matched.data.bio : matched.data[base];
+        if (val) return val;
+      }
+
+      // 3. Fallback to locale dictionary keys
+      const normalizedName = (m.name || '').replace(/^(Mr\.|Ms\.|Dr\.)\s*/i, '').replace(/[^a-zA-Z]/g, '');
+      const teamKey = `team_${normalizedName}_${base === 'role' ? 'title' : base}`;
+      const teamVal = t(teamKey);
+      if (teamVal && teamVal !== teamKey) return teamVal;
+
+      const teamKeyAlt = `team_${normalizedName}_${base}`;
+      const teamValAlt = t(teamKeyAlt);
+      if (teamValAlt && teamValAlt !== teamKeyAlt) return teamValAlt;
+
+      const advKey = `advisor_${normalizedName.toLowerCase()}_${base}`;
+      const advVal = t(advKey);
+      if (advVal && advVal !== advKey) return advVal;
+    }
+    return m[base];
+  };
 
   const leadership = cmsMembers
     .filter((m) => m.category === 'Board')
@@ -107,7 +241,7 @@ export default function AboutPage() {
     }));
 
   // ---- CMS-driven content (falls back to built-in text when CMS is empty) ----
-  const verticalsList = (cmsAbout?.verticals?.length
+  const verticalsList = (cmsAbout?.verticals?.length && language !== 'ja'
     ? cmsAbout.verticals.map((v: any, i: number) => ({
         id: String(i + 1).padStart(2, '0'),
         icon: (verticals[i] || verticals[0]).icon,
@@ -137,7 +271,7 @@ export default function AboutPage() {
     { label: t('about_facts_msme_members'), value: "16,000+" },
     { label: t('about_facts_corp_members'), value: "36,000+" },
   ];
-  const factsList = (cmsAbout?.facts?.length ? cmsAbout.facts : defaultFacts).map((f: any, i: number) => ({
+  const factsList = ((language === 'ja' || !cmsAbout?.facts?.length) ? defaultFacts : cmsAbout.facts).map((f: any, i: number) => ({
     label: f.label,
     value: f.value,
     icon: factIcons[i % factIcons.length],
@@ -161,7 +295,7 @@ export default function AboutPage() {
     const n = String(i + 1).padStart(2, '0');
     return { id: n, title: t(`obj_${n}_title`), desc: t(`obj_${n}_desc`) };
   });
-  const objectivesList = (cmsAbout?.objectives?.length ? cmsAbout.objectives : defaultObjectives).map((o: any, i: number) => ({
+  const objectivesList = ((language === 'ja' || !cmsAbout?.objectives?.length) ? defaultObjectives : cmsAbout.objectives).map((o: any, i: number) => ({
     id: o.id || String(i + 1).padStart(2, '0'),
     icon: objectiveIcons[i % objectiveIcons.length],
     title: o.title,
@@ -179,7 +313,7 @@ export default function AboutPage() {
     title: t(`ben_${n}_title`),
     points: [1, 2, 3, 4].map((p) => t(`ben_${n}_p${p}`)),
   }));
-  const benefitsList = (cmsAbout?.benefits?.length ? cmsAbout.benefits : defaultBenefits).map((b: any, i: number) => ({
+  const benefitsList = ((language === 'ja' || !cmsAbout?.benefits?.length) ? defaultBenefits : cmsAbout.benefits).map((b: any, i: number) => ({
     id: b.id || String(i + 1).padStart(2, '0'),
     icon: benefitIcons[i % benefitIcons.length],
     title: b.title,
@@ -187,14 +321,14 @@ export default function AboutPage() {
   }));
 
   const defaultMouPartners = [
-    { id: "spolto", name: "Spolto", desc: t('mou_spolto_desc') },
-    { id: "nihon", name: "Nihon Edutech", desc: t('mou_nihon_desc') },
-    { id: "iia", name: "Indian Industries Association (IIA)", desc: t('mou_iia_desc') },
-    { id: "wadhwani", name: "Wadhwani Foundation", desc: t('mou_wadhwani_desc') },
-    { id: "sem", name: "SEM — Smart Education Method", desc: t('mou_sem_desc') },
-    { id: "alliances", name: "JETRO | FICCI | CII | AIMA", desc: t('mou_alliances_desc') },
+    { id: "spolto", name: language === 'ja' ? "スポルト (Spolto)" : "Spolto", desc: t('mou_spolto_desc') },
+    { id: "nihon", name: language === 'ja' ? "日本エデュテック (Nihon Edutech)" : "Nihon Edutech", desc: t('mou_nihon_desc') },
+    { id: "iia", name: language === 'ja' ? "インド産業協会 (IIA)" : "Indian Industries Association (IIA)", desc: t('mou_iia_desc') },
+    { id: "wadhwani", name: language === 'ja' ? "ワドワニ財団 (Wadhwani Foundation)" : "Wadhwani Foundation", desc: t('mou_wadhwani_desc') },
+    { id: "sem", name: language === 'ja' ? "SEM — スマート・エデュケーション・メソッド" : "SEM — Smart Education Method", desc: t('mou_sem_desc') },
+    { id: "alliances", name: language === 'ja' ? "JETRO | FICCI | CII | AIMA（日印機関提携）" : "JETRO | FICCI | CII | AIMA", desc: t('mou_alliances_desc') },
   ];
-  const mouList = (cmsAbout?.mouPartners?.length ? cmsAbout.mouPartners : defaultMouPartners).map((p: any, i: number) => ({
+  const mouList = ((language === 'ja' || !cmsAbout?.mouPartners?.length) ? defaultMouPartners : cmsAbout.mouPartners).map((p: any, i: number) => ({
     id: p.id || `mou-${i}`,
     name: p.name,
     desc: p.description || p.desc,
@@ -208,13 +342,13 @@ export default function AboutPage() {
         <div className="container relative z-10 text-center">
           <div className="max-w-4xl mx-auto space-y-8">
             <Badge className="bg-accent text-accent-foreground px-4 py-1 text-sm font-bold tracking-widest uppercase mb-4">
-              {cmsAbout?.heroBadge || t('about_hero_badge')}
+              {language === 'ja' ? t('about_hero_badge') : (cmsAbout?.heroBadge || t('about_hero_badge'))}
             </Badge>
             <h1 className="text-5xl font-headline tracking-tight lg:text-7xl leading-tight">
-              {cmsAbout?.heroTitle || t('about_hero_title')}
+              {language === 'ja' ? t('about_hero_title') : (cmsAbout?.heroTitle || t('about_hero_title'))}
             </h1>
             <p className="text-2xl font-headline italic text-accent">
-              "{cmsAbout?.heroTagline || t('about_hero_tagline')}"
+              "{language === 'ja' ? t('about_hero_tagline') : (cmsAbout?.heroTagline || t('about_hero_tagline'))}"
             </p>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-primary-foreground/80 font-medium">
               {verticalsList.map((v: any, i: number) => (
@@ -230,10 +364,10 @@ export default function AboutPage() {
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           <div className="space-y-8">
             <h2 className="text-4xl font-headline text-primary border-b-4 border-accent/30 pb-2 inline-block">
-              {cmsAbout?.pageTitle || t('about_intro_title')}
+              {language === 'ja' ? t('about_intro_title') : (cmsAbout?.pageTitle || t('about_intro_title'))}
             </h2>
             <div className="prose prose-lg text-muted-foreground max-w-none space-y-6">
-              {cmsAbout?.introduction ? (
+              {cmsAbout?.introduction && language !== 'ja' ? (
                 cmsAbout.introduction.split(/\n\n+/).map((para: string, i: number) => (
                   <p key={i}>{para}</p>
                 ))
@@ -249,11 +383,11 @@ export default function AboutPage() {
               <Card className="bg-primary/5 border-none shadow-none text-left">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2 text-primary uppercase tracking-wider">
-                    <Target className="h-5 w-5" /> {cmsAbout?.missionTitle || t('about_mission_title')}
+                    <Target className="h-5 w-5" /> {language === 'ja' ? t('about_mission_title') : (cmsAbout?.missionTitle || t('about_mission_title'))}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground text-sm leading-relaxed prose-sm prose-p:my-1">
-                  {cmsAbout?.mission ? (
+                  {cmsAbout?.mission && language !== 'ja' ? (
                     <PortableText value={cmsAbout.mission} />
                   ) : (
                     t('about_mission_desc')
@@ -263,11 +397,11 @@ export default function AboutPage() {
               <Card className="bg-accent/5 border-none shadow-none text-left">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2 text-accent uppercase tracking-wider">
-                    <Globe className="h-5 w-5" /> {cmsAbout?.visionTitle || t('about_vision_title')}
+                    <Globe className="h-5 w-5" /> {language === 'ja' ? t('about_vision_title') : (cmsAbout?.visionTitle || t('about_vision_title'))}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground text-sm leading-relaxed prose-sm prose-p:my-1">
-                  {cmsAbout?.visionDescription ? (
+                  {cmsAbout?.visionDescription && language !== 'ja' ? (
                     cmsAbout.visionDescription.split(/\n\n+/).map((para: string, i: number) => (
                       <p key={i} className="my-1">{para}</p>
                     ))
@@ -282,7 +416,7 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-muted/30 p-8 rounded-3xl space-y-8">
-            <h3 className="text-2xl font-headline text-primary">{cmsAbout?.factsTitle || t('about_facts_title')}</h3>
+            <h3 className="text-2xl font-headline text-primary">{language === 'ja' ? t('about_facts_title') : (cmsAbout?.factsTitle || t('about_facts_title'))}</h3>
             <div className="grid grid-cols-2 gap-8">
               {factsList.map((stat: any, i: number) => (
                 <div key={i} className="space-y-1">
@@ -295,15 +429,15 @@ export default function AboutPage() {
             </div>
             <div className="pt-8 border-t border-muted-foreground/20 space-y-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{cmsAbout?.orgTypeLabel || t('about_facts_type_label')}:</span>
-                <span className="font-bold">{cmsAbout?.orgTypeValue || t('about_facts_type_val')}</span>
+                <span className="text-muted-foreground">{language === 'ja' ? t('about_facts_type_label') : (cmsAbout?.orgTypeLabel || t('about_facts_type_label'))}:</span>
+                <span className="font-bold">{language === 'ja' ? t('about_facts_type_val') : (cmsAbout?.orgTypeValue || t('about_facts_type_val'))}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{cmsAbout?.hqLabel || t('about_facts_hq_label')}:</span>
-                <span className="font-bold">{cmsAbout?.hqValue || t('about_facts_hq_val')}</span>
+                <span className="text-muted-foreground">{language === 'ja' ? t('about_facts_hq_label') : (cmsAbout?.hqLabel || t('about_facts_hq_label'))}:</span>
+                <span className="font-bold">{language === 'ja' ? t('about_facts_hq_val') : (cmsAbout?.hqValue || t('about_facts_hq_val'))}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{cmsAbout?.websiteLabel || t('about_facts_web_label')}:</span>
+                <span className="text-muted-foreground">{language === 'ja' ? t('about_facts_web_label') : (cmsAbout?.websiteLabel || t('about_facts_web_label'))}:</span>
                 <span className="font-bold">{cmsAbout?.websiteValue || "www.ijcc.in"}</span>
               </div>
             </div>
@@ -315,8 +449,8 @@ export default function AboutPage() {
       <section className="bg-muted/30 py-24">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline text-primary">{cmsAbout?.objectivesTitle || t('about_objectives_title')}</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto italic">{cmsAbout?.objectivesSubtitle || t('about_objectives_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary">{language === 'ja' ? t('about_objectives_title') : (cmsAbout?.objectivesTitle || t('about_objectives_title'))}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto italic">{language === 'ja' ? t('about_objectives_subtitle') : (cmsAbout?.objectivesSubtitle || t('about_objectives_subtitle'))}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {objectivesList.map((obj: any) => (
@@ -339,8 +473,8 @@ export default function AboutPage() {
       <section className="container py-24">
         <div className="max-w-4xl mx-auto space-y-12">
           <div className="text-center space-y-4">
-            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.verticalsTitle || t('about_verts_title')}</h2>
-            <p className="text-muted-foreground">{cmsAbout?.verticalsSubtitle || t('about_verts_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{language === 'ja' ? t('about_verts_title') : (cmsAbout?.verticalsTitle || t('about_verts_title'))}</h2>
+            <p className="text-muted-foreground">{language === 'ja' ? t('about_verts_subtitle') : (cmsAbout?.verticalsSubtitle || t('about_verts_subtitle'))}</p>
           </div>
           <Accordion type="single" collapsible className="w-full space-y-4">
             {verticalsList.map((v: any) => (
@@ -381,9 +515,9 @@ export default function AboutPage() {
       <section className="bg-primary py-24 text-primary-foreground">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline uppercase tracking-tight">{cmsAbout?.leadershipTitle || t('about_leadership_title')}</h2>
+            <h2 className="text-4xl font-headline uppercase tracking-tight">{language === 'ja' ? t('about_leadership_title') : (cmsAbout?.leadershipTitle || t('about_leadership_title'))}</h2>
             <p className="text-primary-foreground/70 max-w-2xl mx-auto italic">
-              {cmsAbout?.leadershipSubtitle || t('about_leadership_subtitle')}
+              {language === 'ja' ? t('about_leadership_subtitle') : (cmsAbout?.leadershipSubtitle || t('about_leadership_subtitle'))}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -439,8 +573,8 @@ export default function AboutPage() {
       {/* Advisory Board */}
       <section className="container py-24">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.advisoryTitle || t('about_advisory_title')}</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{cmsAbout?.advisorySubtitle || t('about_advisory_subtitle')}</p>
+          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{language === 'ja' ? t('about_advisory_title') : (cmsAbout?.advisoryTitle || t('about_advisory_title'))}</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">{language === 'ja' ? t('about_advisory_subtitle') : (cmsAbout?.advisorySubtitle || t('about_advisory_subtitle'))}</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {advisors.map((advisor) => {
@@ -503,8 +637,8 @@ export default function AboutPage() {
       <section className="bg-muted/30 py-24">
         <div className="container">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.benefitsTitle || t('about_benefits_title')}</h2>
-            <p className="text-muted-foreground">{cmsAbout?.benefitsSubtitle || t('about_benefits_subtitle')}</p>
+            <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{language === 'ja' ? t('about_benefits_title') : (cmsAbout?.benefitsTitle || t('about_benefits_title'))}</h2>
+            <p className="text-muted-foreground">{language === 'ja' ? t('about_benefits_subtitle') : (cmsAbout?.benefitsSubtitle || t('about_benefits_subtitle'))}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefitsList.map((benefit: any) => (
@@ -531,8 +665,8 @@ export default function AboutPage() {
       {/* MoU Partners */}
       <section className="container py-24">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{cmsAbout?.mouTitle || t('about_mou_title')}</h2>
-          <p className="text-muted-foreground">{cmsAbout?.mouSubtitle || t('about_mou_subtitle')}</p>
+          <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{language === 'ja' ? t('about_mou_title') : (cmsAbout?.mouTitle || t('about_mou_title'))}</h2>
+          <p className="text-muted-foreground">{language === 'ja' ? t('about_mou_subtitle') : (cmsAbout?.mouSubtitle || t('about_mou_subtitle'))}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {mouList.map((partner: any) => (
@@ -549,15 +683,15 @@ export default function AboutPage() {
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
             <div className="space-y-4">
-              <h3 className="text-3xl font-headline text-primary">{cmsAbout?.connectTitle || t('about_footer_title')}</h3>
-              <p className="text-muted-foreground">{cmsAbout?.connectSubtitle || t('about_footer_subtitle')}</p>
+              <h3 className="text-3xl font-headline text-primary">{language === 'ja' ? t('about_footer_title') : (cmsAbout?.connectTitle || t('about_footer_title'))}</h3>
+              <p className="text-muted-foreground">{language === 'ja' ? t('about_footer_subtitle') : (cmsAbout?.connectSubtitle || t('about_footer_subtitle'))}</p>
             </div>
             <div className="flex flex-wrap justify-center md:justify-end gap-8">
               {[
-                { label: "Website", icon: <Globe className="h-6 w-6" />, href: "/" },
-                { label: "LinkedIn", icon: <Linkedin className="h-6 w-6" />, href: siteSettings?.linkedinUrl || "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/" },
-                { label: "Instagram", icon: <Instagram className="h-6 w-6" />, href: siteSettings?.instagramUrl || "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y" },
-                { label: "Facebook", icon: <Facebook className="h-6 w-6" />, href: siteSettings?.facebookUrl || "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/" },
+                { label: language === 'ja' ? "ウェブサイト" : "Website", icon: <Globe className="h-6 w-6" />, href: "/" },
+                { label: language === 'ja' ? "リンクトイン" : "LinkedIn", icon: <Linkedin className="h-6 w-6" />, href: siteSettings?.linkedinUrl || "https://www.linkedin.com/company/indo-japan-chamber-of-commerce/" },
+                { label: language === 'ja' ? "インスタグラム" : "Instagram", icon: <Instagram className="h-6 w-6" />, href: siteSettings?.instagramUrl || "https://www.instagram.com/ijccindia?igsh=YW41MzJzNDY2M25y" },
+                { label: language === 'ja' ? "フェイスブック" : "Facebook", icon: <Facebook className="h-6 w-6" />, href: siteSettings?.facebookUrl || "https://www.facebook.com/people/Indo-Japan-Chamber-of-Commerce/61573931145126/" },
               ].map((link, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 group">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{link.label}</div>

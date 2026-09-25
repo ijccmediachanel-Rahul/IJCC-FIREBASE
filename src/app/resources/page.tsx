@@ -100,7 +100,7 @@ const allResources = [
 ];
 
 export default function ResourcesPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<DocumentData | null>(null);
@@ -200,10 +200,14 @@ export default function ResourcesPage() {
         const fallbackDesc = t(`resource_${key}_description`) !== `resource_${key}_description` ? t(`resource_${key}_description`) : (t(`resource_${d.resourceId}_description`) !== `resource_${d.resourceId}_description` ? t(`resource_${d.resourceId}_description`) : "");
 
         const isKebabCase = d.title && /^[a-z0-9]+(-[a-z0-9]+)+$/.test(d.title);
-        const displayTitle = isKebabCase
-          ? (fallbackTitle && fallbackTitle !== d.title ? fallbackTitle : d.title.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
-          : (d.title || fallbackTitle);
-        const displayDesc = d.description?.trim() ? d.description : fallbackDesc;
+        const displayTitle = language === 'ja'
+          ? (fallbackTitle || d.title)
+          : (isKebabCase
+              ? (fallbackTitle && fallbackTitle !== d.title ? fallbackTitle : d.title.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+              : (d.title || fallbackTitle));
+        const displayDesc = language === 'ja'
+          ? (fallbackDesc || d.description)
+          : (d.description?.trim() ? d.description : fallbackDesc);
         const displayType = d.category ? (d.category.charAt(0).toUpperCase() + d.category.slice(1)) : base.type;
 
         return {
@@ -211,7 +215,7 @@ export default function ResourcesPage() {
           type: displayType,
           title: displayTitle,
           description: displayDesc,
-          href: linkUrl || base.href,
+          href: (linkUrl || base.href).replace('/resources/self_study', '/resources/self-study'),
           isLink: (linkUrl || base.href).length > 0,
           isProtected: d.isProtected ?? base.isProtected,
         };
@@ -255,9 +259,9 @@ export default function ResourcesPage() {
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('resources_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('resources_title') : (cmsPage?.title || t('resources_title'))}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {cmsPage?.description || t('resources_description')}
+          {language === 'ja' ? t('resources_description') : (cmsPage?.description || t('resources_description'))}
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -289,16 +293,18 @@ export default function ResourcesPage() {
                   <CardFooter>
                     {isAccessible ? (
                       resource.isLink ? (
-                         <Button asChild variant="outline" className="w-full rounded-full">
+                        <Button asChild variant="outline" className="w-full rounded-full">
                           <Link href={resource.href!} target={resource.href?.startsWith('http') ? "_blank" : "_self"} rel="noopener noreferrer">
                             {resource.href?.startsWith('http') ? <Download className="mr-2 h-4 w-4" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-                            {resource.href?.startsWith('http') ? `Download ${resource.type}` : `Access ${resource.type}`}
+                            {language === 'ja'
+                              ? (resource.href?.startsWith('http') ? 'ダウンロード' : 'ドキュメントにアクセス')
+                              : (resource.href?.startsWith('http') ? `Download ${resource.type}` : `Access ${resource.type}`)}
                           </Link>
                         </Button>
                       ) : (
                         <Button variant="outline" className="w-full rounded-full" onClick={() => handleDownload(resource.title)}>
                           <Download className="mr-2 h-4 w-4" />
-                          {t('resource_download')} {t(`resource_type_${resource.type.toLowerCase().replace(' ', '')}`) || resource.type}
+                          {language === 'ja' ? 'ダウンロード' : `${t('resource_download')} ${t(`resource_type_${resource.type.toLowerCase().replace(' ', '')}`) || resource.type}`}
                         </Button>
                       )
                     ) : (

@@ -15,7 +15,7 @@ import { client } from "@/sanity/lib/client";
 import { SITE_SETTINGS_QUERY, CONTACT_PAGE_QUERY } from "@/sanity/lib/queries";
 
 export default function ContactPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const faqData = [
     { q: t('contact_faq_q1'), a: t('contact_faq_a1') },
@@ -52,9 +52,9 @@ export default function ContactPage() {
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{contactPage?.pageTitle || t('contact_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('contact_title') : (contactPage?.pageTitle || t('contact_title'))}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {contactPage?.introduction || t('contact_subtitle')}
+          {language === 'ja' ? t('contact_subtitle') : (contactPage?.introduction || t('contact_subtitle'))}
         </p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -62,27 +62,27 @@ export default function ContactPage() {
           <ContactForm />
         </div>
         <div className="space-y-8">
-            <h2 className="text-2xl font-headline">{contactPage?.officesTitle || t('contact_officesTitle')}</h2>
+            <h2 className="text-2xl font-headline">{language === 'ja' ? t('contact_officesTitle') : (contactPage?.officesTitle || t('contact_officesTitle'))}</h2>
             <div className="space-y-4">
                 <div className="flex items-start gap-4">
                     <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="font-semibold">{contactPage?.corporateOfficeTitle || t('contact_corporateOfficeTitle')}</h3>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{contactPage?.corporateOfficeAddress || settings?.address || t('contact_corporateOfficeAddress')}</p>
+                        <h3 className="font-semibold">{language === 'ja' ? t('contact_corporateOfficeTitle') : (contactPage?.corporateOfficeTitle || t('contact_corporateOfficeTitle'))}</h3>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{language === 'ja' ? t('contact_corporateOfficeAddress') : (contactPage?.corporateOfficeAddress || settings?.address || t('contact_corporateOfficeAddress'))}</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-4">
                     <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="font-semibold">{contactPage?.branchOfficeTitle || t('contact_branchOfficeTitle')}</h3>
-                        <p className="text-muted-foreground">{contactPage?.branchOfficeAddress || t('contact_branchOfficeAddress')}</p>
+                        <h3 className="font-semibold">{language === 'ja' ? t('contact_branchOfficeTitle') : (contactPage?.branchOfficeTitle || t('contact_branchOfficeTitle'))}</h3>
+                        <p className="text-muted-foreground">{language === 'ja' ? t('contact_branchOfficeAddress') : (contactPage?.branchOfficeAddress || t('contact_branchOfficeAddress'))}</p>
                     </div>
                 </div>
                  <div className="flex items-start gap-4">
                     <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="font-semibold">{contactPage?.japanOfficeTitle || t('contact_japanOfficeTitle')}</h3>
-                        <p className="text-muted-foreground">{contactPage?.japanOfficeAddress || t('contact_japanOfficeAddress')}</p>
+                        <h3 className="font-semibold">{language === 'ja' ? t('contact_japanOfficeTitle') : (contactPage?.japanOfficeTitle || t('contact_japanOfficeTitle'))}</h3>
+                        <p className="text-muted-foreground">{language === 'ja' ? t('contact_japanOfficeAddress') : (contactPage?.japanOfficeAddress || t('contact_japanOfficeAddress'))}</p>
                     </div>
                 </div>
             </div>
@@ -108,9 +108,9 @@ export default function ContactPage() {
       </div>
 
       <div className="mt-24 max-w-4xl mx-auto">
-        <h2 className="text-3xl font-headline text-center mb-12">{contactPage?.faqTitle || t('contact_faq_title')}</h2>
+        <h2 className="text-3xl font-headline text-center mb-12">{language === 'ja' ? t('contact_faq_title') : (contactPage?.faqTitle || t('contact_faq_title'))}</h2>
         <Accordion type="single" collapsible className="w-full">
-          {(contactPage?.faqs?.length ? contactPage.faqs : faqData).map((faq: any, index: number) => (
+          {((language === 'ja' || !contactPage?.faqs?.length) ? faqData : contactPage.faqs).map((faq: any, index: number) => (
             <AccordionItem key={index} value={`item-${index}`}>
               <AccordionTrigger className="text-left font-semibold text-lg hover:no-underline hover:text-primary transition-colors">
                 {faq.question || faq.q}

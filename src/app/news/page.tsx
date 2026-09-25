@@ -66,7 +66,7 @@ const newsArticlesData = [
 ];
 
 export default function NewsPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [cmsArticles, setCmsArticles] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<any>(null);
 
@@ -94,7 +94,7 @@ export default function NewsPage() {
   };
 
   // Articles come from the CMS when available, otherwise built-in defaults.
-  const newsArticles = (cmsArticles.length > 0
+  const newsArticles = (cmsArticles.length > 0 && language !== 'ja'
     ? cmsArticles.map((a: any) => ({
         id: a.slug,
         date: a.publishDate,
@@ -115,9 +115,9 @@ export default function NewsPage() {
   return (
     <div className="container py-12">
       <div className="space-y-4 mb-12 text-center">
-        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{cmsPage?.title || t('news_title')}</h1>
+        <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('news_title') : (cmsPage?.title || t('news_title'))}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          {cmsPage?.description || t('news_description')}
+          {language === 'ja' ? t('news_description') : (cmsPage?.description || t('news_description'))}
         </p>
       </div>
 
