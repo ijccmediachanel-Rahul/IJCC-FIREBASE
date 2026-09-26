@@ -16,6 +16,15 @@ import { useAutoTranslate } from "@/hooks/use-auto-translate";
 import { client } from "@/sanity/lib/client";
 import { RESOURCES_QUERY, RESOURCES_PAGE_QUERY } from "@/sanity/lib/queries";
 import { isPaidMember } from "@/lib/definitions";
+import {
+  MemberAccessModal,
+  getStoredMemberSession,
+  clearMemberSession,
+  syncAndValidateMemberSession,
+  VerifiedMemberSession,
+} from "@/components/MemberAccessModal";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, LogOut } from "lucide-react";
 
 const allResources = [
   {
@@ -162,7 +171,64 @@ export default function ResourcesPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = isPaidMember(profile);
+  const [memberSession, setMemberSession] = useState<VerifiedMemberSession | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetResource, setTargetResource] = useState<any>(null);
+
+  useEffect(() => {
+    // 1. Instant optimistic load from localStorage
+    const local = getStoredMemberSession();
+    setMemberSession(local);
+
+    // 2. Real-time background server verification
+    const verifyStatus = async () => {
+      const prevSession = getStoredMemberSession();
+      const fresh = await syncAndValidateMemberSession(user?.email);
+      setMemberSession(fresh);
+
+      // If user was previously verified and server revoked it:
+      if (prevSession && !fresh) {
+        toast({
+          variant: "destructive",
+          title: language === "ja" ? "会員権アクセス解除" : "Member Session Revoked",
+          description:
+            language === "ja"
+              ? "会員権のメール変更または利用停止が検出されたため、アクセスがロックされました。"
+              : "Access locked: Your membership was suspended or bound to a different email by IJCC Admin.",
+        });
+      }
+    };
+
+    verifyStatus();
+
+    // 3. Auto re-verify whenever user switches back to this tab or periodically every 4 seconds
+    window.addEventListener("focus", verifyStatus);
+    const interval = setInterval(verifyStatus, 4000);
+    return () => {
+      window.removeEventListener("focus", verifyStatus);
+      clearInterval(interval);
+    };
+  }, [user?.email, language, toast]);
+
+  const hasMembership = !!memberSession;
+
+  const handleProtectedClick = (resource: any) => {
+    setTargetResource(resource);
+    setModalOpen(true);
+  };
+
+  const handleModalSuccess = (session: VerifiedMemberSession) => {
+    setMemberSession(session);
+  };
+
+  const handleMemberLogout = () => {
+    clearMemberSession();
+    setMemberSession(null);
+    toast({
+      title: language === 'ja' ? "セッション終了" : "Member Session Ended",
+      description: language === 'ja' ? "会員ポータルからログアウトしました。" : "You have logged out of the member portal.",
+    });
+  };
 
   const cardIconPool = [
     <FileText key="r1" className="h-8 w-8 text-primary" />,
@@ -256,14 +322,6 @@ export default function ResourcesPage() {
     });
   };
 
-  const handleProtectedClick = () => {
-      toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "This resource is for members only. Please log in and ensure you have an active membership.",
-      });
-  };
-
   const isLoading = authLoading || loadingProfile;
 
   const visibleResources = allResources.filter(resource => {
@@ -273,12 +331,44 @@ export default function ResourcesPage() {
 
   return (
     <div className="container py-12">
-      <div className="space-y-4 mb-12 text-center">
+      <div className="space-y-4 mb-8 text-center">
         <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl">{language === 'ja' ? t('resources_title') : (cmsPage?.title || t('resources_title'))}</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
           {language === 'ja' ? t('resources_description') : (cmsPage?.description || t('resources_description'))}
         </p>
       </div>
+
+      {/* Verified Member Session Banner */}
+      {memberSession && (
+        <div className="mb-8 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex flex-wrap items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div>
+              <div className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
+                {language === 'ja' ? '認証済み会員: ' : 'Verified Member: '}
+                <span className="text-foreground">{memberSession.name}</span>
+                <Badge variant="outline" className="ml-2 text-[10px] bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                  {memberSession.tier}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {language === 'ja' ? '会員ID: ' : 'Member ID: '}
+                <span className="font-mono font-bold text-foreground">{memberSession.memberId}</span> • {language === 'ja' ? '有効期限: ' : 'Valid till: '} {new Date(memberSession.expiryDate).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'en-US')}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMemberLogout}
+            className="text-xs h-8 text-muted-foreground hover:text-destructive"
+          >
+            <LogOut className="h-3.5 w-3.5 mr-1.5" />
+            {language === 'ja' ? 'セッション終了' : 'Lock / Exit'}
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading
           ? Array.from({ length: 6 }).map((_, index) => (
@@ -323,8 +413,8 @@ export default function ResourcesPage() {
                         </Button>
                       )
                     ) : (
-                        <Button variant="outline" className="w-full rounded-full" onClick={handleProtectedClick}>
-                            <Lock className="mr-2 h-4 w-4" />
+                        <Button variant="outline" className="w-full rounded-full hover:border-primary/50 group" onClick={() => handleProtectedClick(resource)}>
+                            <Lock className="mr-2 h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
                             {t('resource_membersOnly')}
                         </Button>
                     )}
@@ -333,6 +423,13 @@ export default function ResourcesPage() {
               );
         })}
       </div>
+
+      <MemberAccessModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        targetResourceTitle={targetResource?.title}
+      />
     </div>
   );
 }

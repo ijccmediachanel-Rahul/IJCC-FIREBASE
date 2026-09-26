@@ -5,6 +5,8 @@ import { z } from "zod";
 import { ContactFormSchema, type ContactFormState, RazorpayVerificationSchema, MembershipFormSchema, MembershipFormState } from "./definitions";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export async function submitMembershipForm(
   values: z.infer<typeof MembershipFormSchema>
@@ -21,7 +23,29 @@ export async function submitMembershipForm(
 
   const data = validatedFields.data;
 
-  // 1. Send Application Details via Email (Nodemailer)
+  // 1. Save Application to Store for Real-time Admin Portal access
+  try {
+    const { saveApplication } = await import("./memberships-store");
+    const appId = `app_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    await saveApplication({
+      id: appId,
+      legalCompanyName: data.legalCompanyName,
+      applicantName: data.applicantName,
+      primaryContactPerson: data.primaryContactPerson,
+      emailAddress: data.emailAddress,
+      mobileNumber: data.mobileNumber,
+      membershipTier: data.membershipTier,
+      city: data.city,
+      state: data.state,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      rawDetails: data,
+    });
+  } catch (dbErr) {
+    console.warn("Could not save membership application:", dbErr);
+  }
+
+  // 2. Send Application Details via Email (Nodemailer)
   try {
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       const transporter = nodemailer.createTransport({
@@ -190,6 +214,145 @@ export async function logUserSignupToGoogleSheet(data: {
     console.warn("Google Sheet signup sync failed (skipped to avoid blocking user):", error.message || error);
     return { success: false };
   }
+}
+
+export async function logMembershipPaymentToGoogleSheet(data: {
+  uid: string;
+  displayName: string;
+  email: string;
+  phoneNumber?: string;
+  membershipTier: string;
+  tierTitle: string;
+  amount: number;
+  paymentId: string;
+  orderId: string;
+}) {
+  const istDateStr = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+
+  // 1. Save directly into Admin Portal Applications store as "Paid Online"
+  try {
+    const { saveApplication } = await import("./memberships-store");
+    const appId = `pay_${data.paymentId || Date.now()}`;
+    await saveApplication({
+      id: appId,
+      legalCompanyName: data.displayName || "Online Member",
+      applicantName: data.displayName || "Online Member",
+      primaryContactPerson: data.displayName || "Online Member",
+      emailAddress: data.email,
+      mobileNumber: data.phoneNumber || "",
+      membershipTier: data.membershipTier,
+      city: "Online Payment (Razorpay)",
+      state: `Amount: ₹${data.amount.toLocaleString("en-IN")}`,
+      status: "Paid Online",
+      createdAt: new Date().toISOString(),
+      rawDetails: {
+        ...data,
+        paidOnline: true,
+        paidAtIST: istDateStr,
+      },
+    });
+    console.log("Online payment recorded in Admin Applications store.");
+  } catch (storeErr) {
+    console.warn("Could not save payment to Admin Applications store:", storeErr);
+  }
+
+  // 2. Dispatch Email Alert to Secretariat (if SMTP is configured)
+  try {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 465,
+        secure: Number(process.env.SMTP_PORT) === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      const receiver = process.env.CONTACT_FORM_RECEIVER || "info@ijcc.in";
+
+      await transporter.sendMail({
+        from: `"IJCC Payment Gateway" <${process.env.SMTP_USER}>`,
+        to: receiver,
+        replyTo: data.email,
+        subject: `Online Membership Payment Received: ${data.displayName || data.email} (${data.tierTitle} - ₹${data.amount.toLocaleString("en-IN")})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #059669; color: #fff; padding: 18px 24px;">
+              <h2 style="margin: 0; font-size: 20px;">✓ Online Membership Payment Received</h2>
+              <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.95;">IJCC Razorpay Payment Gateway</p>
+            </div>
+            
+            <div style="padding: 24px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr><td style="padding: 8px 0; font-weight: bold; width: 35%;">Member Name:</td><td>${data.displayName || "N/A"}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Email:</td><td>${data.email}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Phone:</td><td>${data.phoneNumber || "N/A"}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Selected Plan:</td><td><strong>${data.tierTitle} (${data.membershipTier})</strong></td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Amount Paid:</td><td><strong style="color: #059669; font-size: 16px;">₹${data.amount.toLocaleString("en-IN")}</strong></td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Razorpay Payment ID:</td><td><code>${data.paymentId}</code></td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Razorpay Order ID:</td><td><code>${data.orderId}</code></td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Date & Time:</td><td>${istDateStr}</td></tr>
+              </table>
+
+              <div style="margin-top: 24px; padding: 16px; background-color: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; text-align: center;">
+                <p style="margin: 0 0 12px 0; font-size: 13px; color: #64748b;">
+                  Action Required: Please log in to the Admin Portal to issue Member ID & Password for this member.
+                </p>
+                <a href="https://ijcc.in/admin" style="background-color: #0f172a; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
+                  Open Admin Portal ➔
+                </a>
+              </div>
+            </div>
+          </div>
+        `,
+      });
+      console.log("Payment notification email successfully sent to:", receiver);
+    }
+  } catch (emailErr) {
+    console.warn("Could not send payment notification email:", emailErr);
+  }
+
+  // 3. Post to Google Sheet Webhooks (Both Membership Sheet & User Sheet if configured)
+  const membershipSheetUrl = process.env.GOOGLE_SHEET_WEB_APP_URL;
+  const usersSheetUrl = process.env.GOOGLE_SHEET_USERS_WEB_APP_URL;
+
+  const payload = {
+    type: "ONLINE_MEMBERSHIP_PAYMENT",
+    legalCompanyName: data.displayName || "Online Member",
+    applicantName: data.displayName || "Online Member",
+    primaryContactPerson: data.displayName || "Online Member",
+    emailAddress: data.email,
+    mobileNumber: data.phoneNumber || "",
+    membershipTier: data.membershipTier,
+    tierTitle: data.tierTitle,
+    amount: `₹${data.amount.toLocaleString("en-IN")}`,
+    paymentId: data.paymentId,
+    orderId: data.orderId,
+    status: "PAID_ONLINE",
+    paymentDate: istDateStr,
+    applicantDate: istDateStr,
+    remarks: `Razorpay Payment ID: ${data.paymentId}`,
+  };
+
+  const targetUrls = [membershipSheetUrl, usersSheetUrl].filter(Boolean) as string[];
+
+  for (const url of targetUrls) {
+    try {
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        redirect: "follow",
+        signal: AbortSignal.timeout(5000),
+      });
+      console.log("Payment logged successfully to sheet webhook:", url.slice(0, 45) + "...");
+    } catch (gsErr: any) {
+      console.warn("Payment sync to Google Sheet webhook failed (skipped non-blocking):", gsErr.message || gsErr);
+    }
+  }
+
+  return { success: true };
 }
 
 const OTP_SECRET = process.env.SMTP_PASS || process.env.RAZORPAY_KEY_SECRET || "ijcc-otp-secret-key-2026";

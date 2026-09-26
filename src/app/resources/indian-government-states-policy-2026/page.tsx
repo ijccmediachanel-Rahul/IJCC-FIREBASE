@@ -27,6 +27,12 @@ import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
 import { isPaidMember } from "@/lib/definitions";
 import { useTranslation } from "@/hooks/use-translation";
+import {
+  MemberAccessModal,
+  getStoredMemberSession,
+  clearMemberSession,
+  VerifiedMemberSession,
+} from "@/components/MemberAccessModal";
 
 export default function IndianStatePoliciesPage() {
   const { language } = useTranslation();
@@ -82,7 +88,15 @@ export default function IndianStatePoliciesPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = isPaidMember(profile);
+  const [memberSession, setMemberSession] = useState<VerifiedMemberSession | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const session = getStoredMemberSession();
+    if (session) setMemberSession(session);
+  }, []);
+
+  const hasMembership = isPaidMember(profile) || !!memberSession;
   const isLoading = authLoading || loadingCMS || (isProtected && loadingProfile);
   const isLocked = isProtected === true && !hasMembership;
 
@@ -163,20 +177,30 @@ export default function IndianStatePoliciesPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild size="lg" className="w-full sm:w-auto font-bold px-8 shadow-md">
-              <Link href={user ? "/pricing" : "/login"}>
-                {language === 'ja'
-                  ? (user ? "会員権をアップグレード" : "ログインしてアクセス")
-                  : (user ? "Upgrade to Member Access" : "Log In to Access")}
-              </Link>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              size="lg"
+              className="w-full sm:w-auto font-bold px-8 shadow-md gap-2"
+            >
+              <ShieldCheck className="h-5 w-5" />
+              {language === 'ja' ? '会員IDとパスワードで解除' : 'Enter Member ID & Password'}
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-              <Link href="/resources">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {language === 'ja' ? 'リソース一覧に戻る' : 'Back to Resources'}
+              <Link href="/membership-application">
+                {language === 'ja' ? '会員登録を申し込む' : 'Apply for Membership'}
               </Link>
             </Button>
           </div>
+
+          <MemberAccessModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={(session) => {
+              setMemberSession(session);
+              setIsModalOpen(false);
+            }}
+            targetResourceTitle="Indian Government States Policy 2026"
+          />
 
           <div className="mt-10 pt-8 border-t grid grid-cols-2 sm:grid-cols-4 gap-4 text-left text-xs text-muted-foreground">
             <div className="flex items-center gap-2">

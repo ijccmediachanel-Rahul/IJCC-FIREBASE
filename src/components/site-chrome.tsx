@@ -10,23 +10,29 @@ import ChatWidget from "@/components/ChatWidget";
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStudio = pathname?.startsWith("/studio") ?? false;
-
-  // Sanity Studio is a full-viewport app — render it without
-  // the site header/footer/widgets so it can scroll and fill the screen.
-  if (isStudio) {
-    return <div className="min-h-screen">{children}</div>;
-  }
+  const isAdmin = pathname?.startsWith("/admin") ?? false;
+  const isIsolated = isStudio || isAdmin;
 
   return (
     <>
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main className="flex-grow animate-fade-in">{children}</main>
-        <AppFooter />
-      </div>
+      {isIsolated ? (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+          {children}
+        </div>
+      ) : (
+        <div className="flex min-h-screen flex-col">
+          <AppHeader />
+          <main className="flex-grow animate-fade-in">{children}</main>
+          <AppFooter />
+        </div>
+      )}
       <Toaster />
-      <CookieBanner />
-      <ChatWidget />
+      {!isIsolated && (
+        <>
+          <CookieBanner />
+          <ChatWidget />
+        </>
+      )}
     </>
   );
 }

@@ -12,6 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isPaidMember } from "@/lib/definitions";
 import { useTranslation } from "@/hooks/use-translation";
+import {
+  MemberAccessModal,
+  getStoredMemberSession,
+  clearMemberSession,
+  VerifiedMemberSession,
+} from "@/components/MemberAccessModal";
+import { ShieldCheck, CheckCircle2, LogOut } from "lucide-react";
 
 const marugotoBooks = [
   { level: "A1", title: "Marugoto A1 Rikai", titleJa: "まるごと A1 りかい", description: "Focuses on understanding and comprehension for the A1 level.", descriptionJa: "A1レベルの言語構造と読解・理解に焦点を当てています。", file: "https://jumpshare.com/share/aufWQ9WfeAKcUb5Iv15R", isExternal: true },
@@ -52,7 +59,15 @@ export default function MarugotoBooksPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = isPaidMember(profile);
+  const [memberSession, setMemberSession] = useState<VerifiedMemberSession | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const session = getStoredMemberSession();
+    if (session) setMemberSession(session);
+  }, []);
+
+  const hasMembership = isPaidMember(profile) || !!memberSession;
   const isLoading = authLoading || loadingProfile;
 
   if (isLoading) {
@@ -84,23 +99,45 @@ export default function MarugotoBooksPage() {
 
   if (!hasMembership) {
     return (
-      <div className="container py-12 text-center">
-        <Lock className="h-16 w-16 mx-auto text-muted-foreground" />
-        <h1 className="text-3xl font-headline mt-6">
-          {language === 'ja' ? 'アクセスが制限されています' : 'Access Denied'}
+      <div className="container py-16 text-center max-w-xl mx-auto">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4 text-primary">
+          <Lock className="h-8 w-8" />
+        </div>
+        <h1 className="text-3xl font-headline font-bold">
+          {language === 'ja' ? 'アクセスが制限されています' : 'Member Access Required'}
         </h1>
-        <p className="mt-4 text-muted-foreground max-w-md mx-auto">
+        <p className="mt-4 text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
           {language === 'ja'
-            ? 'このリソースは会員限定です。「まるごと」教材にアクセスするには、ログインして有効な会員権をお持ちであることをご確認ください。'
-            : 'This resource is exclusive to our members. Please log in and ensure you have an active membership to access the Marugoto books.'}
+            ? 'このリソースは会員限定です。IJCCから発行された会員IDとパスワードでログインして「まるごと」教材にアクセスしてください。'
+            : 'This resource is exclusive to our members. Please verify with your Membership ID & Password to access the complete Marugoto series books.'}
         </p>
-        <Button asChild className="mt-8">
-          <Link href={user ? "/pricing" : "/login"}>
-            {language === 'ja'
-              ? (user ? "メンバーシップをアップグレード" : "ログイン / 新規登録")
-              : (user ? "Upgrade Membership" : "Login or Sign Up")}
-          </Link>
-        </Button>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            size="lg"
+            className="w-full sm:w-auto font-semibold shadow-md gap-2"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            {language === 'ja' ? '会員IDとパスワードで解除' : 'Enter Member ID & Password'}
+          </Button>
+
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/membership-application">
+              {language === 'ja' ? '会員登録を申し込む' : 'Apply for Membership'}
+            </Link>
+          </Button>
+        </div>
+
+        <MemberAccessModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={(session) => {
+            setMemberSession(session);
+            setIsModalOpen(false);
+          }}
+          targetResourceTitle="Marugoto Books Library"
+        />
       </div>
     );
   }

@@ -180,12 +180,26 @@ export default function ProfilePage() {
                     <p className="font-semibold">{user.email}</p>
                 </div>
                 {profileData && profileData.createdAt && (
-                  <>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Joined On</p>
-                        <p className="font-semibold text-sm">{profileData.createdAt.toDate().toLocaleDateString()}</p>
-                    </div>
-                  </>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Joined On</p>
+                    <p className="font-semibold text-sm">
+                      {(() => {
+                        const val = profileData.createdAt;
+                        try {
+                          if (val && typeof val.toDate === "function") {
+                            return val.toDate().toLocaleDateString();
+                          }
+                          const d = new Date(val);
+                          if (!isNaN(d.getTime())) {
+                            return d.toLocaleDateString();
+                          }
+                          return String(val);
+                        } catch {
+                          return "";
+                        }
+                      })()}
+                    </p>
+                  </div>
                 )}
                 {profileData && profileData.membershipTier && (
                     <div className="space-y-1">

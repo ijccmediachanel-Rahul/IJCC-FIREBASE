@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Script from "next/script";
-import { verifyRazorpayPayment } from "@/lib/actions";
+import { verifyRazorpayPayment, logMembershipPaymentToGoogleSheet } from "@/lib/actions";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useTranslation } from "@/hooks/use-translation";
@@ -261,6 +261,19 @@ export default function PricingPage() {
                             orderId: response.razorpay_order_id,
                             membershipUpdatedAt: new Date(),
                         });
+
+                        // 1. Sync payment to Google Sheet & Admin Applications Store (non-blocking)
+                        logMembershipPaymentToGoogleSheet({
+                            uid: user.uid,
+                            displayName: user.displayName || user.email || "IJCC Member",
+                            email: user.email || "",
+                            phoneNumber: user.phoneNumber || "",
+                            membershipTier: tier.id,
+                            tierTitle: t(tier.titleKey) || tier.id,
+                            amount: tier.price,
+                            paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                        }).catch((err) => console.warn("Google Sheet payment sync failed:", err));
                         
                         toast({
                             title: t('membershipForm_toastSuccessTitle') || "Payment Successful!",

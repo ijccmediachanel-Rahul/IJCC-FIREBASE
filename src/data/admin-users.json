@@ -1,0 +1,29 @@
+{
+  "admins": [
+    {
+      "id": "admin_owner_1",
+      "email": "info@ijcc.in",
+      "name": "IJCC Secretariat (Sir)",
+      "role": "owner",
+      "status": "active",
+      "addedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "admin_owner_2",
+      "email": "ijccmediachanel@gmail.com",
+      "name": "IJCC Media Channel",
+      "role": "owner",
+      "status": "active",
+      "addedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "admin_dev_1",
+      "email": "codernitin268@gmail.com",
+      "name": "Nitin Prakash (Developer)",
+      "role": "admin",
+      "status": "active",
+      "addedAt": "2026-09-25T00:00:00.000Z"
+    }
+  ],
+  "requests": []
+}

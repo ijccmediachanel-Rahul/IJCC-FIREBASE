@@ -12,6 +12,11 @@ import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { isPaidMember } from "@/lib/definitions";
 import { useTranslation } from "@/hooks/use-translation";
+import {
+  MemberAccessModal,
+  getStoredMemberSession,
+  VerifiedMemberSession,
+} from "@/components/MemberAccessModal";
 
 const magazines = [
   {
@@ -74,7 +79,14 @@ export default function MagazinesPage() {
     fetchProfile();
   }, [user, authLoading]);
 
-  const hasMembership = isPaidMember(profile);
+  const [memberSession, setMemberSession] = useState<VerifiedMemberSession | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    setMemberSession(getStoredMemberSession());
+  }, []);
+
+  const hasMembership = isPaidMember(profile) || !!memberSession;
   const isLoading = authLoading || loadingProfile;
 
   if (isLoading) {
@@ -92,20 +104,32 @@ export default function MagazinesPage() {
       <div className="container py-12 text-center">
         <Lock className="h-16 w-16 mx-auto text-muted-foreground" />
         <h1 className="text-3xl font-headline mt-6">
-          {language === 'ja' ? 'アクセスが制限されています' : 'Access Denied'}
+          {language === 'ja' ? 'アクセスが制限されています' : 'Members Only Access'}
         </h1>
         <p className="mt-4 text-muted-foreground max-w-md mx-auto">
           {language === 'ja'
-            ? 'このリソースは会員限定です。月刊誌にアクセスするには、ログインして有効な会員権をお持ちであることをご確認ください。'
-            : 'This resource is exclusive to our members. Please log in and ensure you have an active membership to access the magazines.'}
+            ? 'このリソースは会員限定です。IJCC発行の会員ID・パスワードでアクセスするか、ログインして会員プランをご確認ください。'
+            : 'This resource is exclusive to IJCC members. Enter your Member ID & Password to unlock, or login with your account.'}
         </p>
-        <Button asChild className="mt-8">
-          <Link href={user ? "/pricing" : "/login"}>
-            {language === 'ja'
-              ? (user ? "メンバーシップをアップグレード" : "ログイン / 新規登録")
-              : (user ? "Upgrade Membership" : "Login or Sign Up")}
-          </Link>
-        </Button>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Button onClick={() => setModalOpen(true)} className="rounded-full shadow-md">
+            <Lock className="mr-2 h-4 w-4" />
+            {language === 'ja' ? '会員ID・パスワードで解除' : 'Enter Member ID & Password'}
+          </Button>
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href={user ? "/pricing" : "/login"}>
+              {language === 'ja'
+                ? (user ? "メンバーシップをアップグレード" : "ログイン / 新規登録")
+                : (user ? "Upgrade Membership" : "Login or Sign Up")}
+            </Link>
+          </Button>
+        </div>
+
+        <MemberAccessModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSuccess={(s) => setMemberSession(s)}
+        />
       </div>
     );
   }
