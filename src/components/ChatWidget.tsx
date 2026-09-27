@@ -154,17 +154,6 @@ export default function ChatWidget() {
 
   const currentSuggestions = isJa ? SUGGESTED_QUESTIONS_JA : SUGGESTED_QUESTIONS;
 
-  const S = {
-    btn: { position:"fixed" as const, bottom:"24px", right:"24px", zIndex:9999, width:"60px", height:"60px", borderRadius:"50%", background:"linear-gradient(135deg,#C8102E,#8B0A1F)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 32px rgba(200,16,46,0.4)" },
-    window: { position:"fixed" as const, bottom:"24px", right:"24px", zIndex:9999, width:"370px", height:isMinimized?"60px":"590px", borderRadius:"16px", boxShadow:"0 20px 60px rgba(0,0,0,0.15)", overflow:"hidden", display:"flex", flexDirection:"column" as const, transition:"height 0.3s ease", background:"#fff", border:"1px solid #e5e7eb" },
-    header: { background:"linear-gradient(135deg,#C8102E,#8B0A1F)", padding:"12px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", flexShrink:0 },
-    messages: { flex:1, overflowY:"auto" as const, padding:"12px", background:"#f9fafb" },
-    input: { flexShrink:0, padding:"10px 12px", borderTop:"1px solid #e5e7eb", background:"#fff" },
-    inputRow: { display:"flex", gap:"8px", alignItems:"center", background:"#f3f4f6", borderRadius:"12px", padding:"8px 12px" },
-    sendBtn: { width:"32px", height:"32px", borderRadius:"8px", background:"#C8102E", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-    hdrBtn: { background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.7)", padding:"4px", borderRadius:"6px" },
-  };
-
   return (
     <>
       <style>{`
@@ -178,59 +167,103 @@ export default function ChatWidget() {
       `}</style>
 
       {!isOpen && (
-        <button style={{...S.btn, animation:"pulse 2s ease-in-out infinite"}} onClick={() => setIsOpen(true)} aria-label={isJa ? "チャットを開く" : "Open chat"}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          {hasNew && <span style={{ position:"absolute", top:"4px", right:"4px", width:"12px", height:"12px", background:"#facc15", borderRadius:"50%", border:"2px solid #fff" }} />}
+        <button
+          className="fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center cursor-pointer shadow-xl border-none transition-transform active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #C8102E, #8B0A1F)",
+            boxShadow: "0 8px 32px rgba(200,16,46,0.4)",
+            animation: "pulse 2s ease-in-out infinite"
+          }}
+          onClick={() => setIsOpen(true)}
+          aria-label={isJa ? "チャットを開く" : "Open chat"}
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          {hasNew && (
+            <span className="absolute top-1 right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white" />
+          )}
         </button>
       )}
 
       {isOpen && (
-        <div style={S.window} ref={widgetRef}>
-          <div style={S.header} onClick={() => setIsMinimized(!isMinimized)}>
-            <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-              <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                <span style={{ color:"#C8102E", fontWeight:900, fontSize:"16px" }}>I</span>
+        <div
+          ref={widgetRef}
+          className={`fixed z-[9999] bottom-3 right-3 sm:bottom-6 sm:right-6 w-[calc(100vw-24px)] sm:w-[380px] max-w-[390px] rounded-2xl overflow-hidden flex flex-col bg-white border border-gray-200 shadow-2xl transition-all duration-300 ${
+            isMinimized ? "h-[54px] sm:h-[60px]" : "h-[82vh] sm:h-[590px] max-h-[620px]"
+          }`}
+          style={{
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+          }}
+        >
+          {/* Header */}
+          <div
+            className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between cursor-pointer shrink-0 select-none"
+            style={{ background: "linear-gradient(135deg,#C8102E,#8B0A1F)" }}
+            onClick={() => setIsMinimized(!isMinimized)}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+                <span className="text-[#C8102E] font-black text-sm sm:text-base">I</span>
               </div>
-              <div>
-                <div style={{ color:"#fff", fontWeight:700, fontSize:"14px" }}>
+              <div className="min-w-0">
+                <div className="text-white font-bold text-xs sm:text-sm leading-tight truncate">
                   {isJa ? "IJCC アシスタント" : "IJCC Assistant"}
                 </div>
-                <div style={{ color:"rgba(255,255,255,0.7)", fontSize:"11px", display:"flex", alignItems:"center", gap:"4px" }}>
-                  <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#4ade80", display:"inline-block" }}/>
-                  {isJa ? "印日商工会議所" : "Indo-Japan Chamber of Commerce"}
+                <div className="text-white/80 text-[10px] sm:text-[11px] flex items-center gap-1.5 leading-tight truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shrink-0" />
+                  <span className="truncate">{isJa ? "印日商工会議所" : "Indo-Japan Chamber"}</span>
                 </div>
               </div>
             </div>
-            <div style={{ display:"flex", gap:"2px" }} onClick={e => e.stopPropagation()}>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={reset} title={isJa ? "会話をリセット" : "Reset"}>
+
+            <div className="flex items-center gap-1 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
+              <button
+                className="ijcc-hbtn text-white/80 hover:text-white p-1 sm:p-1.5 rounded-md hover:bg-white/20 transition-colors"
+                onClick={reset}
+                title={isJa ? "会話をリセット" : "Reset"}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.75"/></svg>
               </button>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => setIsMinimized(!isMinimized)} title={isJa ? "最小化" : "Minimize"}>
+              <button
+                className="ijcc-hbtn text-white/80 hover:text-white p-1 sm:p-1.5 rounded-md hover:bg-white/20 transition-colors"
+                onClick={() => setIsMinimized(!isMinimized)}
+                title={isJa ? "最小化" : "Minimize"}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points={isMinimized?"18 15 12 9 6 15":"18 9 12 15 6 9"}/></svg>
               </button>
-              <button className="ijcc-hbtn" style={S.hdrBtn} onClick={() => { setIsOpen(false); setIsMinimized(false); }} title={isJa ? "閉じる" : "Close"}>
+              <button
+                className="ijcc-hbtn text-white/80 hover:text-white p-1 sm:p-1.5 rounded-md hover:bg-white/20 transition-colors"
+                onClick={() => { setIsOpen(false); setIsMinimized(false); }}
+                title={isJa ? "閉じる" : "Close"}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>
 
-          {!isMinimized && <div style={{ height:"3px", background:"linear-gradient(90deg,#FF9933 33%,#fff 33%,#fff 66%,#138808 66%)", flexShrink:0 }} />}
+          {!isMinimized && (
+            <div style={{ height:"3px", background:"linear-gradient(90deg,#FF9933 33%,#fff 33%,#fff 66%,#138808 66%)", flexShrink:0 }} />
+          )}
 
           {!isMinimized && (
-            <div className="ijcc-scroll" style={S.messages}>
+            <div className="ijcc-scroll flex-1 overflow-y-auto p-3 bg-gray-50/60">
               {messages.map((m, i) => (
                 <div key={m.id} className="ijcc-msg">
                   <MessageBubble message={m} isLatest={i === messages.length - 1} />
                 </div>
               ))}
               {showSuggestions && messages.length === 1 && (
-                <div style={{ marginTop:"8px" }}>
-                  <p style={{ fontSize:"11px", color:"#9ca3af", marginBottom:"6px", paddingLeft:"4px" }}>
+                <div className="mt-2">
+                  <p className="text-[11px] text-gray-500 mb-1.5 pl-1 font-medium">
                     {isJa ? "よくある質問：" : "Suggested questions:"}
                   </p>
-                  {currentSuggestions.slice(0,4).map(q => (
-                    <button key={q} className="ijcc-suggest" onClick={() => send(q)}
-                      style={{ width:"100%", textAlign:"left", fontSize:"12px", padding:"8px 12px", marginBottom:"6px", borderRadius:"10px", background:"#fff", border:"1px solid #e5e7eb", cursor:"pointer", color:"#374151", display:"block" }}>
+                  {currentSuggestions.slice(0, 4).map(q => (
+                    <button
+                      key={q}
+                      className="ijcc-suggest w-full text-left text-xs p-2 sm:p-2.5 mb-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 leading-snug cursor-pointer shadow-2xs hover:bg-[#fff0f3] hover:border-[#C8102E] transition-all block break-words"
+                      onClick={() => send(q)}
+                    >
                       {q}
                     </button>
                   ))}
@@ -241,17 +274,28 @@ export default function ChatWidget() {
           )}
 
           {!isMinimized && (
-            <div style={S.input}>
-              <div style={S.inputRow}>
-                <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); }}}
-                  placeholder={isJa ? "日印貿易やIJCCについて質問する..." : "Ask about India-Japan trade..."} disabled={isLoading}
-                  style={{ flex:1, background:"transparent", border:"none", outline:"none", fontSize:"13px", color:"#374151" }} />
-                <button style={{...S.sendBtn, opacity:(!input.trim()||isLoading)?0.4:1}} disabled={!input.trim()||isLoading} onClick={() => send(input)}>
+            <div className="shrink-0 p-2.5 sm:p-3 border-t border-gray-200 bg-white">
+              <div className="flex gap-2 items-center bg-gray-100 rounded-xl px-3 py-1.5 sm:py-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); }}}
+                  placeholder={isJa ? "日印貿易やIJCCについて質問する..." : "Ask about India-Japan trade..."}
+                  disabled={isLoading}
+                  className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm text-gray-800 placeholder-gray-400"
+                />
+                <button
+                  className="w-8 h-8 rounded-lg bg-[#C8102E] text-white flex items-center justify-center shrink-0 cursor-pointer transition-opacity active:scale-95 disabled:opacity-40"
+                  disabled={!input.trim() || isLoading}
+                  onClick={() => send(input)}
+                  aria-label="Send message"
+                >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </div>
-              <p style={{ textAlign:"center", fontSize:"10px", color:"#d1d5db", marginTop:"6px" }}>
+              <p className="text-center text-[10px] text-gray-400 mt-1.5">
                 {isJa ? `Gemini AI 搭載 • IJCC © ${new Date().getFullYear()}` : `Powered by Gemini AI • IJCC © ${new Date().getFullYear()}`}
               </p>
             </div>

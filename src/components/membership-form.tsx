@@ -315,7 +315,7 @@ function MembershipFormComponent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base font-bold">{t('membershipForm_mobile_label')}</FormLabel>
-                        <FormControl><Input className="h-12 border-2" type="tel" placeholder="+91 98765 43210" {...field} /></FormControl>
+                        <FormControl><Input className="h-12 border-2" type="tel" placeholder="e.g. +91 98XXXXXXXX" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

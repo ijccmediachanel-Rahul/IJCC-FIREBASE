@@ -83,15 +83,15 @@ function LoginForm() {
   const isMembersRedirect = reason === 'members' || redirectUrl === '/members';
 
   return (
-    <div className="container flex min-h-[calc(100vh-200px)] items-center justify-center py-12">
-      <Card className="w-full max-w-md shadow-lg border-border/80">
-        <CardHeader className="text-center">
+    <div className="container flex min-h-[calc(100vh-200px)] items-center justify-center px-4 py-8 sm:py-12 pb-24 sm:pb-16">
+      <Card className="w-full max-w-md shadow-lg border-border/80 overflow-hidden">
+        <CardHeader className="text-center p-4 sm:p-6 pb-2 sm:pb-4">
           {isMembersRedirect && (
-            <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center">
-              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Lock className="h-5 w-5" />
+            <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 p-3.5 sm:p-4 text-center">
+              <div className="mx-auto mb-2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <h3 className="font-headline text-base font-bold text-foreground">
+              <h3 className="font-headline text-sm sm:text-base font-bold text-foreground">
                 Login to see Members
               </h3>
               <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
@@ -99,18 +99,20 @@ function LoginForm() {
               </p>
             </div>
           )}
-          <CardTitle className="text-3xl font-headline">Login</CardTitle>
-          <CardDescription>Enter your credentials or continue with Google to access your account</CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl font-headline tracking-normal break-normal">Login</CardTitle>
+          <CardDescription className="text-xs sm:text-sm mt-1">
+            Enter your credentials or continue with Google to access your account
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4 sm:p-6 pt-2 sm:pt-2">
           <Button
             type="button"
             variant="outline"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full h-11 rounded-full text-sm font-semibold shadow-xs flex items-center justify-center gap-3 border border-border"
+            className="w-full h-10 sm:h-11 rounded-full text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-2 sm:gap-3 border border-border px-3 sm:px-4 hover:bg-muted/50 transition-colors"
           >
-            <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -128,7 +130,7 @@ function LoginForm() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>Continue with Google</span>
+            <span className="truncate">Continue with Google</span>
           </Button>
 
           <div className="relative py-1">
@@ -142,21 +144,22 @@ function LoginForm() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+          <form onSubmit={handleLogin} className="space-y-3.5 sm:space-y-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="email" className="text-xs sm:text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
                 required
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-xs sm:text-sm font-medium">Password</Label>
               </div>
               <div className="relative">
                 <Input
@@ -164,7 +167,7 @@ function LoginForm() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                   required
                 />
                 <button
@@ -177,17 +180,17 @@ function LoginForm() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full rounded-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center text-sm">
-          <p>Don&apos;t have an account?&nbsp;</p>
+        <CardFooter className="flex flex-wrap justify-center items-center text-xs sm:text-sm p-4 sm:p-6 pt-0 sm:pt-0 gap-1 text-center">
+          <p className="text-muted-foreground">Don&apos;t have an account?</p>
           <Link 
             href={redirectUrl && redirectUrl !== '/profile' ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : '/signup'} 
-            className="font-semibold text-primary hover:underline"
+            className="font-semibold text-primary hover:underline whitespace-nowrap"
           >
             Sign up
           </Link>

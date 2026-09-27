@@ -81,6 +81,15 @@ body {
   top: 0px !important;
 }
 
+/* Prevent Radix UI / react-remove-scroll from narrowing the page on modal/select open */
+html,
+body,
+body[data-scroll-locked],
+body[style*="overflow: hidden"] {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+}
+
 /* Fix decorative/cursive ampersand (&) in Playfair font */
 @font-face {
   font-family: 'Playfair';

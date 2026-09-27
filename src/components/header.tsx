@@ -171,7 +171,7 @@ export function AppHeader() {
         <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
                 {navLinks.map((link) => (
-                    <NavigationMenuItem key={link.label}>
+                    <NavigationMenuItem key={link.label} value={link.href}>
                         {link.submenu ? (
                             <>
                                 <NavigationMenuTrigger className={cn(

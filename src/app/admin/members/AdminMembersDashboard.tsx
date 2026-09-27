@@ -44,7 +44,9 @@ import {
   Send,
   Check,
   X,
+  Menu,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { MemberRecord } from "@/lib/memberships";
 
 const ADMIN_STORAGE_KEY = "ijcc_admin_auth_key_v1";
@@ -85,6 +87,7 @@ export default function AdminMembersDashboard() {
   const [newAdminName, setNewAdminName] = useState<string>("");
   const [newAdminRole, setNewAdminRole] = useState<"admin" | "owner">("admin");
   const [isManagingAdmins, setIsManagingAdmins] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // Data State
   const [members, setMembers] = useState<MemberRecord[]>([]);
@@ -886,33 +889,33 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
 
     if (accessStatus === "pending") {
       return (
-        <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-3 py-6 sm:p-4 pb-20 sm:pb-4">
           <Card suppressHydrationWarning className="max-w-md w-full border border-border shadow-xl rounded-2xl overflow-hidden bg-card text-card-foreground">
-            <div className="bg-card border-b border-border/80 p-6 sm:p-8 text-center space-y-2">
+            <div className="bg-card border-b border-border/80 p-4 sm:p-8 text-center space-y-2">
               <div className="flex items-center justify-center mb-1">
                 <img
                   src="https://i.postimg.cc/mkDLyKfN/JPG-LOGO-removebg-preview.png"
                   alt="Indo-Japan Chamber of Commerce"
-                  className="h-16 w-auto object-contain mx-auto"
+                  className="h-14 sm:h-16 w-auto object-contain mx-auto"
                 />
               </div>
-              <h1 className="text-2xl font-headline font-bold text-foreground tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-headline font-bold text-foreground tracking-tight break-normal">
                 IJCC Administration Studio
               </h1>
               <p className="text-xs text-muted-foreground">Access Permission Request</p>
             </div>
 
-            <CardContent className="p-6 sm:p-8 space-y-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center mx-auto">
-                <Clock className="h-7 w-7" />
+            <CardContent className="p-4 sm:p-8 space-y-5 text-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center mx-auto">
+                <Clock className="h-6 w-6 sm:h-7 sm:w-7" />
               </div>
 
-              <div className="space-y-2">
-                <h2 className="text-lg font-bold font-headline text-foreground">Access Request Pending</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Your request for <strong className="text-foreground font-semibold">{adminEmail || user?.email || manualEmailInput}</strong> has been submitted to the IJCC Administrator (Sir).
+              <div className="space-y-1.5 sm:space-y-2">
+                <h2 className="text-base sm:text-lg font-bold font-headline text-foreground">Access Request Pending</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Your request for <strong className="text-foreground font-semibold break-all">{adminEmail || user?.email || manualEmailInput}</strong> has been submitted to the IJCC Administrator (Sir).
                 </p>
-                <p className="text-xs text-muted-foreground/80">
+                <p className="text-[11px] sm:text-xs text-muted-foreground/80">
                   As soon as your email is approved, you will have immediate access to this portal.
                 </p>
               </div>
@@ -939,9 +942,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                       }
                     } catch {}
                   }}
-                  className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-md"
+                  className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm rounded-full shadow-md px-3"
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" /> Check Approval Status
+                  <RefreshCw className="mr-1.5 sm:mr-2 h-4 w-4 shrink-0" /> Check Approval Status
                 </Button>
                 <Button
                   variant="ghost"
@@ -950,7 +953,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     setAdminEmail("");
                     sessionStorage.removeItem(ADMIN_EMAIL_STORAGE_KEY);
                   }}
-                  className="w-full h-10 text-muted-foreground hover:text-foreground text-xs rounded-full"
+                  className="w-full h-9 sm:h-10 text-muted-foreground hover:text-foreground text-xs rounded-full"
                 >
                   Sign in with a different account
                 </Button>
@@ -963,37 +966,37 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
 
     if (accessStatus === "unauthorized") {
       return (
-        <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-3 py-6 sm:p-4 pb-20 sm:pb-4">
           <Card suppressHydrationWarning className="max-w-md w-full border border-border shadow-xl rounded-2xl overflow-hidden bg-card text-card-foreground">
-            <div className="bg-card border-b border-border/80 p-6 sm:p-8 text-center space-y-2">
+            <div className="bg-card border-b border-border/80 p-4 sm:p-8 text-center space-y-2">
               <div className="flex items-center justify-center mb-1">
                 <img
                   src="https://i.postimg.cc/mkDLyKfN/JPG-LOGO-removebg-preview.png"
                   alt="Indo-Japan Chamber of Commerce"
-                  className="h-16 w-auto object-contain mx-auto"
+                  className="h-14 sm:h-16 w-auto object-contain mx-auto"
                 />
               </div>
-              <h1 className="text-2xl font-headline font-bold text-foreground tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-headline font-bold text-foreground tracking-tight break-normal">
                 IJCC Administration Studio
               </h1>
               <p className="text-xs text-muted-foreground">Restricted Access Control</p>
             </div>
 
-            <CardContent className="p-6 sm:p-8 space-y-5">
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-full bg-destructive/10 border border-destructive/20 text-destructive flex items-center justify-center mx-auto">
-                  <ShieldAlert className="h-7 w-7" />
+            <CardContent className="p-4 sm:p-8 space-y-4 sm:space-y-5">
+              <div className="text-center space-y-1.5 sm:space-y-2">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-destructive/10 border border-destructive/20 text-destructive flex items-center justify-center mx-auto">
+                  <ShieldAlert className="h-6 w-6 sm:h-7 sm:w-7" />
                 </div>
-                <h2 className="text-lg font-bold font-headline text-foreground">Permission Required</h2>
+                <h2 className="text-base sm:text-lg font-bold font-headline text-foreground">Permission Required</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  You are signed in as <strong className="text-foreground font-semibold">{adminEmail || user?.email || manualEmailInput}</strong>, but you do not have permission to access the IJCC Administration Studio.
+                  You are signed in as <strong className="text-foreground font-semibold break-all">{adminEmail || user?.email || manualEmailInput}</strong>, but you do not have permission to access the IJCC Administration Studio.
                 </p>
                 <p className="text-[11px] text-muted-foreground/80">
                   Ask the project administrator (Sir) to invite you or send an access request below:
                 </p>
               </div>
 
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-1">
                 <div className="space-y-1.5">
                   <Label htmlFor="req-reason" className="text-xs font-semibold text-foreground">
                     Reason / Role (Optional)
@@ -1003,22 +1006,22 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     placeholder="e.g. Developer access / Secretariat member"
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
-                    className="bg-background border-input text-foreground h-10 rounded-xl text-xs focus-visible:ring-primary"
+                    className="bg-background border-input text-foreground h-9 sm:h-10 rounded-xl text-xs focus-visible:ring-primary"
                   />
                 </div>
 
                 <Button
                   onClick={handleRequestAccess}
                   disabled={isSubmittingRequest}
-                  className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-md"
+                  className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm rounded-full shadow-md px-3"
                 >
                   {isSubmittingRequest ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting Request...
+                      <Loader2 className="mr-1.5 sm:mr-2 h-4 w-4 animate-spin shrink-0" /> Submitting Request...
                     </>
                   ) : (
                     <>
-                      <Send className="mr-2 h-4 w-4" /> Request Access from Administrator
+                      <Send className="mr-1.5 sm:mr-2 h-4 w-4 shrink-0" /> Request Access from Administrator
                     </>
                   )}
                 </Button>
@@ -1043,23 +1046,23 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
 
     // Default: Google OAuth Login + Work Email Option (Synced with App UI)
     return (
-      <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+      <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-3 py-6 sm:p-4 pb-20 sm:pb-4">
         <Card suppressHydrationWarning className="max-w-md w-full border border-border shadow-xl rounded-2xl overflow-hidden bg-card text-card-foreground">
-          <div className="bg-card border-b border-border/80 p-6 sm:p-8 text-center space-y-2">
+          <div className="bg-card border-b border-border/80 p-4 sm:p-8 text-center space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-center mb-1">
               <img
                 src="https://i.postimg.cc/mkDLyKfN/JPG-LOGO-removebg-preview.png"
                 alt="Indo-Japan Chamber of Commerce"
-                className="h-16 w-auto object-contain mx-auto"
+                className="h-14 sm:h-16 w-auto object-contain mx-auto"
               />
             </div>
-            <h1 className="text-2xl font-headline font-bold text-foreground tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-headline font-bold text-foreground tracking-tight break-normal">
               IJCC Administration Studio
             </h1>
             <p className="text-xs text-muted-foreground">Authorized Personnel Only</p>
           </div>
 
-          <CardContent suppressHydrationWarning className="p-6 sm:p-8 space-y-5">
+          <CardContent suppressHydrationWarning className="p-4 sm:p-8 space-y-4 sm:space-y-5">
             {authError && (
               <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -1087,21 +1090,21 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
             )}
 
             {/* 1-Click Google Sign In (Sanity Studio Standard) */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               <Button
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={isGoogleSigningIn}
-                className="w-full h-12 rounded-full text-sm font-semibold shadow-sm bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-white dark:border-slate-700 flex items-center justify-center gap-3 transition-all cursor-pointer"
+                className="w-full h-10 sm:h-12 rounded-full text-xs sm:text-sm font-semibold shadow-xs bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-white dark:border-slate-700 flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 transition-all cursor-pointer"
               >
                 {isGoogleSigningIn ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span>Connecting Google Account...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                    <span className="truncate">Connecting Google...</span>
                   </>
                 ) : (
                   <>
-                    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" viewBox="0 0 24 24">
                       <path
                         fill="#4285F4"
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -1119,18 +1122,18 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                       />
                     </svg>
-                    <span>Continue with Google</span>
+                    <span className="truncate">Continue with Google</span>
                   </>
                 )}
               </Button>
 
-              <p className="text-[11px] text-center text-muted-foreground">
+              <p className="text-[10px] sm:text-[11px] text-center text-muted-foreground leading-tight">
                 Sign in with your verified Google account to authenticate
               </p>
             </div>
 
             {/* Subtle Divider for Non-Google Check */}
-            <div className="relative py-2">
+            <div className="relative py-1 sm:py-2">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border" />
               </div>
@@ -1141,7 +1144,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </div>
             </div>
 
-            <form onSubmit={handleCheckPermissionOnly} className="space-y-3">
+            <form onSubmit={handleCheckPermissionOnly} className="space-y-2.5 sm:space-y-3">
               <div className="relative">
                 <Input
                   id="admin-email-in"
@@ -1152,7 +1155,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     setManualEmailInput(e.target.value);
                     if (permissionCheckMessage) setPermissionCheckMessage(null);
                   }}
-                  className="h-10 rounded-xl pr-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary text-xs"
+                  className="h-9 sm:h-10 rounded-xl pr-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary text-xs"
                 />
                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               </div>
@@ -1161,15 +1164,15 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 type="submit"
                 variant="outline"
                 disabled={isCheckingPermission}
-                className="w-full h-10 rounded-full text-xs font-semibold"
+                className="w-full h-9 sm:h-10 rounded-full text-xs font-semibold px-3"
               >
                 {isCheckingPermission ? (
                   <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking Permission...
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin shrink-0" /> Checking Permission...
                   </>
                 ) : (
                   <>
-                    <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Check Permission Status
+                    <ShieldCheck className="mr-1.5 h-3.5 w-3.5 shrink-0" /> Check Permission Status
                   </>
                 )}
               </Button>
@@ -1187,7 +1190,130 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
     <div suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       {/* Top Header */}
       <header className="bg-card border-b sticky top-0 z-30 shadow-xs">
-        <div className="container py-3 flex flex-wrap items-center justify-between gap-4">
+        {/* MOBILE HEADER (< 640px) */}
+        <div className="sm:hidden px-3.5 py-2.5 flex items-center justify-between gap-2">
+          {/* Brand & Portal Title */}
+          <div className="flex items-center gap-2 min-w-0">
+            <img
+              src="https://i.postimg.cc/mkDLyKfN/JPG-LOGO-removebg-preview.png"
+              alt="Indo-Japan Chamber of Commerce"
+              className="h-8 w-auto object-contain shrink-0"
+            />
+            <div className="border-l pl-2 py-0.5 min-w-0">
+              <div className="font-headline font-bold text-sm leading-tight text-foreground truncate">
+                Admin Portal
+              </div>
+              <div className="text-[10px] text-muted-foreground leading-tight truncate">
+                IJCC Membership
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Hamburger Menu Button */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8.5 w-8.5 p-0 rounded-xl relative shrink-0 border-border bg-card"
+                aria-label="Open Admin Menu"
+              >
+                <Menu className="h-4.5 w-4.5 text-foreground" />
+                {pendingAccessRequests.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-600 text-white text-[8px] font-bold flex items-center justify-center">
+                    {pendingAccessRequests.length}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side="right" className="w-[85vw] max-w-[320px] p-5 flex flex-col justify-between">
+              <div className="space-y-5">
+                <SheetHeader className="text-left space-y-1.5 pb-3.5 border-b">
+                  <SheetTitle className="font-headline text-base font-bold text-primary flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" /> Admin Controls
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Admin portal navigation and quick management actions
+                  </SheetDescription>
+                  {adminEmail && (
+                    <div className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span className="font-medium text-foreground truncate">{adminEmail}</span>
+                      <Badge variant="outline" className="text-[9px] h-4 py-0 uppercase shrink-0">
+                        {adminRole}
+                      </Badge>
+                    </div>
+                  )}
+                </SheetHeader>
+
+                {/* Quick Actions List in Drawer */}
+                <div className="space-y-2.5">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      fetchTeamData();
+                      setIsTeamModalOpen(true);
+                    }}
+                    className="w-full justify-start h-11 text-xs font-semibold rounded-xl"
+                  >
+                    <Users className="h-4 w-4 mr-2.5 text-primary shrink-0" />
+                    <span className="flex-1 text-left">Team & Access</span>
+                    {pendingAccessRequests.length > 0 && (
+                      <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-bold">
+                        {pendingAccessRequests.length}
+                      </span>
+                    )}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      fetchData();
+                    }}
+                    disabled={loading}
+                    className="w-full justify-start h-11 text-xs font-semibold rounded-xl"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2.5 shrink-0 ${loading ? "animate-spin" : ""}`} />
+                    <span>Refresh Database</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleExportCSV();
+                    }}
+                    className="w-full justify-start h-11 text-xs font-semibold rounded-xl"
+                  >
+                    <Download className="h-4 w-4 mr-2.5 shrink-0" />
+                    <span>Export CSV</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Logout Button at Bottom of Drawer */}
+              <div className="pt-4 border-t">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full justify-start h-11 text-destructive hover:bg-destructive/10 text-xs font-bold rounded-xl"
+                >
+                  <LogOut className="h-4 w-4 mr-2.5 shrink-0" />
+                  <span>Logout from Portal</span>
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* DESKTOP HEADER (>= 640px) */}
+        <div className="hidden sm:flex container px-6 py-3 items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img
               src="https://i.postimg.cc/mkDLyKfN/JPG-LOGO-removebg-preview.png"
@@ -1245,73 +1371,89 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
         </div>
       </header>
 
-      <main className="container py-8 space-y-8">
+      <main className="container px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8">
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="border-none shadow-sm bg-card">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <UserCheck className="h-6 w-6" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card className="border shadow-xs bg-card overflow-hidden">
+            <CardContent className="p-2.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 h-full">
+              <div className="flex items-center justify-between w-full">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <UserCheck className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                </div>
+                <span className="text-base sm:text-2xl font-bold font-headline text-foreground">
+                  {stats.total}
+                </span>
               </div>
-              <div>
-                <div className="text-2xl font-bold font-headline">{stats.total}</div>
-                <div className="text-xs text-muted-foreground">Total Members</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-card">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold font-headline text-emerald-600">{stats.active}</div>
-                <div className="text-xs text-muted-foreground">Active Access</div>
+              <div className="text-[11px] sm:text-xs font-medium text-muted-foreground leading-tight">
+                Total Members
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm bg-card">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
-                <Clock className="h-6 w-6" />
+          <Card className="border shadow-xs bg-card overflow-hidden">
+            <CardContent className="p-2.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 h-full">
+              <div className="flex items-center justify-between w-full">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                </div>
+                <span className="text-base sm:text-2xl font-bold font-headline text-emerald-600">
+                  {stats.active}
+                </span>
               </div>
-              <div>
-                <div className="text-2xl font-bold font-headline text-rose-600">{stats.expired}</div>
-                <div className="text-xs text-muted-foreground">Expired (Due)</div>
+              <div className="text-[11px] sm:text-xs font-medium text-muted-foreground leading-tight">
+                Active Access
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm bg-card">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                <Sparkles className="h-6 w-6" />
+          <Card className="border shadow-xs bg-card overflow-hidden">
+            <CardContent className="p-2.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 h-full">
+              <div className="flex items-center justify-between w-full">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 shrink-0">
+                  <Clock className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                </div>
+                <span className="text-base sm:text-2xl font-bold font-headline text-rose-600">
+                  {stats.expired}
+                </span>
               </div>
-              <div>
-                <div className="text-2xl font-bold font-headline text-amber-600">{stats.pending}</div>
-                <div className="text-xs text-muted-foreground">Applications</div>
+              <div className="text-[11px] sm:text-xs font-medium text-muted-foreground leading-tight">
+                Expired (Due)
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border shadow-xs bg-card overflow-hidden">
+            <CardContent className="p-2.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 h-full">
+              <div className="flex items-center justify-between w-full">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
+                  <Sparkles className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                </div>
+                <span className="text-base sm:text-2xl font-bold font-headline text-amber-600">
+                  {stats.pending}
+                </span>
+              </div>
+              <div className="text-[11px] sm:text-xs font-medium text-muted-foreground leading-tight">
+                Applications
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Action Bar + Search */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-1 max-w-md items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex flex-col xs:flex-row sm:flex-row items-stretch sm:items-center gap-2 w-full sm:max-w-md">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by ID, Name, Phone, Email..."
+                placeholder="Search by ID, Name, Phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-11 bg-card rounded-xl"
+                className="pl-9 h-9 sm:h-10 bg-card rounded-xl text-xs"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px] h-11 bg-card rounded-xl">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-full xs:w-[120px] sm:w-[130px] h-9 sm:h-10 bg-card rounded-xl text-xs shrink-0">
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -1337,47 +1479,48 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               });
               setIsFormOpen(!isFormOpen);
             }}
-            className="h-11 rounded-xl shadow-md font-semibold"
+            className="h-9.5 sm:h-10 rounded-xl shadow-xs font-semibold w-full sm:w-auto text-xs"
           >
-            <UserPlus className="mr-2 h-4 w-4" /> Issue New Member Access
+            <UserPlus className="mr-1.5 h-3.5 w-3.5 shrink-0" /> Issue New Member Access
           </Button>
         </div>
 
         {/* ➕ Issue New Member Form (Collapsible Card) */}
         {isFormOpen && (
           <Card className="border-2 border-primary/20 shadow-xl overflow-hidden bg-card animate-in fade-in-50 duration-200">
-            <CardHeader className="bg-primary/5 pb-4 border-b">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-xl font-headline text-primary flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" /> Issue Member ID & Password
+            <CardHeader className="bg-primary/5 p-3.5 sm:p-6 pb-2.5 sm:pb-4 border-b">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <CardTitle className="text-sm sm:text-xl font-headline text-primary flex items-center gap-1.5 leading-snug">
+                    <UserPlus className="h-4 w-4 shrink-0 text-primary" />
+                    <span>Issue Member Access</span>
                   </CardTitle>
-                  <CardDescription>
-                    Create a new member access record. Sir can customize the ID and Password as needed.
+                  <CardDescription className="text-[11px] sm:text-xs mt-0.5">
+                    Create a new member record. Customize ID & password as needed.
                   </CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setIsFormOpen(false)}>
+                <Button variant="ghost" size="sm" onClick={() => setIsFormOpen(false)} className="h-7 px-2 text-xs text-muted-foreground shrink-0">
                   Cancel
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleCreateMember} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2">
+            <CardContent className="p-4 sm:p-6">
+              <form onSubmit={handleCreateMember} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
+                <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="create-name" className="text-xs font-bold uppercase text-muted-foreground">
                     Member / Company Name *
                   </Label>
                   <Input
                     id="create-name"
                     required
-                    placeholder="e.g. Toyota Tsusho / Rajesh Sharma"
+                    placeholder="e.g. Member or Company Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="h-10"
+                    className="h-10 text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="create-id" className="text-xs font-bold uppercase text-muted-foreground">
                       Membership ID *
@@ -1396,11 +1539,11 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     placeholder="e.g. IJCC-2026-001"
                     value={formData.memberId}
                     onChange={(e) => setFormData({ ...formData, memberId: e.target.value })}
-                    className="h-10 font-mono"
+                    className="h-10 font-mono text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="create-pass" className="text-xs font-bold uppercase text-muted-foreground">
                       Password *
@@ -1419,44 +1562,44 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     placeholder="e.g. Pass@2026"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="h-10 font-mono"
+                    className="h-10 font-mono text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="create-email" className="text-xs font-bold uppercase text-muted-foreground">
                     Email Address
                   </Label>
                   <Input
                     id="create-email"
                     type="email"
-                    placeholder="rajesh@company.com"
+                    placeholder="e.g. member@company.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="h-10"
+                    className="h-10 text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="create-phone" className="text-xs font-bold uppercase text-muted-foreground">
                     Phone / WhatsApp Number
                   </Label>
                   <Input
                     id="create-phone"
-                    placeholder="+91 98765 43210"
+                    placeholder="e.g. +91 98XXXXXXXX"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="h-10"
+                    className="h-10 text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <Label className="text-xs font-bold uppercase text-muted-foreground">Membership Tier</Label>
                   <Select
                     value={formData.tier}
                     onValueChange={(val) => setFormData({ ...formData, tier: val })}
                   >
-                    <SelectTrigger className="h-10">
+                    <SelectTrigger className="h-10 text-xs sm:text-sm">
                       <SelectValue placeholder="Select Tier" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1472,13 +1615,13 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <Label className="text-xs font-bold uppercase text-muted-foreground">Validity Duration</Label>
                   <Select
                     value={formData.durationMonths}
                     onValueChange={(val) => setFormData({ ...formData, durationMonths: val })}
                   >
-                    <SelectTrigger className="h-10">
+                    <SelectTrigger className="h-10 text-xs sm:text-sm">
                       <SelectValue placeholder="Duration" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1490,7 +1633,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                   </Select>
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
                   <Label htmlFor="create-notes" className="text-xs font-bold uppercase text-muted-foreground">
                     Notes (Optional)
                   </Label>
@@ -1499,15 +1642,15 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     placeholder="e.g. Paid via Bank Transfer, Ref: UTR-9821..."
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="h-10"
+                    className="h-10 text-xs sm:text-sm"
                   />
                 </div>
 
-                <div className="md:col-span-2 lg:col-span-3 pt-2 flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
+                <div className="md:col-span-2 lg:col-span-3 pt-2 flex flex-col sm:flex-row justify-end gap-2.5 sm:gap-3">
+                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} className="w-full sm:w-auto order-2 sm:order-1">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isCreatingMember} className="px-8 font-semibold min-w-[200px]">
+                  <Button type="submit" disabled={isCreatingMember} className="w-full sm:w-auto px-8 font-semibold order-1 sm:order-2">
                     {isCreatingMember ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Member...
@@ -1525,19 +1668,206 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
         )}
 
         {/* Tabs: Active Directory vs Submitted Applications */}
-        <Tabs defaultValue="members" className="w-full space-y-6">
-          <TabsList className="bg-card p-1 rounded-xl border">
-            <TabsTrigger value="members" className="rounded-lg font-semibold px-4">
-              All Members Directory ({filteredMembers.length})
+        <Tabs defaultValue="members" className="w-full space-y-3 sm:space-y-6">
+          <TabsList className="grid grid-cols-2 w-full h-9 p-1 bg-card rounded-xl border">
+            <TabsTrigger value="members" className="rounded-lg font-semibold py-1.5 px-2 text-[11px] sm:text-sm text-center">
+              <span className="hidden sm:inline">All Members Directory</span>
+              <span className="sm:hidden">Members</span> ({filteredMembers.length})
             </TabsTrigger>
-            <TabsTrigger value="applications" className="rounded-lg font-semibold px-4">
-              Pending Applications ({applications.length})
+            <TabsTrigger value="applications" className="rounded-lg font-semibold py-1.5 px-2 text-[11px] sm:text-sm text-center">
+              <span className="hidden sm:inline">Pending Applications</span>
+              <span className="sm:hidden">Applications</span> ({applications.length})
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: MEMBERS DIRECTORY */}
-          <TabsContent value="members" className="space-y-4">
-            <Card className="border-none shadow-sm overflow-hidden bg-card">
+          <TabsContent value="members" className="space-y-3 sm:space-y-4">
+            {/* MOBILE VIEW: RESPONSIVE CARDS */}
+            <div className="md:hidden space-y-3">
+              {filteredMembers.length === 0 ? (
+                <Card className="border shadow-xs bg-card p-8 text-center text-muted-foreground text-xs">
+                  No members found matching your search.
+                </Card>
+              ) : (
+                filteredMembers.map((member) => {
+                  const isExpired = member.expiryDate && new Date() > new Date(member.expiryDate);
+                  const isVisible = visiblePasswords[member.id];
+                  const formattedDueDate = member.expiryDate
+                    ? new Date(member.expiryDate).toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "N/A";
+
+                  return (
+                    <Card key={member.id} className="border shadow-xs bg-card p-3.5 space-y-3">
+                      {/* Card Header: Member ID & Status */}
+                      <div className="flex items-center justify-between gap-2 border-b pb-2.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-mono font-bold text-sm text-primary truncate">
+                            {member.memberId}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(member.memberId, "Member ID copied!")}
+                            className="text-muted-foreground hover:text-foreground shrink-0 p-1"
+                            title="Copy Member ID"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isExpired ? (
+                            <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[10px] px-1.5 py-0">
+                              Expired
+                            </Badge>
+                          ) : member.status === "active" ? (
+                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] px-1.5 py-0">
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0">
+                              Inactive
+                            </Badge>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={renewingMemberId === member.id}
+                            onClick={() => handleRenewMember(member)}
+                            className="h-6 px-2 text-[10px] font-semibold hover:border-emerald-500 hover:text-emerald-600"
+                          >
+                            {renewingMemberId === member.id ? (
+                              <Loader2 className="h-2.5 w-2.5 animate-spin mr-1 text-primary" />
+                            ) : (
+                              <RefreshCw className="h-2.5 w-2.5 mr-1" />
+                            )}
+                            +1 Yr
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Member Name & Tier */}
+                      <div>
+                        <div className="font-bold text-sm text-foreground">{member.name}</div>
+                        <div className="text-xs text-muted-foreground capitalize mt-0.5">
+                          {member.tier?.replace(/-/g, " ")}
+                        </div>
+                      </div>
+
+                      {/* Contact Info */}
+                      {(member.email || member.phone) && (
+                        <div className="space-y-1 text-xs text-muted-foreground pt-1 border-t border-dashed">
+                          {member.email && (
+                            <a
+                              href={`mailto:${member.email}`}
+                              className="flex items-center gap-1.5 hover:text-foreground truncate"
+                            >
+                              <Mail className="h-3 w-3 shrink-0 text-primary" />
+                              <span className="truncate">{member.email}</span>
+                            </a>
+                          )}
+                          {member.phone && (
+                            <a
+                              href={`tel:${member.phone}`}
+                              className="flex items-center gap-1.5 hover:text-foreground"
+                            >
+                              <Phone className="h-3 w-3 shrink-0 text-primary" />
+                              <span>{member.phone}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Password & Validity */}
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-muted/40 p-2.5 rounded-lg border">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Password</span>
+                          <div className="flex items-center gap-1.5 font-mono mt-0.5">
+                            <span className="text-xs font-semibold select-all">
+                              {isVisible ? member.password : "••••••••"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setVisiblePasswords((prev) => ({
+                                  ...prev,
+                                  [member.id]: !prev[member.id],
+                                }))
+                              }
+                              className="text-muted-foreground hover:text-foreground p-0.5"
+                            >
+                              {isVisible ? (
+                                <EyeOff className="h-3 w-3" />
+                              ) : (
+                                <Eye className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Valid Until</span>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className={`text-xs ${isExpired ? "text-rose-600 font-bold" : "text-foreground"}`}>
+                              {formattedDueDate}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons Row */}
+                      <div className="flex items-center justify-between gap-1.5 pt-1 border-t">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShareModalMember(member)}
+                          className="flex-1 h-8 text-xs font-medium"
+                        >
+                          <Copy className="h-3.5 w-3.5 mr-1 text-primary" /> WhatsApp / Share
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingMember(member);
+                            setShowEditPassword(false);
+                            setEditFormData({
+                              memberId: member.memberId || "",
+                              name: member.name || "",
+                              password: member.password || "",
+                              email: member.email || "",
+                              phone: member.phone || "",
+                              tier: member.tier || "",
+                              expiryDate: member.expiryDate ? member.expiryDate.slice(0, 10) : "",
+                              status: member.status || "active",
+                              notes: member.notes || "",
+                            });
+                          }}
+                          className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteMember(member)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                          title="Delete Member"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+
+            {/* DESKTOP VIEW: FULL TABLE */}
+            <Card className="hidden md:block border-none shadow-sm overflow-hidden bg-card">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-muted/50 border-b text-xs uppercase text-muted-foreground font-semibold">
@@ -1722,8 +2052,72 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
           </TabsContent>
 
           {/* TAB 2: PENDING APPLICATIONS */}
-          <TabsContent value="applications" className="space-y-4">
-            <Card className="border-none shadow-sm overflow-hidden bg-card">
+          <TabsContent value="applications" className="space-y-3 sm:space-y-4">
+            {/* MOBILE VIEW FOR APPLICATIONS */}
+            <div className="md:hidden space-y-3">
+              {applications.length === 0 ? (
+                <Card className="border shadow-xs bg-card p-8 text-center text-muted-foreground text-xs">
+                  No submitted applications yet.
+                </Card>
+              ) : (
+                applications.map((app) => (
+                  <Card key={app.id} className="border shadow-xs bg-card p-3.5 space-y-3">
+                    <div className="flex items-center justify-between gap-2 border-b pb-2">
+                      <Badge variant={app.status === "approved" ? "outline" : "default"} className="text-xs">
+                        {app.status || "Pending"}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground">
+                        {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Recent"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-bold text-sm text-foreground">{app.legalCompanyName || "N/A"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {app.applicantName || app.primaryContactPerson || "N/A"}
+                      </div>
+                      <div className="text-xs text-muted-foreground capitalize mt-0.5">
+                        Tier: {app.membershipTier?.replace(/-/g, " ")}
+                      </div>
+                    </div>
+
+                    {(app.emailAddress || app.mobileNumber) && (
+                      <div className="text-xs text-muted-foreground space-y-0.5 pt-1 border-t border-dashed">
+                        {app.emailAddress && <div>{app.emailAddress}</div>}
+                        {app.mobileNumber && <div>{app.mobileNumber}</div>}
+                      </div>
+                    )}
+
+                    {app.status !== "approved" && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setFormData({
+                            memberId: generateRandomId(),
+                            password: generateRandomPassword(),
+                            name: app.legalCompanyName || app.applicantName || "",
+                            email: app.emailAddress || "",
+                            phone: app.mobileNumber || "",
+                            tier: app.membershipTier || "corporate-standard",
+                            durationMonths: "12",
+                            notes: `Approved from online application (${app.id})`,
+                            applicationId: app.id,
+                          });
+                          setIsFormOpen(true);
+                          window.scrollTo({ top: 180, behavior: "smooth" });
+                        }}
+                        className="w-full h-8 text-xs font-semibold"
+                      >
+                        <UserPlus className="h-3 w-3 mr-1.5" /> Approve & Issue ID
+                      </Button>
+                    )}
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* DESKTOP VIEW: FULL APPLICATIONS TABLE */}
+            <Card className="hidden md:block border-none shadow-sm overflow-hidden bg-card">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-muted/50 border-b text-xs uppercase text-muted-foreground font-semibold">
@@ -1801,22 +2195,22 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
       {/* MODAL: SHARE / COPY CREDENTIALS MESSAGE */}
       {shareModalMember && (
         <Dialog open={!!shareModalMember} onOpenChange={(open) => !open && setShareModalMember(null)}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-xl font-headline text-primary flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <DialogTitle className="text-lg sm:text-xl font-headline text-primary flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 Member Credentials Issued
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-xs">
                 Copy the text below to send to the member via WhatsApp or Email.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="p-4 rounded-xl bg-muted/50 font-mono text-xs whitespace-pre-wrap leading-relaxed select-all border">
+            <div className="p-3 sm:p-4 rounded-xl bg-muted/50 font-mono text-xs whitespace-pre-wrap leading-relaxed select-all border max-h-[45vh] overflow-y-auto">
               {getShareText(shareModalMember)}
             </div>
 
-            <DialogFooter className="flex justify-between sm:justify-between items-center gap-2">
+            <DialogFooter className="flex flex-col sm:flex-row justify-between sm:justify-between items-stretch sm:items-center gap-2 pt-2">
               <Button
                 variant="outline"
                 onClick={() =>
@@ -1825,10 +2219,13 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     "WhatsApp/Email text copied to clipboard!"
                   )
                 }
+                className="w-full sm:w-auto text-xs"
               >
                 <Copy className="h-4 w-4 mr-2" /> Copy Full Message
               </Button>
-              <Button onClick={() => setShareModalMember(null)}>Done</Button>
+              <Button onClick={() => setShareModalMember(null)} className="w-full sm:w-auto text-xs">
+                Done
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1837,10 +2234,10 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
       {/* MODAL: EDIT MEMBER */}
       {editingMember && (
         <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
-          <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col p-0 overflow-hidden shadow-2xl">
-            <DialogHeader className="px-6 pt-5 pb-3 border-b bg-muted/20">
-              <DialogTitle className="text-lg font-headline text-primary flex items-center gap-2">
-                <Edit className="h-5 w-5 text-accent" />
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
+            <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b bg-muted/20">
+              <DialogTitle className="text-base sm:text-lg font-headline text-primary flex items-center gap-2">
+                <Edit className="h-4 w-4 sm:h-5 sm:w-5 text-accent shrink-0" />
                 Edit Member Access & Credentials
               </DialogTitle>
               <DialogDescription className="text-xs">
@@ -1848,12 +2245,12 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </DialogDescription>
             </DialogHeader>
 
-            <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
               {/* Member Identity Profile */}
-              <div className="bg-muted/40 border rounded-xl p-3.5 space-y-2.5 text-xs">
+              <div className="bg-muted/40 border rounded-xl p-3 sm:p-3.5 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium">Company / Member:</span>
-                  <span className="font-bold text-foreground">{editingMember.name || "N/A"}</span>
+                  <span className="font-bold text-foreground truncate max-w-[180px]">{editingMember.name || "N/A"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium">Phone:</span>
@@ -1883,7 +2280,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, email: e.target.value.toLowerCase().trim() })
                     }
-                    placeholder="e.g. member@company.com (leave blank to auto-bind on user's first login)"
+                    placeholder="e.g. member@company.com"
                     className="font-mono h-8 text-xs bg-background"
                   />
                   <p className="text-[10px] text-muted-foreground">
@@ -1895,7 +2292,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </div>
 
               {/* Row 1: Membership ID & Password */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                 {/* Membership ID Field */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -1921,7 +2318,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                       setEditFormData({ ...editFormData, memberId: e.target.value.toUpperCase() })
                     }
                     placeholder="e.g. IJCC-2026-001 or IJCC-HONDA"
-                    className="font-mono font-bold tracking-wide uppercase h-9 text-sm"
+                    className="font-mono font-bold tracking-wide uppercase h-9 text-xs sm:text-sm"
                   />
                 </div>
 
@@ -1952,7 +2349,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                       onChange={(e) =>
                         setEditFormData({ ...editFormData, password: e.target.value })
                       }
-                      className="font-mono pr-8 h-9 text-sm"
+                      className="font-mono pr-8 h-9 text-xs sm:text-sm"
                       placeholder="Password"
                     />
                     <button
@@ -1972,7 +2369,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </div>
 
               {/* Row 2: Due Date & Access Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Valid Until (Due Date)
@@ -1983,7 +2380,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, expiryDate: e.target.value })
                     }
-                    className="font-mono h-9 text-sm"
+                    className="font-mono h-9 text-xs sm:text-sm"
                   />
                 </div>
 
@@ -1995,7 +2392,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                     value={editFormData.status}
                     onValueChange={(val) => setEditFormData({ ...editFormData, status: val })}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                    <SelectTrigger className="h-9 text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -2007,19 +2404,19 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </div>
             </div>
 
-            <DialogFooter className="px-6 py-3 border-t bg-muted/20 flex items-center justify-end gap-2">
-              <Button variant="outline" size="sm" disabled={isSavingMember} onClick={() => setEditingMember(null)}>
+            <DialogFooter className="px-4 sm:px-6 py-2.5 sm:py-3 border-t bg-muted/20 flex flex-row items-center justify-end gap-2">
+              <Button variant="outline" size="sm" disabled={isSavingMember} onClick={() => setEditingMember(null)} className="h-8 text-xs">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleEditSave} disabled={isSavingMember} className="font-semibold shadow-sm min-w-[130px]">
+              <Button size="sm" onClick={handleEditSave} disabled={isSavingMember} className="h-8 text-xs font-semibold shadow-sm min-w-[120px]">
                 {isSavingMember ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                     Save Changes
                   </>
                 )}
@@ -2031,32 +2428,32 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
 
       {/* MODAL: TEAM ACCESS & PERMISSIONS (SANITY STYLE) */}
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-headline font-bold">
-              <Users className="h-5 w-5 text-primary" />
-              Administrative Team & Access Permissions
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-headline font-bold">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              Administrative Team & Permissions
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs">
               Manage authorized administrator emails and review access permission requests.
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="requests" className="w-full">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="requests" className="relative text-xs">
-                Pending Requests
+            <TabsList className="grid grid-cols-3 mb-4 h-auto p-1 bg-muted/60">
+              <TabsTrigger value="requests" className="relative text-[11px] sm:text-xs py-1.5 px-1 truncate">
+                <span className="hidden sm:inline">Pending </span>Requests
                 {pendingAccessRequests.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-bold">
+                  <span className="ml-1 px-1 rounded-full bg-red-600 text-white text-[9px] font-bold">
                     {pendingAccessRequests.length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="admins" className="text-xs">
-                Authorized Admins ({adminUsersList.length})
+              <TabsTrigger value="admins" className="text-[11px] sm:text-xs py-1.5 px-1 truncate">
+                <span className="hidden sm:inline">Authorized </span>Admins ({adminUsersList.length})
               </TabsTrigger>
-              <TabsTrigger value="add" className="text-xs">
-                + Add Administrator
+              <TabsTrigger value="add" className="text-[11px] sm:text-xs py-1.5 px-1 truncate">
+                + Add<span className="hidden sm:inline"> Admin</span>
               </TabsTrigger>
             </TabsList>
 
