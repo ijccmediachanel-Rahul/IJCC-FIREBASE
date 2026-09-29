@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       tier = "corporate-standard",
+      startDate,
+      endDate,
+      expiryDate,
       durationMonths = 12,
       notes = "",
       applicationId,
@@ -74,7 +77,10 @@ export async function POST(req: NextRequest) {
     const trimmedId = String(memberId).trim();
     const docId = `mem_${trimmedId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
     const now = new Date();
-    const expiry = calculateExpiryDate(now, Number(durationMonths) || 12);
+    const start = startDate ? new Date(startDate) : now;
+    const finalExpiry = (endDate || expiryDate)
+      ? new Date(endDate || expiryDate).toISOString()
+      : calculateExpiryDate(start, Number(durationMonths) || 12);
 
     const newMember: MemberRecord = {
       id: docId,
@@ -84,8 +90,8 @@ export async function POST(req: NextRequest) {
       email: String(email || "").trim(),
       phone: String(phone || "").trim(),
       tier: String(tier || "corporate-standard"),
-      startDate: now.toISOString(),
-      expiryDate: expiry,
+      startDate: start.toISOString(),
+      expiryDate: finalExpiry,
       status: "active",
       notes: String(notes || ""),
       createdAt: now.toISOString(),
@@ -114,7 +120,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, action, memberId, password, name, email, phone, tier, status, notes, expiryDate } = body;
+    const { id, action, memberId, password, name, email, phone, tier, status, notes, startDate, expiryDate, endDate } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Member document ID is required" }, { status: 400 });
@@ -170,7 +176,10 @@ export async function PUT(req: NextRequest) {
     if (tier !== undefined) updatePayload.tier = String(tier);
     if (status !== undefined) updatePayload.status = status;
     if (notes !== undefined) updatePayload.notes = String(notes);
-    if (expiryDate !== undefined) updatePayload.expiryDate = String(expiryDate);
+    if (startDate !== undefined) updatePayload.startDate = String(startDate);
+    if (expiryDate !== undefined || endDate !== undefined) {
+      updatePayload.expiryDate = String(expiryDate || endDate);
+    }
 
     const updated = await updateMember(id, updatePayload);
     return NextResponse.json({ success: true, member: updated });

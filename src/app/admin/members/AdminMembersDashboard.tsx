@@ -52,6 +52,36 @@ import { MemberRecord } from "@/lib/memberships";
 const ADMIN_STORAGE_KEY = "ijcc_admin_auth_key_v1";
 const ADMIN_EMAIL_STORAGE_KEY = "ijcc_admin_email_v1";
 
+// Helper: Calculate End Date dynamically from Start Date and Duration (Months)
+function computeEndDate(startDateStr: string, durationMonths: string | number): string {
+  if (!startDateStr) return "";
+  const parts = startDateStr.split("-");
+  if (parts.length !== 3) return "";
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return "";
+
+  const d = new Date(year, month, day);
+  const months = parseInt(String(durationMonths), 10);
+  if (isNaN(months) || months <= 0) return startDateStr;
+
+  d.setMonth(d.getMonth() + months);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// Helper: Get today's local date string as YYYY-MM-DD
+function getTodayString(): string {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function AdminMembersDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -98,7 +128,7 @@ export default function AdminMembersDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // New Member Form State
+  // New Member Form State with Dynamic Start & End Date
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     memberId: "",
@@ -107,12 +137,14 @@ export default function AdminMembersDashboard() {
     email: "",
     phone: "",
     tier: "corporate-standard",
+    startDate: getTodayString(),
     durationMonths: "12",
+    endDate: computeEndDate(getTodayString(), "12"),
     notes: "",
     applicationId: "",
   });
 
-  // Edit Member Modal State
+  // Edit Member Modal State with Dynamic Start & End Date
   const [editingMember, setEditingMember] = useState<MemberRecord | null>(null);
   const [showEditPassword, setShowEditPassword] = useState<boolean>(false);
   const [editFormData, setEditFormData] = useState({
@@ -122,7 +154,9 @@ export default function AdminMembersDashboard() {
     email: "",
     phone: "",
     tier: "",
-    expiryDate: "",
+    startDate: getTodayString(),
+    durationMonths: "custom",
+    expiryDate: computeEndDate(getTodayString(), "12"),
     status: "active",
     notes: "",
   });
@@ -578,7 +612,12 @@ export default function AdminMembersDashboard() {
       const res = await fetch("/api/admin/members", {
         method: "POST",
         headers,
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          startDate: formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString(),
+          endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+          expiryDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+        }),
       });
 
       const data = await res.json();
@@ -590,6 +629,7 @@ export default function AdminMembersDashboard() {
       });
 
       setShareModalMember(data.member);
+      const today = getTodayString();
       setFormData({
         memberId: "",
         password: "",
@@ -597,7 +637,9 @@ export default function AdminMembersDashboard() {
         email: "",
         phone: "",
         tier: "corporate-standard",
+        startDate: today,
         durationMonths: "12",
+        endDate: computeEndDate(today, "12"),
         notes: "",
         applicationId: "",
       });
@@ -679,7 +721,8 @@ export default function AdminMembersDashboard() {
           memberId: editFormData.memberId,
           password: editFormData.password,
           email: editFormData.email.trim().toLowerCase(),
-          expiryDate: editFormData.expiryDate,
+          startDate: editFormData.startDate ? new Date(editFormData.startDate).toISOString() : undefined,
+          expiryDate: editFormData.expiryDate ? new Date(editFormData.expiryDate).toISOString() : undefined,
           status: editFormData.status,
           notes: editFormData.notes,
         }),
@@ -752,7 +795,7 @@ export default function AdminMembersDashboard() {
       "Tier",
       "Password",
       "Start Date",
-      "Due Date",
+      "End Date",
       "Status",
     ];
 
@@ -763,8 +806,8 @@ export default function AdminMembersDashboard() {
       `"${m.phone || ""}"`,
       `"${m.tier || ""}"`,
       `"${m.password || ""}"`,
-      `" ${m.startDate ? m.startDate.slice(0, 10) : ""}"`,
-      `" ${m.expiryDate ? m.expiryDate.slice(0, 10) : ""}"`,
+      `"${m.startDate ? m.startDate.slice(0, 10) : ""}"`,
+      `"${m.expiryDate ? m.expiryDate.slice(0, 10) : ""}"`,
       `"${m.status}"`,
     ]);
 
@@ -827,13 +870,31 @@ export default function AdminMembersDashboard() {
 
   // Format share message
   const getShareText = (m: MemberRecord) => {
+    const formattedStartDate = m.startDate
+      ? new Date(m.startDate).toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : m.createdAt
+      ? new Date(m.createdAt).toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "";
+
     const formattedDate = m.expiryDate
       ? new Date(m.expiryDate).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
       : "1 Year";
+
+    const validityPeriodStr = formattedStartDate
+      ? `${formattedStartDate} to ${formattedDate}`
+      : formattedDate;
 
     return `Dear ${m.name},
 
@@ -843,7 +904,7 @@ Here are your official Member Portal credentials to access exclusive chamber res
 • Membership ID: ${m.memberId}
 • Password: ${m.password}
 • Category: ${m.tier}
-• Valid Till: ${formattedDate}
+• Validity Period: ${validityPeriodStr}
 
 Access your resources anytime at:
 https://ijcc.in/resources
@@ -1466,6 +1527,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
 
           <Button
             onClick={() => {
+              const today = getTodayString();
               setFormData({
                 memberId: generateRandomId(),
                 password: generateRandomPassword(),
@@ -1473,7 +1535,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 email: "",
                 phone: "",
                 tier: "corporate-standard",
+                startDate: today,
                 durationMonths: "12",
+                endDate: computeEndDate(today, "12"),
                 notes: "",
                 applicationId: "",
               });
@@ -1505,11 +1569,13 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
               </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <form onSubmit={handleCreateMember} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
+              <form onSubmit={handleCreateMember} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 items-start">
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="create-name" className="text-xs font-bold uppercase text-muted-foreground">
-                    Member / Company Name *
-                  </Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-name" className="text-xs font-bold uppercase text-muted-foreground">
+                      Member / Company Name *
+                    </Label>
+                  </div>
                   <Input
                     id="create-name"
                     required
@@ -1521,14 +1587,14 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between h-5">
                     <Label htmlFor="create-id" className="text-xs font-bold uppercase text-muted-foreground">
                       Membership ID *
                     </Label>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, memberId: generateRandomId() })}
-                      className="text-[11px] text-primary hover:underline font-semibold"
+                      className="text-[11px] text-primary hover:underline font-semibold leading-none"
                     >
                       🎲 Generate
                     </button>
@@ -1544,14 +1610,14 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between h-5">
                     <Label htmlFor="create-pass" className="text-xs font-bold uppercase text-muted-foreground">
                       Password *
                     </Label>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, password: generateRandomPassword() })}
-                      className="text-[11px] text-primary hover:underline font-semibold"
+                      className="text-[11px] text-primary hover:underline font-semibold leading-none"
                     >
                       🎲 Generate
                     </button>
@@ -1567,9 +1633,11 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="create-email" className="text-xs font-bold uppercase text-muted-foreground">
-                    Email Address
-                  </Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-email" className="text-xs font-bold uppercase text-muted-foreground">
+                      Email Address
+                    </Label>
+                  </div>
                   <Input
                     id="create-email"
                     type="email"
@@ -1581,9 +1649,11 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="create-phone" className="text-xs font-bold uppercase text-muted-foreground">
-                    Phone / WhatsApp Number
-                  </Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-phone" className="text-xs font-bold uppercase text-muted-foreground">
+                      Phone / WhatsApp Number
+                    </Label>
+                  </div>
                   <Input
                     id="create-phone"
                     placeholder="e.g. +91 98XXXXXXXX"
@@ -1594,7 +1664,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label className="text-xs font-bold uppercase text-muted-foreground">Membership Tier</Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Membership Tier</Label>
+                  </div>
                   <Select
                     value={formData.tier}
                     onValueChange={(val) => setFormData({ ...formData, tier: val })}
@@ -1615,23 +1687,152 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                   </Select>
                 </div>
 
+                {/* Start Date */}
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label className="text-xs font-bold uppercase text-muted-foreground">Validity Duration</Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-start-date" className="text-xs font-bold uppercase text-muted-foreground">
+                      Start Date *
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = getTodayString();
+                        setFormData((prev) => ({
+                          ...prev,
+                          startDate: today,
+                          endDate:
+                            prev.durationMonths !== "custom"
+                              ? computeEndDate(today, prev.durationMonths)
+                              : prev.endDate,
+                        }));
+                      }}
+                      className="text-[11px] text-primary hover:underline font-semibold leading-none"
+                    >
+                      📅 Today
+                    </button>
+                  </div>
+                  <Input
+                    id="create-start-date"
+                    type="date"
+                    required
+                    value={formData.startDate}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        startDate: newStart,
+                        endDate:
+                          prev.durationMonths !== "custom" && newStart
+                            ? computeEndDate(newStart, prev.durationMonths)
+                            : prev.endDate,
+                      }));
+                    }}
+                    className="h-10 font-mono text-xs sm:text-sm"
+                  />
+                </div>
+
+                {/* Validity Duration */}
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-duration" className="text-xs font-bold uppercase text-muted-foreground">
+                      Validity Duration
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      Select Period
+                    </span>
+                  </div>
                   <Select
                     value={formData.durationMonths}
-                    onValueChange={(val) => setFormData({ ...formData, durationMonths: val })}
+                    onValueChange={(val) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        durationMonths: val,
+                        endDate:
+                          val !== "custom" && prev.startDate
+                            ? computeEndDate(prev.startDate, val)
+                            : prev.endDate,
+                      }));
+                    }}
                   >
-                    <SelectTrigger className="h-10 text-xs sm:text-sm">
+                    <SelectTrigger id="create-duration" className="h-10 text-xs sm:text-sm">
                       <SelectValue placeholder="Duration" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="1">1 Month</SelectItem>
+                      <SelectItem value="3">3 Months</SelectItem>
+                      <SelectItem value="6">6 Months</SelectItem>
                       <SelectItem value="12">1 Year (12 Months)</SelectItem>
                       <SelectItem value="24">2 Years (24 Months)</SelectItem>
-                      <SelectItem value="6">6 Months</SelectItem>
-                      <SelectItem value="36">3 Years</SelectItem>
+                      <SelectItem value="36">3 Years (36 Months)</SelectItem>
+                      <SelectItem value="60">5 Years (60 Months)</SelectItem>
+                      <SelectItem value="custom">Custom End Date</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* End Date (Auto-calculated dynamically from start date + duration) */}
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center justify-between h-5">
+                    <Label htmlFor="create-end-date" className="text-xs font-bold uppercase text-muted-foreground">
+                      End Date (Expiry) *
+                    </Label>
+                    {formData.durationMonths !== "custom" ? (
+                      <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 leading-none">
+                        ⚡ Auto-set
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 leading-none">
+                        Custom
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    id="create-end-date"
+                    type="date"
+                    required
+                    value={formData.endDate}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                        durationMonths: "custom",
+                      }));
+                    }}
+                    className="h-10 font-mono text-xs sm:text-sm"
+                  />
+                </div>
+
+                {/* Visual Duration & Period Summary Banner */}
+                {formData.startDate && formData.endDate && (
+                  <div className="md:col-span-2 lg:col-span-3 p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-foreground">
+                        Membership Period:{" "}
+                        <strong className="font-semibold text-primary">
+                          {new Date(formData.startDate).toLocaleDateString("en-US", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </strong>{" "}
+                        ➔{" "}
+                        <strong className="font-semibold text-foreground">
+                          {new Date(formData.endDate).toLocaleDateString("en-US", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </strong>
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {formData.durationMonths === "custom"
+                        ? "Custom Range"
+                        : `${formData.durationMonths} Months Duration`}
+                    </span>
+                  </div>
+                )}
 
                 <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
                   <Label htmlFor="create-notes" className="text-xs font-bold uppercase text-muted-foreground">
@@ -1692,6 +1893,19 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 filteredMembers.map((member) => {
                   const isExpired = member.expiryDate && new Date() > new Date(member.expiryDate);
                   const isVisible = visiblePasswords[member.id];
+                  const formattedStartDate = member.startDate
+                    ? new Date(member.startDate).toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : member.createdAt
+                    ? new Date(member.createdAt).toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "N/A";
                   const formattedDueDate = member.expiryDate
                     ? new Date(member.expiryDate).toLocaleDateString("en-US", {
                         day: "numeric",
@@ -1780,11 +1994,11 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                         </div>
                       )}
 
-                      {/* Password & Validity */}
-                      <div className="grid grid-cols-2 gap-2 text-xs bg-muted/40 p-2.5 rounded-lg border">
-                        <div>
-                          <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Password</span>
-                          <div className="flex items-center gap-1.5 font-mono mt-0.5">
+                      {/* Password & Validity Dates */}
+                      <div className="space-y-2 text-xs bg-muted/40 p-2.5 rounded-lg border">
+                        <div className="flex items-center justify-between border-b pb-1.5">
+                          <span className="text-[10px] text-muted-foreground uppercase font-semibold">Password</span>
+                          <div className="flex items-center gap-1.5 font-mono">
                             <span className="text-xs font-semibold select-all">
                               {isVisible ? member.password : "••••••••"}
                             </span>
@@ -1807,13 +2021,25 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                           </div>
                         </div>
 
-                        <div>
-                          <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Valid Until</span>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
-                            <span className={`text-xs ${isExpired ? "text-rose-600 font-bold" : "text-foreground"}`}>
-                              {formattedDueDate}
-                            </span>
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Start Date</span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Calendar className="h-3 w-3 text-primary shrink-0" />
+                              <span className="text-xs text-foreground font-medium">
+                                {formattedStartDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block uppercase font-semibold">End Date</span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <span className={`text-xs ${isExpired ? "text-rose-600 font-bold" : "text-foreground font-medium"}`}>
+                                {formattedDueDate}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1832,6 +2058,15 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                           size="sm"
                           variant="ghost"
                           onClick={() => {
+                            const start = member.startDate
+                              ? member.startDate.slice(0, 10)
+                              : member.createdAt
+                              ? member.createdAt.slice(0, 10)
+                              : getTodayString();
+                            const end = member.expiryDate
+                              ? member.expiryDate.slice(0, 10)
+                              : computeEndDate(start, "12");
+
                             setEditingMember(member);
                             setShowEditPassword(false);
                             setEditFormData({
@@ -1841,7 +2076,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                               email: member.email || "",
                               phone: member.phone || "",
                               tier: member.tier || "",
-                              expiryDate: member.expiryDate ? member.expiryDate.slice(0, 10) : "",
+                              startDate: start,
+                              durationMonths: "custom",
+                              expiryDate: end,
                               status: member.status || "active",
                               notes: member.notes || "",
                             });
@@ -1876,7 +2113,8 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                       <th className="py-3.5 px-4">Name / Company</th>
                       <th className="py-3.5 px-4">Contact</th>
                       <th className="py-3.5 px-4">Password</th>
-                      <th className="py-3.5 px-4">Due Date</th>
+                      <th className="py-3.5 px-4">Start Date</th>
+                      <th className="py-3.5 px-4">End Date</th>
                       <th className="py-3.5 px-4">Status</th>
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
@@ -1884,7 +2122,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                   <tbody className="divide-y">
                     {filteredMembers.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                        <td colSpan={8} className="text-center py-12 text-muted-foreground">
                           No members found matching your search.
                         </td>
                       </tr>
@@ -1893,12 +2131,26 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                         const isExpired = member.expiryDate && new Date() > new Date(member.expiryDate);
                         const isVisible = visiblePasswords[member.id];
 
+                        const formattedStartDate = member.startDate
+                          ? new Date(member.startDate).toLocaleDateString("en-US", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : member.createdAt
+                          ? new Date(member.createdAt).toLocaleDateString("en-US", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "N/A";
+
                         const formattedDueDate = member.expiryDate
                           ? new Date(member.expiryDate).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
                           : "N/A";
 
                         return (
@@ -1953,16 +2205,28 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                                 </button>
                               </div>
                             </td>
-                            <td className="py-3.5 px-4">
+                            {/* Start Date Column */}
+                            <td className="py-3.5 px-4 whitespace-nowrap">
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="font-medium text-foreground">{formattedStartDate}</span>
+                              </div>
+                            </td>
+                            {/* End Date Column */}
+                            <td className="py-3.5 px-4 whitespace-nowrap">
                               <div className="flex items-center gap-1.5 text-xs">
-                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className={isExpired ? "text-rose-600 font-bold" : "text-foreground"}>
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className={isExpired ? "text-rose-600 font-bold" : "text-foreground font-medium"}>
                                   {formattedDueDate}
                                 </span>
                               </div>
-                              {isExpired && (
+                              {isExpired ? (
                                 <span className="text-[10px] text-rose-500 font-semibold block">
-                                  Past Due Date
+                                  Expired
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-emerald-600 font-medium block">
+                                  Active
                                 </span>
                               )}
                             </td>
@@ -2011,6 +2275,15 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => {
+                                    const start = member.startDate
+                                      ? member.startDate.slice(0, 10)
+                                      : member.createdAt
+                                      ? member.createdAt.slice(0, 10)
+                                      : getTodayString();
+                                    const end = member.expiryDate
+                                      ? member.expiryDate.slice(0, 10)
+                                      : computeEndDate(start, "12");
+
                                     setEditingMember(member);
                                     setShowEditPassword(false);
                                     setEditFormData({
@@ -2020,7 +2293,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                                       email: member.email || "",
                                       phone: member.phone || "",
                                       tier: member.tier || "",
-                                      expiryDate: member.expiryDate ? member.expiryDate.slice(0, 10) : "",
+                                      startDate: start,
+                                      durationMonths: "custom",
+                                      expiryDate: end,
                                       status: member.status || "active",
                                       notes: member.notes || "",
                                     });
@@ -2092,6 +2367,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                       <Button
                         size="sm"
                         onClick={() => {
+                          const today = getTodayString();
                           setFormData({
                             memberId: generateRandomId(),
                             password: generateRandomPassword(),
@@ -2099,7 +2375,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                             email: app.emailAddress || "",
                             phone: app.mobileNumber || "",
                             tier: app.membershipTier || "corporate-standard",
+                            startDate: today,
                             durationMonths: "12",
+                            endDate: computeEndDate(today, "12"),
                             notes: `Approved from online application (${app.id})`,
                             applicationId: app.id,
                           });
@@ -2161,6 +2439,7 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                               <Button
                                 size="sm"
                                 onClick={() => {
+                                  const today = getTodayString();
                                   setFormData({
                                     memberId: generateRandomId(),
                                     password: generateRandomPassword(),
@@ -2168,7 +2447,9 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                                     email: app.emailAddress || "",
                                     phone: app.mobileNumber || "",
                                     tier: app.membershipTier || "corporate-standard",
+                                    startDate: today,
                                     durationMonths: "12",
+                                    endDate: computeEndDate(today, "12"),
                                     notes: `Approved from online application (${app.id})`,
                                     applicationId: app.id,
                                   });
@@ -2368,26 +2649,128 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                 </div>
               </div>
 
-              {/* Row 2: Due Date & Access Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {/* Row 2: Start Date & Duration */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-start">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Valid Until (Due Date)
-                  </Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Start Date
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = getTodayString();
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          startDate: today,
+                          expiryDate:
+                            prev.durationMonths !== "custom"
+                              ? computeEndDate(today, prev.durationMonths)
+                              : prev.expiryDate,
+                        }));
+                      }}
+                      className="text-[10px] text-primary hover:underline font-semibold leading-none"
+                    >
+                      📅 Set Today
+                    </button>
+                  </div>
+                  <Input
+                    type="date"
+                    value={editFormData.startDate}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      setEditFormData((prev) => ({
+                        ...prev,
+                        startDate: newStart,
+                        expiryDate:
+                          prev.durationMonths !== "custom" && newStart
+                            ? computeEndDate(newStart, prev.durationMonths)
+                            : prev.expiryDate,
+                      }));
+                    }}
+                    className="font-mono h-9 text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between h-5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Validity Duration
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      Select Period
+                    </span>
+                  </div>
+                  <Select
+                    value={editFormData.durationMonths}
+                    onValueChange={(val) => {
+                      setEditFormData((prev) => ({
+                        ...prev,
+                        durationMonths: val,
+                        expiryDate:
+                          val !== "custom" && prev.startDate
+                            ? computeEndDate(prev.startDate, val)
+                            : prev.expiryDate,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs sm:text-sm">
+                      <SelectValue placeholder="Duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Month</SelectItem>
+                      <SelectItem value="3">3 Months</SelectItem>
+                      <SelectItem value="6">6 Months</SelectItem>
+                      <SelectItem value="12">1 Year (12 Months)</SelectItem>
+                      <SelectItem value="24">2 Years (24 Months)</SelectItem>
+                      <SelectItem value="36">3 Years (36 Months)</SelectItem>
+                      <SelectItem value="60">5 Years (60 Months)</SelectItem>
+                      <SelectItem value="custom">Custom End Date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row 3: End Date & Access Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-start">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between h-5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      End Date (Due Date)
+                    </Label>
+                    {editFormData.durationMonths !== "custom" ? (
+                      <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 leading-none">
+                        ⚡ Auto-set
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 leading-none">
+                        Custom
+                      </span>
+                    )}
+                  </div>
                   <Input
                     type="date"
                     value={editFormData.expiryDate}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, expiryDate: e.target.value })
+                      setEditFormData((prev) => ({
+                        ...prev,
+                        expiryDate: e.target.value,
+                        durationMonths: "custom",
+                      }))
                     }
                     className="font-mono h-9 text-xs sm:text-sm"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Access Status
-                  </Label>
+                  <div className="flex items-center justify-between h-5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Access Status
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      Permission
+                    </span>
+                  </div>
                   <Select
                     value={editFormData.status}
                     onValueChange={(val) => setEditFormData({ ...editFormData, status: val })}
@@ -2402,6 +2785,38 @@ Email: info@ijcc.in | Web: www.ijcc.in`;
                   </Select>
                 </div>
               </div>
+
+              {/* Edit Modal Duration & Period Summary Banner */}
+              {editFormData.startDate && editFormData.expiryDate && (
+                <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 text-xs flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-foreground">
+                      Period:{" "}
+                      <strong className="font-semibold text-primary">
+                        {new Date(editFormData.startDate).toLocaleDateString("en-US", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </strong>{" "}
+                      ➔{" "}
+                      <strong className="font-semibold text-foreground">
+                        {new Date(editFormData.expiryDate).toLocaleDateString("en-US", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </strong>
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    {editFormData.durationMonths === "custom"
+                      ? "Custom Range"
+                      : `${editFormData.durationMonths} Months`}
+                  </span>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="px-4 sm:px-6 py-2.5 sm:py-3 border-t bg-muted/20 flex flex-row items-center justify-end gap-2">
