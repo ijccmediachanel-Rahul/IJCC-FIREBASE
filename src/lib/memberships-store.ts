@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { MemberRecord } from "./memberships";
 import { db } from "./firebase";
 import {
@@ -7,84 +8,172 @@ import {
   getDocs,
   doc,
   setDoc,
-  updateDoc,
   deleteDoc,
 } from "firebase/firestore";
 
-const DATA_DIR = path.join(process.cwd(), "src", "data");
-const MEMBERS_FILE = path.join(DATA_DIR, "memberships.json");
-const APPLICATIONS_FILE = path.join(DATA_DIR, "membership-applications.json");
+declare global {
+  // eslint-disable-next-line no-var
+  var __ijcc_members_cache: MemberRecord[] | undefined;
+  // eslint-disable-next-line no-var
+  var __ijcc_apps_cache: any[] | undefined;
+}
 
-function ensureFilesExist() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(MEMBERS_FILE)) {
-    fs.writeFileSync(MEMBERS_FILE, JSON.stringify([], null, 2), "utf-8");
-  }
-  if (!fs.existsSync(APPLICATIONS_FILE)) {
-    fs.writeFileSync(APPLICATIONS_FILE, JSON.stringify([], null, 2), "utf-8");
+const LOCAL_DATA_DIR = path.join(process.cwd(), "src", "data");
+const TMP_DATA_DIR = path.join(os.tmpdir(), "ijcc_store");
+
+// Determine the safest writable path for storage (works on both Localhost & Vercel Serverless)
+function getStorageFilePath(filename: string): string {
+  // 1. Try local src/data first (works on development and persistent server environments)
+  try {
+    if (!fs.existsSync(LOCAL_DATA_DIR)) {
+      fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
+    }
+    const testFile = path.join(LOCAL_DATA_DIR, `.write_check_${Date.now()}`);
+    fs.writeFileSync(testFile, "1");
+    fs.unlinkSync(testFile);
+    return path.join(LOCAL_DATA_DIR, filename);
+  } catch {
+    // 2. Read-only filesystem (e.g. Vercel Serverless / AWS Lambda) -> fallback to /tmp
+    try {
+      if (!fs.existsSync(TMP_DATA_DIR)) {
+        fs.mkdirSync(TMP_DATA_DIR, { recursive: true });
+      }
+      const tmpFile = path.join(TMP_DATA_DIR, filename);
+      // Seed from bundled static src/data file if /tmp file does not exist yet
+      if (!fs.existsSync(tmpFile)) {
+        const bundledFile = path.join(LOCAL_DATA_DIR, filename);
+        if (fs.existsSync(bundledFile)) {
+          const content = fs.readFileSync(bundledFile, "utf-8");
+          fs.writeFileSync(tmpFile, content, "utf-8");
+        } else {
+          fs.writeFileSync(tmpFile, JSON.stringify([], null, 2), "utf-8");
+        }
+      }
+      return tmpFile;
+    } catch {
+      return path.join(LOCAL_DATA_DIR, filename);
+    }
   }
 }
 
 function readLocalMembers(): MemberRecord[] {
-  ensureFilesExist();
+  const filePath = getStorageFilePath("memberships.json");
+  let members: MemberRecord[] = [];
+
   try {
-    const raw = fs.readFileSync(MEMBERS_FILE, "utf-8");
-    return raw ? JSON.parse(raw) : [];
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      if (raw) members = JSON.parse(raw);
+    }
   } catch (err) {
-    console.error("Failed to read local memberships.json:", err);
-    return [];
+    console.warn("Failed to read memberships file:", err);
+    if (globalThis.__ijcc_members_cache) {
+      return globalThis.__ijcc_members_cache;
+    }
   }
+
+  globalThis.__ijcc_members_cache = members;
+  return members;
 }
 
 function writeLocalMembers(members: MemberRecord[]) {
-  ensureFilesExist();
+  globalThis.__ijcc_members_cache = members;
+  const filePath = getStorageFilePath("memberships.json");
   try {
-    fs.writeFileSync(MEMBERS_FILE, JSON.stringify(members, null, 2), "utf-8");
+    fs.writeFileSync(filePath, JSON.stringify(members, null, 2), "utf-8");
   } catch (err) {
-    console.error("Failed to write local memberships.json:", err);
+    console.warn("Failed to write memberships file:", err);
   }
+
+  // Also try writing to local src/data if different and writable
+  try {
+    const localFile = path.join(LOCAL_DATA_DIR, "memberships.json");
+    if (localFile !== filePath) {
+      fs.writeFileSync(localFile, JSON.stringify(members, null, 2), "utf-8");
+    }
+  } catch {}
 }
 
 function readLocalApplications(): any[] {
-  ensureFilesExist();
-  try {
-    const raw = fs.readFileSync(APPLICATIONS_FILE, "utf-8");
-    return raw ? JSON.parse(raw) : [];
-  } catch (err) {
-    console.error("Failed to read local applications.json:", err);
-    return [];
+  if (globalThis.__ijcc_apps_cache && Array.isArray(globalThis.__ijcc_apps_cache) && globalThis.__ijcc_apps_cache.length > 0) {
+    return globalThis.__ijcc_apps_cache;
   }
+
+  const filePath = getStorageFilePath("membership-applications.json");
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = raw ? JSON.parse(raw) : [];
+      globalThis.__ijcc_apps_cache = data;
+      return data;
+    }
+  } catch (err) {
+    console.warn("Failed to read applications file:", err);
+  }
+  return [];
 }
 
 function writeLocalApplications(apps: any[]) {
-  ensureFilesExist();
+  globalThis.__ijcc_apps_cache = apps;
+  const filePath = getStorageFilePath("membership-applications.json");
   try {
-    fs.writeFileSync(APPLICATIONS_FILE, JSON.stringify(apps, null, 2), "utf-8");
+    fs.writeFileSync(filePath, JSON.stringify(apps, null, 2), "utf-8");
   } catch (err) {
-    console.error("Failed to write local applications.json:", err);
+    console.warn("Failed to write applications file:", err);
   }
 }
 
 // -------------------------------------------------------------
-// Public Data Store Methods (Local JSON Primary + Firestore Sync)
+// Public Data Store Methods
 // -------------------------------------------------------------
 
 export async function getAllMembers(): Promise<MemberRecord[]> {
   const localMembers = readLocalMembers();
+
+  // Also attempt Firestore sync in background if permissions allow
+  try {
+    const snap = await getDocs(collection(db, "memberships"));
+    if (!snap.empty) {
+      const fsMembers: MemberRecord[] = [];
+      snap.forEach((d) => {
+        fsMembers.push(d.data() as MemberRecord);
+      });
+      const map = new Map<string, MemberRecord>();
+      fsMembers.forEach((m) => map.set(m.memberId || m.id, m));
+      localMembers.forEach((m) => {
+        const k = m.memberId || m.id;
+        if (!map.has(k)) map.set(k, m);
+      });
+      const merged = Array.from(map.values());
+      writeLocalMembers(merged);
+      return merged;
+    }
+  } catch {
+    // Expected when Firestore rules require client authentication
+  }
+
   return localMembers;
 }
 
 export async function findMemberById(rawId: string): Promise<MemberRecord | null> {
   const all = await getAllMembers();
   const search = rawId.trim().toLowerCase();
-  return all.find((m) => m.memberId && m.memberId.trim().toLowerCase() === search) || null;
+  return (
+    all.find(
+      (m) =>
+        (m.memberId && m.memberId.trim().toLowerCase() === search) ||
+        (m.id && m.id.trim().toLowerCase() === search)
+    ) || null
+  );
 }
 
 export async function saveMember(newMember: MemberRecord): Promise<void> {
   const all = readLocalMembers();
-  const idx = all.findIndex((m) => m.id === newMember.id || m.memberId === newMember.memberId);
+  const idx = all.findIndex(
+    (m) =>
+      m.id === newMember.id ||
+      (m.memberId && newMember.memberId && m.memberId.trim().toLowerCase() === newMember.memberId.trim().toLowerCase())
+  );
   if (idx >= 0) {
     all[idx] = newMember;
   } else {
@@ -97,7 +186,7 @@ export async function saveMember(newMember: MemberRecord): Promise<void> {
     const docRef = doc(db, "memberships", newMember.id);
     await setDoc(docRef, newMember, { merge: true });
   } catch {
-    // Expected if Firestore rules restrict direct client writes
+    // Handled gracefully if client authentication is required
   }
 }
 
@@ -121,21 +210,24 @@ export async function updateMember(
   try {
     const docRef = doc(db, "memberships", id);
     await setDoc(docRef, updated, { merge: true });
-  } catch {
-    // Ignore firestore permission error
-  }
+  } catch {}
 
   return updated;
 }
 
 export async function deleteMember(id: string): Promise<boolean> {
   const all = readLocalMembers();
-  const filtered = all.filter((m) => m.id !== id);
+  const target = all.find((m) => m.id === id || m.memberId === id);
+  const targetDocId = target?.id || id;
+  const filtered = all.filter((m) => m.id !== id && m.memberId !== id);
   writeLocalMembers(filtered);
 
   // Background sync to Firestore
   try {
-    await deleteDoc(doc(db, "memberships", id));
+    await deleteDoc(doc(db, "memberships", targetDocId));
+    if (target?.memberId && target.memberId !== targetDocId) {
+      await deleteDoc(doc(db, "memberships", target.memberId));
+    }
   } catch {}
 
   return true;
@@ -169,7 +261,11 @@ export async function saveApplication(app: any): Promise<void> {
   } catch {}
 }
 
-export async function updateApplicationStatus(id: string, status: string, assignedMemberId?: string): Promise<void> {
+export async function updateApplicationStatus(
+  id: string,
+  status: string,
+  assignedMemberId?: string
+): Promise<void> {
   const all = readLocalApplications();
   const idx = all.findIndex((a) => a.id === id);
   if (idx >= 0) {

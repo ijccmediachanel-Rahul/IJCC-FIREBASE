@@ -511,10 +511,10 @@ export default function AboutPage() {
             <h2 className="text-4xl font-headline text-primary uppercase tracking-tight">{language === 'ja' ? t('about_verts_title') : (cmsAbout?.verticalsTitle || t('about_verts_title'))}</h2>
             <p className="text-muted-foreground">{language === 'ja' ? t('about_verts_subtitle') : (cmsAbout?.verticalsSubtitle || t('about_verts_subtitle'))}</p>
           </div>
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion type="single" collapsible suppressHydrationWarning className="w-full space-y-4">
             {verticalsList.map((v: any) => (
-              <AccordionItem key={v.id} value={v.id} className="border rounded-2xl px-6 bg-white overflow-hidden shadow-sm">
-                <AccordionTrigger className="hover:no-underline py-6">
+              <AccordionItem key={v.id} value={v.id} suppressHydrationWarning className="border rounded-2xl px-6 bg-white overflow-hidden shadow-sm">
+                <AccordionTrigger suppressHydrationWarning className="hover:no-underline py-6">
                   <div className="flex items-center gap-4 text-left">
                     <div className="bg-primary text-white font-bold h-8 w-8 rounded-full flex items-center justify-center shrink-0">
                       {v.id}

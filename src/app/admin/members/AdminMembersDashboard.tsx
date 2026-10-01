@@ -176,6 +176,17 @@ export default function AdminMembersDashboard() {
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
+      // 1. Immediately hydrate members from localStorage cache so the table is never blank
+      try {
+        const cached = localStorage.getItem("ijcc_admin_members_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMembers(parsed);
+          }
+        }
+      } catch {}
+
       const isLoggedOut =
         sessionStorage.getItem("ijcc_admin_logged_out") === "true" ||
         localStorage.getItem("ijcc_admin_logged_out") === "true";
@@ -371,7 +382,14 @@ export default function AdminMembersDashboard() {
         return;
       }
       const data = await res.json();
-      setMembers(data.members || []);
+      const serverMembers: MemberRecord[] = data.members || [];
+
+      // Update state and cache with authoritative server list
+      setMembers(serverMembers);
+      try {
+        localStorage.setItem("ijcc_admin_members_cache", JSON.stringify(serverMembers));
+      } catch {}
+
       setApplications(data.applications || []);
     } catch (err: any) {
       toast({
@@ -623,12 +641,35 @@ export default function AdminMembersDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create member");
 
-      toast({
-        title: "Member Created Successfully!",
-        description: `${data.member.name} (ID: ${data.member.memberId}) is now active.`,
+      const createdMember: MemberRecord = data.member;
+
+      // 1. Immediately update UI state and localStorage so member NEVER disappears
+      setMembers((prev) => {
+        const filtered = prev.filter(
+          (m) => m.id !== createdMember.id && m.memberId !== createdMember.memberId
+        );
+        const updated = [createdMember, ...filtered];
+        try {
+          localStorage.setItem("ijcc_admin_members_cache", JSON.stringify(updated));
+        } catch {}
+        return updated;
       });
 
-      setShareModalMember(data.member);
+      // 2. Also try client-side Firestore sync (since admin user is authenticated in browser)
+      try {
+        const { doc, setDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        await setDoc(doc(db, "memberships", createdMember.id), createdMember, { merge: true });
+      } catch (fsErr) {
+        console.warn("Client Firestore sync notice:", fsErr);
+      }
+
+      toast({
+        title: "Member Created Successfully!",
+        description: `${createdMember.name} (ID: ${createdMember.memberId}) is now active.`,
+      });
+
+      setShareModalMember(createdMember);
       const today = getTodayString();
       setFormData({
         memberId: "",
@@ -678,6 +719,30 @@ export default function AdminMembersDashboard() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Renewal failed");
+
+      // Optimistic update
+      setMembers((prev) => {
+        const updated = prev.map((m) =>
+          m.id === member.id
+            ? { ...m, expiryDate: data.newExpiryDate, status: "active" as const, updatedAt: new Date().toISOString() }
+            : m
+        );
+        try {
+          localStorage.setItem("ijcc_admin_members_cache", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      // Client Firestore sync
+      try {
+        const { doc, setDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        await setDoc(
+          doc(db, "memberships", member.id),
+          { expiryDate: data.newExpiryDate, status: "active", updatedAt: new Date().toISOString() },
+          { merge: true }
+        );
+      } catch {}
 
       const newDateStr = new Date(data.newExpiryDate).toLocaleDateString("en-US", {
         day: "numeric",
@@ -731,6 +796,23 @@ export default function AdminMembersDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Update failed");
 
+      if (data.member) {
+        setMembers((prev) => {
+          const updated = prev.map((m) => (m.id === data.member.id ? data.member : m));
+          try {
+            localStorage.setItem("ijcc_admin_members_cache", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        // Client Firestore sync
+        try {
+          const { doc, setDoc } = await import("firebase/firestore");
+          const { db } = await import("@/lib/firebase");
+          await setDoc(doc(db, "memberships", data.member.id), data.member, { merge: true });
+        } catch {}
+      }
+
       toast({
         title: "Member Updated",
         description: "Credentials and details have been saved.",
@@ -760,11 +842,27 @@ export default function AdminMembersDashboard() {
       if (adminKey) headers["x-admin-key"] = adminKey;
       if (adminEmail) headers["x-admin-email"] = adminEmail;
 
+      // Optimistic delete
+      setMembers((prev) => {
+        const updated = prev.filter((m) => m.id !== member.id);
+        try {
+          localStorage.setItem("ijcc_admin_members_cache", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
       const res = await fetch(`/api/admin/members?id=${member.id}`, {
         method: "DELETE",
         headers,
       });
       if (!res.ok) throw new Error("Delete failed");
+
+      // Client Firestore delete
+      try {
+        const { doc, deleteDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        await deleteDoc(doc(db, "memberships", member.id));
+      } catch {}
 
       toast({
         title: "Member Deleted",

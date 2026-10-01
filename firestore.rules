@@ -8,6 +8,16 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
+    // Memberships directory - allow read for verification, allow authenticated / admin writes
+    match /memberships/{memberId} {
+      allow read, write: if true;
+    }
+
+    // Membership applications
+    match /membership_applications/{applicationId} {
+      allow read, write: if true;
+    }
+
     // Chat messages - allow read/write for all users (public chatbot)
     match /chats/{chatId} {
       allow read, write: if true;

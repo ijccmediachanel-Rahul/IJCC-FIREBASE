@@ -122,6 +122,17 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { id, action, memberId, password, name, email, phone, tier, status, notes, startDate, expiryDate, endDate } = body;
 
+    // Handle bidirectional client cache sync
+    if (action === "sync" && Array.isArray(body.members)) {
+      for (const m of body.members) {
+        if (m && m.memberId && m.name) {
+          await saveMember(m);
+        }
+      }
+      const all = await getAllMembers();
+      return NextResponse.json({ success: true, members: all });
+    }
+
     if (!id) {
       return NextResponse.json({ error: "Member document ID is required" }, { status: 400 });
     }
