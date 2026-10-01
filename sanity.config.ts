@@ -8,7 +8,25 @@ export default defineConfig({
   basePath: '/studio',
   projectId,
   dataset,
-  schema,
+  schema: {
+    ...schema,
+    templates: (prev) => [
+      ...prev,
+      {
+        id: 'member-by-chapter',
+        title: 'Member by Chapter',
+        schemaType: 'member',
+        parameters: [
+          { name: 'chapterId', title: 'Chapter ID', type: 'string' },
+          { name: 'chapterTitle', title: 'Chapter Title', type: 'string' },
+        ],
+        value: (params: { chapterId?: string; chapterTitle?: string }) => ({
+          chapterRef: params.chapterId ? { _type: 'reference', _ref: params.chapterId } : undefined,
+          category: params.chapterTitle || '',
+        }),
+      },
+    ],
+  },
   plugins: [
     structureTool({ structure }),
   ],

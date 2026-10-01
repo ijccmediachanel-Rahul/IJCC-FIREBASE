@@ -3,6 +3,7 @@ import { siteSettings } from './siteSettings';
 import { membershipPricing } from './membershipPricing';
 import { event } from './event';
 import { eventsPage } from './eventsPage';
+import { chapter } from './chapter';
 import { member } from './member';
 import { associate } from './associate';
 import { membersPage } from './membersPage';
@@ -28,6 +29,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     membershipPricing,
     event,
     eventsPage,
+    chapter,
     member,
     associate,
     galleryImage,

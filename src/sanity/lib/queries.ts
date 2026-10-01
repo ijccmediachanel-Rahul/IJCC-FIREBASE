@@ -91,8 +91,51 @@ export const EVENTS_PAGE_QUERY = groq`
   }
 `;
 
+export const CHAPTERS_QUERY = groq`
+  *[_type == "chapter" && hidden != true] | order(coalesce(order, 50) asc, title asc) {
+    _id,
+    title,
+    subtitle,
+    chapterType,
+    region,
+    order,
+    description,
+    hidden,
+    "parentChapter": parentChapter-> {
+      _id,
+      title,
+      region
+    },
+    "imageUrl": coalesce(image.asset->url, imageUrl),
+    "members": coalesce(members[defined(@)] {
+      _type,
+      _key,
+      ...select(
+        _type == "reference" => @-> {
+          _id,
+          name,
+          role,
+          bio,
+          order,
+          hidden,
+          "imageUrl": coalesce(image.asset->url, imageUrl)
+        },
+        {
+          "_id": coalesce(_key, _id),
+          name,
+          role,
+          bio,
+          order,
+          hidden,
+          "imageUrl": coalesce(image.asset->url, imageUrl)
+        }
+      )
+    }[_id != null], [])
+  }
+`;
+
 export const MEMBERS_QUERY = groq`
-  *[_type == "member"] | order(coalesce(order, 99) asc, name asc) {
+  *[_type == "member" && hidden != true] | order(coalesce(order, 99) asc, name asc) {
     _id,
     name,
     name_ja,
@@ -102,6 +145,14 @@ export const MEMBERS_QUERY = groq`
     bio,
     bio_ja,
     order,
+    hidden,
+    "chapterRef": chapterRef-> {
+      _id,
+      title,
+      subtitle,
+      region,
+      order
+    },
     "imageUrl": coalesce(image.asset->url, imageUrl)
   }
 `;

@@ -31,7 +31,8 @@ import {
   Trophy,
   Instagram,
   Linkedin,
-  Facebook
+  Facebook,
+  MapPin
 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAutoTranslate } from "@/hooks/use-auto-translate";
@@ -39,7 +40,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { client } from "@/sanity/lib/client";
-import { MEMBERS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
+import { MEMBERS_QUERY, CHAPTERS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import { PortableText } from "@portabletext/react";
 
 const verticals = [
@@ -61,18 +62,21 @@ export default function AboutPage() {
   const { t, language } = useTranslation();
   const { tr, translateBatch } = useAutoTranslate();
   const [cmsMembers, setCmsMembers] = useState<any[]>([]);
+  const [cmsChapters, setCmsChapters] = useState<any[]>([]);
   const [cmsAbout, setCmsAbout] = useState<any>(null);
   const [siteSettings, setSiteSettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membersData, aboutData, settingsData] = await Promise.all([
+        const [membersData, chaptersData, aboutData, settingsData] = await Promise.all([
           client.fetch(MEMBERS_QUERY),
+          client.fetch(CHAPTERS_QUERY),
           client.fetch(ABOUT_PAGE_QUERY),
           client.fetch(SITE_SETTINGS_QUERY)
         ]);
-        setCmsMembers(membersData);
+        setCmsMembers(membersData || []);
+        setCmsChapters(chaptersData || []);
         setCmsAbout(aboutData);
         if (settingsData) setSiteSettings(settingsData);
       } catch (error) {
@@ -84,17 +88,28 @@ export default function AboutPage() {
 
   // Dynamically auto-translate any newly added CMS member names, roles, and bios
   useEffect(() => {
-    if (language !== 'ja' || !cmsMembers || cmsMembers.length === 0) return;
+    if (language !== 'ja') return;
     const textsToTranslate: string[] = [];
-    cmsMembers.forEach((m) => {
+    (cmsMembers || []).forEach((m) => {
       if (m.name) textsToTranslate.push(m.name);
       if (m.role) textsToTranslate.push(m.role);
       if (m.bio) textsToTranslate.push(m.bio);
     });
+    (cmsChapters || []).forEach((c) => {
+      if (c.title) textsToTranslate.push(c.title);
+      if (c.subtitle) textsToTranslate.push(c.subtitle);
+      if (c.members) {
+        c.members.forEach((m: any) => {
+          if (m?.name) textsToTranslate.push(m.name);
+          if (m?.role) textsToTranslate.push(m.role);
+          if (m?.bio) textsToTranslate.push(m.bio);
+        });
+      }
+    });
     if (textsToTranslate.length > 0) {
       translateBatch(textsToTranslate);
     }
-  }, [cmsMembers, language, translateBatch]);
+  }, [cmsMembers, cmsChapters, language, translateBatch]);
 
   // Team Japanese translations map
   const MEMBER_JA_MAP: Record<string, { name: string; role: string; bio?: string }> = {
@@ -255,18 +270,387 @@ export default function AboutPage() {
     return m[base];
   };
 
-  const leadership = cmsMembers
-    .filter((m) => m.category === 'Board')
-    .map((m) => ({
-      id: m._id,
-      imageUrl: m.imageUrl,
+  // Baseline members to guarantee zero-latency initial render with exact production data
+  const DEFAULT_APEX_MEMBERS = [
+    { id: "team-rahulMishra", name: "Mr. Rahul Mishra", role: "Chairman, IJCC", bio: "Mr.Rahul Mishra is the Chairman of the Indo-Japan Chamber of Commerce (IJCC), Vice President of SEWA...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/7bc38781a556b18333a9c0ef7bfe57e50657bb2c-888x800.jpg" },
+    { id: "team-gajendraBadgujar", name: "Mr. Gajendra Badgujar", role: "Vice-Chairman (Strategy)", bio: "Mr. Gajendra Badgujar is a seasoned professional with extensive experience in international trade and strategic alliances...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/998afdc62f91e384a46cdb08450164235386d2d3-500x478.jpg" },
+    { id: "team-prakashYadav", name: "Mr. Prakash Yadav", role: "Vice-Chairman (Corporate)", bio: "Strategic leadership and corporate initiatives across bilateral corridors.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/631f2d948b42e392cb228e277e6fe89aa362e994-502x481.jpg" },
+    { id: "team-neelamRamaiah", name: "Dr. Neelam Ramaiah", role: "Vice-Chairman (Education)", bio: "Leading educational exchanges and institutional partnerships between India and Japan.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/29bf3019d9902ccd76ff39d930db38c968810a11-190x247.png" },
+    { id: "cbd809aa-a3b7-4cf0-8617-63f2d99ff04d", name: "Dr. Krishan Kumar Kataria", role: "Vice-Chairman – Skill Development & Technical Education", bio: "Dr. Krishan Kumar Kataria is a visionary leader with over 35 years in the public sector...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/72fbda1d333940ddaf1f0a6d92e61cafad3d8747-413x531.jpg" },
+    { id: "team-sushilKumarChauhan", name: "Mr. Sushil Kumar Chauhan", role: "Vice-Chairman – Manufacturing Excellence, TQM & Industry Collaboration", bio: "Former executive at Honda Cars India with 32+ years in automotive manufacturing and Japanese TQM...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/5c307387d826c638cd645afb89c1638537b7fed6-181x156.png" },
+    { id: "team-krishnanNarayanan", name: "Mr. Krishnan Narayanan, Ph.D.", role: "Executive Director – Human Capital & Workforce Strategy", bio: "25+ years in financial services technology, formerly at Citibank Tokyo and UBS Japan...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/43929a4e71fc20d7e35bec3bdc301f802afa8f1e-289x335.jpg" },
+    { id: "30fd728e-5d09-43aa-8190-b25ae46d982a", name: "Mr. C V Kamesh", role: "Vice Chairman – Cultural Affairs & Exchange", bio: "CEO at Ganesa Natyalaya with 30+ years in cultural diplomacy and promotion of performing arts...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/de057b35a8ccaa21571e6a4fbface7ccb511c7bb-1200x1600.jpg" },
+    { id: "ccd4282b-ea6a-4bb5-8aa7-46acf71f18e8", name: "Mr. Palash Sen", role: "Principal Consultant – Corporate Relations & Business Development", bio: "33+ years of expertise in corporate relations, market entry, and industry partnerships...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/f69346e8d13c4426e995b74b3e36a32c9cd33383-760x939.jpg" },
+    { id: "team-parijatTiwari", name: "Mr. Parijat Tiwari", role: "Sr. Consultant (Indo-Japan Bilateral Trade & Economic Relations)", bio: "Trilingual expert with nearly 29 years experience in Japanese business culture, interpretation, and trade...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/052ab2cce2fad220fd46c38258fda4dd93ed44ce-243x235.png" },
+    { id: "team-nidhi", name: "Ms. Nidhi Puri", role: "Corporate Tax & Transfer Pricing Lead", bio: "Advising cross-border ventures on international tax structures and compliance.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/5e8fd12c7e2a34a280194f8a63187c7b8ae31ba5-376x376.jpg" },
+    { id: "team-mukeshRanjan", name: "Mr. Mukesh Ranjan", role: "Director — HR & Strategy", bio: "Leading human resources strategy and cross-cultural organizational development.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/3ec803996e3dbb9cb81b39bbc9922c06c0003f53-480x480.png" },
+    { id: "team-yokoTorii", name: "Ms. Yoko Torii", role: "International Programme Coordinator", bio: "Coordinating student and professional exchange initiatives between Japan and India.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/d9ae227b5af67725de5c923b37383a813613b738-481x519.jpg" },
+    { id: "team-dhruvHans", name: "Mr. Dhruv (Hans Dhruv)", role: "Programme Coordinator", bio: "Youth engagement and technology-driven bilateral initiatives.", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/b6045875a2d0aa09d07a4e7790d0c4bc92685746-378x508.jpg" }
+  ];
+
+  const DEFAULT_JAPAN_MEMBERS = [
+    { id: "c7170645-6f43-4eca-94bd-372085cc29ab", name: "Mr. Jishnu Madhavan", role: "Chairman Japan Chapter", bio: "Mr. Jishnu Madhavan is an accomplished business leader and serial entrepreneur with over 20 years of experience in Japan...", imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/2f540c471978cd55688536fd02135caa4660f69a-382x355.png" }
+  ];
+
+  const FALLBACK_MEMBER_IMAGES: Record<string, string> = {
+    "team-rahulMishra": "https://cdn.sanity.io/images/4j8vl1ls/production/7bc38781a556b18333a9c0ef7bfe57e50657bb2c-888x800.jpg",
+    "team-gajendraBadgujar": "https://cdn.sanity.io/images/4j8vl1ls/production/998afdc62f91e384a46cdb08450164235386d2d3-500x478.jpg",
+    "team-prakashYadav": "https://cdn.sanity.io/images/4j8vl1ls/production/631f2d948b42e392cb228e277e6fe89aa362e994-502x481.jpg",
+    "team-neelamRamaiah": "https://cdn.sanity.io/images/4j8vl1ls/production/29bf3019d9902ccd76ff39d930db38c968810a11-190x247.png",
+    "cbd809aa-a3b7-4cf0-8617-63f2d99ff04d": "https://cdn.sanity.io/images/4j8vl1ls/production/72fbda1d333940ddaf1f0a6d92e61cafad3d8747-413x531.jpg",
+    "team-sushilKumarChauhan": "https://cdn.sanity.io/images/4j8vl1ls/production/5c307387d826c638cd645afb89c1638537b7fed6-181x156.png",
+    "team-krishnanNarayanan": "https://cdn.sanity.io/images/4j8vl1ls/production/43929a4e71fc20d7e35bec3bdc301f802afa8f1e-289x335.jpg",
+    "30fd728e-5d09-43aa-8190-b25ae46d982a": "https://cdn.sanity.io/images/4j8vl1ls/production/de057b35a8ccaa21571e6a4fbface7ccb511c7bb-1200x1600.jpg",
+    "ccd4282b-ea6a-4bb5-8aa7-46acf71f18e8": "https://cdn.sanity.io/images/4j8vl1ls/production/f69346e8d13c4426e995b74b3e36a32c9cd33383-760x939.jpg",
+    "team-parijatTiwari": "https://cdn.sanity.io/images/4j8vl1ls/production/052ab2cce2fad220fd46c38258fda4dd93ed44ce-243x235.png",
+    "team-nidhi": "https://cdn.sanity.io/images/4j8vl1ls/production/5e8fd12c7e2a34a280194f8a63187c7b8ae31ba5-376x376.jpg",
+    "team-mukeshRanjan": "https://cdn.sanity.io/images/4j8vl1ls/production/3ec803996e3dbb9cb81b39bbc9922c06c0003f53-480x480.png",
+    "team-yokoTorii": "https://cdn.sanity.io/images/4j8vl1ls/production/d9ae227b5af67725de5c923b37383a813613b738-481x519.jpg",
+    "team-dhruvHans": "https://cdn.sanity.io/images/4j8vl1ls/production/b6045875a2d0aa09d07a4e7790d0c4bc92685746-378x508.jpg",
+    "team-muazAhmed": "https://cdn.sanity.io/images/4j8vl1ls/production/a4b12808c53e066b8130be183e72367d2b814735-1080x1105.jpg",
+    "team-naveen": "https://cdn.sanity.io/images/4j8vl1ls/production/49a944ba742eb55bc43029193796d1ae3ff0e719-204x247.jpg",
+    "team-vinod": "https://cdn.sanity.io/images/4j8vl1ls/production/b5a593e87fc4b78ae6eb19ba604d53896aa334a1-180x190.png",
+    "team-maushumi": "https://cdn.sanity.io/images/4j8vl1ls/production/fc8ebc64cfb6e4e892d95e0c52bbcb7206d96ff6-200x200.jpg",
+    "8c082daa-bf57-497f-b692-840381b9d539": "https://cdn.sanity.io/images/4j8vl1ls/production/0d9dbeb419b9a51870a3e0ca005facec41c1c968-536x465.png",
+    "c7170645-6f43-4eca-94bd-372085cc29ab": "https://cdn.sanity.io/images/4j8vl1ls/production/2f540c471978cd55688536fd02135caa4660f69a-382x355.png",
+  };
+
+  // Helper to format member data consistently
+  const formatMember = (m: any) => {
+    const mId = m._id || m.id;
+    return {
+      id: mId,
       name: pickLang(m, 'name'),
-      title: pickLang(m, 'role'),
+      role: pickLang(m, 'role'),
       bio: pickLang(m, 'bio'),
-    }));
+      imageUrl: m.imageUrl || FALLBACK_MEMBER_IMAGES[mId] || '',
+      order: m.order ?? 50,
+    };
+  };
+
+  // 1. Resolve Apex Board Members (National Leadership)
+  const apexLeadership = (() => {
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          return cat === 'board' || cat.includes('apex') || (cat.includes('board') && !cat.includes('advisory'));
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+    return DEFAULT_APEX_MEMBERS.map(formatMember);
+  })();
+
+  // 2. Resolve UP Chapter Members
+  const upMembers = (() => {
+    const defaultUP = {
+      id: "team-muazAhmed",
+      name: "Mr. Muaz Ahmed",
+      role: "Uttar Pradesh State Coordinator",
+      bio: "Mr. Muaz Ahmed is a results-driven professional with experience in sales and regional hospitality management, leading industrial partnerships and Japanese investment facilitation across Uttar Pradesh.",
+      imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/a4b12808c53e066b8130be183e72367d2b814735-1080x1105.jpg",
+      order: 10,
+    };
+
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          const refTitle = (m.chapterRef?.title || '').toLowerCase();
+          return cat === 'up chapter team' || cat.includes('uttar pradesh') || cat === 'up' || refTitle.includes('up') || refTitle.includes('uttar pradesh');
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+
+    return [formatMember(defaultUP)];
+  })();
+
+  // 3. Resolve Bihar Chapter Members
+  const biharMembers = (() => {
+    const defaultBihar = [
+      {
+        id: "team-naveen",
+        name: "Mr. Naveen Verma",
+        role: "Chairman, RERA Bihar (Retd. IAS)",
+        bio: "Chairman of RERA Bihar and former senior civil servant fostering regional bilateral ties.",
+        imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/49a944ba742eb55bc43029193796d1ae3ff0e719-204x247.jpg",
+        order: 10,
+      },
+      {
+        id: "team-vinod",
+        name: "Dr. Vinod K. Yadavendu",
+        role: "Ex Member, Bihar Legislative Assembly",
+        bio: "Former Member of the Bihar Legislative Assembly supporting educational and cultural Indo-Japan initiatives.",
+        imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/b5a593e87fc4b78ae6eb19ba604d53896aa334a1-180x190.png",
+        order: 20,
+      },
+    ];
+
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          const refTitle = (m.chapterRef?.title || '').toLowerCase();
+          return cat === 'bihar chapter team' || cat.includes('bihar') || refTitle.includes('bihar');
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+
+    return defaultBihar.map(formatMember);
+  })();
+
+  // 4. Resolve Assam Chapter Members
+  const assamMembers = (() => {
+    const defaultAssam = [
+      {
+        id: "team-maushumi",
+        name: "Dr. Maushumi Barooah",
+        role: "Ex. Director, Assam Technical Education Board",
+        bio: "Leading state coordination, technical skilling and institutional partnerships in Assam.",
+        imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/fc8ebc64cfb6e4e892d95e0c52bbcb7206d96ff6-200x200.jpg",
+        order: 10,
+      },
+    ];
+
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          const refTitle = (m.chapterRef?.title || '').toLowerCase();
+          return cat === 'assam chapter team' || cat.includes('assam') || refTitle.includes('assam');
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+
+    return defaultAssam.map(formatMember);
+  })();
+
+  // 5. Resolve Gujarat Chapter Members
+  const gujaratMembers = (() => {
+    const defaultGujarat = [
+      {
+        id: "8c082daa-bf57-497f-b692-840381b9d539",
+        name: "Ms. Dipti Chitale",
+        role: "Gujarat State Coordinator",
+        bio: "Facilitating bilateral trade and Japanese manufacturing investments in Gujarat.",
+        imageUrl: "https://cdn.sanity.io/images/4j8vl1ls/production/0d9dbeb419b9a51870a3e0ca005facec41c1c968-536x465.png",
+        order: 10,
+      },
+    ];
+
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          const refTitle = (m.chapterRef?.title || '').toLowerCase();
+          return cat === 'gujarat chapter team' || cat.includes('gujarat') || refTitle.includes('gujarat');
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+
+    return defaultGujarat.map(formatMember);
+  })();
+
+  // 6. Resolve Japan Chapter Members
+  const japanMembers = (() => {
+    if (cmsMembers.length > 0) {
+      return cmsMembers
+        .filter((m) => {
+          if (m.hidden) return false;
+          const cat = (m.category || '').toLowerCase();
+          const refTitle = (m.chapterRef?.title || '').toLowerCase();
+          return cat === 'japan chapter team' || cat.includes('japan') || refTitle.includes('japan');
+        })
+        .map(formatMember)
+        .sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    }
+
+    return DEFAULT_JAPAN_MEMBERS.map(formatMember);
+  })();
+
+  // 7. Resolve Dynamic Custom CMS Chapters (e.g. Kolkata Chapter, or newly added state chapters)
+  const customChapters = (() => {
+    const defaultChapterKeys = ['up', 'uttar pradesh', 'bihar', 'assam', 'gujarat', 'apex', 'japan'];
+    return (cmsChapters || [])
+      .filter((c: any) => {
+        if (c.hidden) return false;
+        const titleNorm = (c.title || '').toLowerCase();
+        return !defaultChapterKeys.some((k) => titleNorm.includes(k));
+      })
+      .map((c: any) => {
+        const membersList: any[] = [];
+        const seen = new Set<string>();
+
+        // (i) Direct members from chapter's members array
+        if (Array.isArray(c.members)) {
+          c.members.forEach((m: any) => {
+            if (m && !m.hidden) {
+              // Exclude demo member Nitin that was removed from CMS
+              if (m.name?.toLowerCase().includes('nitin') && (m.bio?.toLowerCase().includes('demo') || m._type === 'chapterMember')) {
+                return;
+              }
+              const mId = m._id || m.name;
+              if (!seen.has(mId)) {
+                seen.add(mId);
+                membersList.push(formatMember(m));
+              }
+            }
+          });
+        }
+
+        // (ii) Members from cmsMembers referencing this chapter
+        cmsMembers.forEach((m: any) => {
+          if (m.hidden) return;
+          const refId = m.chapterRef?._id;
+          const refTitle = m.chapterRef?.title?.toLowerCase();
+          const matches =
+            refId === c._id ||
+            (refTitle && refTitle === c.title?.toLowerCase()) ||
+            (m.category && m.category.toLowerCase().includes(c.title?.toLowerCase()));
+
+          if (matches && !seen.has(m._id)) {
+            seen.add(m._id);
+            membersList.push(formatMember(m));
+          }
+        });
+
+        const tabTitle = c.title.replace(/chapter.*team|chapter/i, '').trim() + " Chapter";
+
+        return {
+          id: c._id,
+          tabTitle: tabTitle.trim() || c.title,
+          title: c.title.toUpperCase(),
+          subtitle: c.subtitle || "Regional Leadership & State Coordination",
+          region: c.region || 'india-state',
+          order: c.order ?? 50,
+          members: membersList.sort((a, b) => (a.order ?? 50) - (b.order ?? 50)),
+        };
+      })
+      .filter((c: any) => c.members && c.members.length > 0)
+      .sort((a: any, b: any) => (a.order ?? 50) - (b.order ?? 50));
+  })();
+
+  const customIndiaStateChapters = customChapters.filter((c) => c.region !== 'japan' && c.region !== 'japan-sub');
+  const customJapanChapters = customChapters.filter((c) => c.region === 'japan' || c.region === 'japan-sub');
+
+  const shouldShowUP = upMembers.length > 0;
+  const shouldShowBihar = biharMembers.length > 0;
+  const shouldShowAssam = assamMembers.length > 0;
+  const shouldShowGujarat = gujaratMembers.length > 0;
+  const shouldShowJapan = japanMembers.length > 0 || customJapanChapters.length > 0;
+  const hasAnyStateChapters = shouldShowUP || shouldShowBihar || shouldShowAssam || shouldShowGujarat || customIndiaStateChapters.length > 0;
+
+  // Red Card Component matching the live website theme exactly
+  const renderRedCard = (member: any) => {
+    const hasBio = !!member.bio;
+    const cardContent = (
+      <Card className="h-full bg-white/5 border-white/10 text-center space-y-4 group hover:bg-white/10 transition-all cursor-pointer transform hover:-translate-y-1 rounded-2xl flex flex-col justify-between p-6">
+        <CardHeader className="p-0">
+          <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white/20 bg-white/10 flex items-center justify-center">
+            {member.imageUrl ? (
+              <Image
+                src={member.imageUrl}
+                alt={member.name}
+                fill
+                unoptimized
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <Users2 className="h-12 w-12 text-white/50" />
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0 space-y-2 flex-1 flex flex-col justify-between">
+          <div className="space-y-1">
+            <h4 className="text-xl font-bold text-white leading-snug">{member.name}</h4>
+            <div className="text-accent font-medium text-sm leading-relaxed">{member.title || member.role}</div>
+            {member.bio && (
+              <p className="text-xs text-primary-foreground/60 line-clamp-2 pt-2">
+                {member.bio.substring(0, 100)}...
+              </p>
+            )}
+          </div>
+          {hasBio && (
+            <div className="pt-4 text-accent text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 group-hover:underline">
+              {t('view_bio') || 'VIEW FULL BIO'} <ArrowRight className="h-3 w-3" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+
+    if (!hasBio) {
+      return <div key={member.id} className="h-full">{cardContent}</div>;
+    }
+
+    return (
+      <Dialog key={member.id}>
+        <DialogTrigger asChild>
+          {cardContent}
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-col items-center text-center space-y-4">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/10 bg-primary/5 flex items-center justify-center">
+              {member.imageUrl ? (
+                <Image src={member.imageUrl} alt={member.name} fill unoptimized className="object-cover" />
+              ) : (
+                <Users2 className="h-12 w-12 text-primary/30" />
+              )}
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-3xl font-headline text-primary">{member.name}</DialogTitle>
+              <div className="text-accent font-bold uppercase tracking-tighter">{member.title || member.role}</div>
+            </div>
+          </DialogHeader>
+          <div className="mt-6 border-t pt-6 max-h-[50vh] overflow-y-auto pr-4 text-justify whitespace-pre-wrap">
+            <p className="text-muted-foreground leading-relaxed">
+              {member.bio}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const getChapterTitle = (ch: any) => {
+    if (language === 'ja') {
+      const titlesJa: Record<string, string> = {
+        up: "ウッタル・プラデーシュ支部チーム",
+        bihar: "ビハール支部チーム",
+        assam: "アッサム支部チーム",
+        gujarat: "グジャラート支部チーム",
+        japan: "日本支部チーム",
+      };
+      if (ch.baseKey && titlesJa[ch.baseKey]) return titlesJa[ch.baseKey];
+      return tr(ch.title);
+    }
+    return ch.title;
+  };
+
+  const getChapterSubtitle = (ch: any) => {
+    if (language === 'ja' && ch.subtitle) {
+      return tr(ch.subtitle);
+    }
+    return ch.subtitle;
+  };
 
   const advisors = cmsMembers
-    .filter((m) => m.category === 'Advisory')
+    .filter((m) => {
+      if (m.hidden) return false;
+      if (m.category !== 'Advisory') return false;
+      if (['team-naveen', 'team-vinod', 'team-maushumi'].includes(m._id)) return false;
+      return true;
+    })
     .map((m) => ({
       id: m._id,
       imageUrl: m.imageUrl,
@@ -546,61 +930,220 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Leadership Section */}
+      {/* Leadership & Chapters Section */}
       <section className="bg-primary py-24 text-primary-foreground">
-        <div className="container">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-headline uppercase tracking-tight">{language === 'ja' ? t('about_leadership_title') : (cmsAbout?.leadershipTitle || t('about_leadership_title'))}</h2>
+        <div className="container space-y-16">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl font-headline uppercase tracking-tight">
+              {language === 'ja' ? t('about_leadership_title') : (cmsAbout?.leadershipTitle || "LEADERSHIP & GOVERNANCE")}
+            </h2>
             <p className="text-primary-foreground/70 max-w-2xl mx-auto italic">
-              {language === 'ja' ? t('about_leadership_subtitle') : (cmsAbout?.leadershipSubtitle || t('about_leadership_subtitle'))}
+              {language === 'ja' ? t('about_leadership_subtitle') : (cmsAbout?.leadershipSubtitle || "Guided by a distinguished board with expertise spanning trade, academia, diplomacy, hospitality and law.")}
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {leadership.map((member) => (
-              <Dialog key={member.id}>
-                <DialogTrigger asChild>
-                  <Card className="bg-white/5 border-white/10 text-center space-y-4 group hover:bg-white/10 transition-all cursor-pointer transform hover:-translate-y-1">
-                    <CardHeader>
-                      <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white/20 bg-white/10 flex items-center justify-center">
-                        {member.imageUrl ? (
-                          <Image src={member.imageUrl} alt={member.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                        ) : (
-                          <Users2 className="h-12 w-12 text-white/50" />
-                        )}
+
+          {/* Chapters Content */}
+          <div className="space-y-28">
+            {/* ========================================================
+                1. MAIN CHAPTER: INDIA CHAPTER TEAM
+                ======================================================== */}
+            <div className="space-y-16">
+              {/* Main Title: INDIA CHAPTER TEAM */}
+              <div className="text-center space-y-3">
+                <div className="text-xs uppercase tracking-widest text-accent font-bold">
+                  {language === 'ja' ? "全国統括および州支部" : "NATIONAL & REGIONAL LEADERSHIP"}
+                </div>
+                <h3 className="text-4xl sm:text-5xl font-headline tracking-wide uppercase font-bold text-white">
+                  {language === 'ja' ? "インド本部・支部" : "INDIA CHAPTER TEAM"}
+                </h3>
+                <div className="w-24 h-1 bg-accent mx-auto mt-2" />
+              </div>
+
+              {/* 1A. Apex Board / Governing Council */}
+              <div className="space-y-8">
+                <div className="text-center space-y-2 mb-8">
+                  <h4 className="text-2xl sm:text-3xl font-headline font-bold text-white uppercase tracking-wide">
+                    {language === 'ja' ? "最高執行評議会" : "Apex Governing Council"}
+                  </h4>
+                  <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                    {language === 'ja' ? "最高執行評議会および中央理事会" : "Apex Governing Council & Central Board"}
+                  </p>
+                  <div className="w-16 h-0.5 bg-accent/60 mx-auto mt-2" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {apexLeadership.map(renderRedCard)}
+                </div>
+              </div>
+
+              {/* 1B. Sub-title: STATE CHAPTER TEAMS (Sub chapters under India Chapter Team) */}
+              {hasAnyStateChapters && (
+                <div className="space-y-16 pt-12 border-t border-white/15">
+                  <div className="text-center space-y-2 mb-12">
+                    <h4 className="text-3xl sm:text-4xl font-headline font-bold text-accent uppercase tracking-wide">
+                      {language === 'ja' ? "州支部チーム" : "STATE CHAPTER TEAMS"}
+                    </h4>
+                    <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                      {language === 'ja' ? "各州における地域リーダーシップおよび産業連携" : "Regional Leadership & State Coordination across India"}
+                    </p>
+                    <div className="w-20 h-0.5 bg-accent mx-auto mt-2" />
+                  </div>
+
+                  {/* State Chapters Grid / Sections */}
+                  <div className="space-y-16">
+                    {/* UP Chapter Team */}
+                    {shouldShowUP && (
+                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                        <div className="text-center space-y-2 mb-8">
+                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                            {language === 'ja' ? "ウッタル・プラデーシュ支部チーム" : "UP CHAPTER TEAM"}
+                          </h5>
+                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                            Regional Leadership & State Coordination
+                          </p>
+                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {upMembers.map(renderRedCard)}
+                        </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <h4 className="text-xl font-bold text-white">{member.name}</h4>
-                      <div className="text-accent font-medium text-sm">{member.title}</div>
-                      <p className="text-xs text-primary-foreground/60 line-clamp-2 pt-2">{member.bio?.substring(0, 100)}...</p>
-                      <div className="pt-4 text-accent text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1">
-                        {t('view_bio')} <ArrowRight className="h-3 w-3" />
+                    )}
+
+                    {/* Bihar Chapter Team */}
+                    {shouldShowBihar && (
+                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                        <div className="text-center space-y-2 mb-8">
+                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                            {language === 'ja' ? "ビハール支部チーム" : "BIHAR CHAPTER TEAM"}
+                          </h5>
+                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                            Regional Leadership & State Coordination
+                          </p>
+                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {biharMembers.map(renderRedCard)}
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader className="flex flex-col items-center text-center space-y-4">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/10 bg-primary/5 flex items-center justify-center">
-                      {member.imageUrl ? (
-                        <Image src={member.imageUrl} alt={member.name} fill className="object-cover" />
+                    )}
+
+                    {/* Assam Chapter Team */}
+                    {shouldShowAssam && (
+                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                        <div className="text-center space-y-2 mb-8">
+                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                            {language === 'ja' ? "アッサム支部チーム" : "ASSAM CHAPTER TEAM"}
+                          </h5>
+                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                            Regional Leadership & State Coordination
+                          </p>
+                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {assamMembers.map(renderRedCard)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Gujarat Chapter Team */}
+                    {shouldShowGujarat && (
+                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                        <div className="text-center space-y-2 mb-8">
+                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                            {language === 'ja' ? "グジャラート支部チーム" : "GUJARAT CHAPTER TEAM"}
+                          </h5>
+                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                            Regional Leadership & State Coordination
+                          </p>
+                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {gujaratMembers.map(renderRedCard)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dynamic CMS State Chapters (e.g. Kolkata Chapter) */}
+                    {customIndiaStateChapters.map((ch) => (
+                      <div key={ch.id} className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                        <div className="text-center space-y-2 mb-8">
+                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                            {ch.title}
+                          </h5>
+                          <p className="text-sm text-primary-foreground/75 italic">
+                            {ch.subtitle}
+                          </p>
+                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {ch.members && ch.members.length > 0 ? (
+                            ch.members.map(renderRedCard)
+                          ) : (
+                            <div className="col-span-full text-center py-8 text-white/60 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                              <Users2 className="h-8 w-8 mx-auto text-white/30 mb-2" />
+                              <p className="text-sm font-medium">
+                                {language === 'ja'
+                                  ? "この支部の役員・リーダーシップ任命は近日発表されます。"
+                                  : "Regional leadership appointments for this chapter will be announced shortly."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ========================================================
+                2. MAIN CHAPTER: JAPAN CHAPTER TEAM
+                ======================================================== */}
+            {shouldShowJapan && (
+              <div className="space-y-8 pt-12 border-t border-white/15">
+                <div className="text-center space-y-2 mb-10">
+                  <div className="text-xs uppercase tracking-widest text-accent font-bold">
+                    {language === 'ja' ? "日本本部" : "HEADQUARTERS & REGIONAL OPERATIONS"}
+                  </div>
+                  <h3 className="text-3xl sm:text-4xl font-headline tracking-wide uppercase font-bold text-white">
+                    {language === 'ja' ? "日本支部チーム" : "JAPAN CHAPTER TEAM"}
+                  </h3>
+                  <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                    {language === 'ja' ? "東京本部および地域運営統括" : "Tokyo Headquarters & Regional Operations"}
+                  </p>
+                  <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {japanMembers.map(renderRedCard)}
+                </div>
+
+                {/* Any Japan Sub-Chapters */}
+                {customJapanChapters.map((ch) => (
+                  <div key={ch.id} className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10 mt-12">
+                    <div className="text-center space-y-2 mb-8">
+                      <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                        {ch.title}
+                      </h5>
+                      <p className="text-sm text-primary-foreground/75 italic">
+                        {ch.subtitle}
+                      </p>
+                      <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {ch.members && ch.members.length > 0 ? (
+                        ch.members.map(renderRedCard)
                       ) : (
-                        <Users2 className="h-12 w-12 text-primary/30" />
+                        <div className="col-span-full text-center py-8 text-white/60 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                          <Users2 className="h-8 w-8 mx-auto text-white/30 mb-2" />
+                          <p className="text-sm font-medium">
+                            Regional leadership appointments for this chapter will be announced shortly.
+                          </p>
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-1">
-                      <DialogTitle className="text-3xl font-headline text-primary">{member.name}</DialogTitle>
-                      <div className="text-accent font-bold uppercase tracking-tighter">{member.title}</div>
-                    </div>
-                  </DialogHeader>
-                  <div className="mt-6 border-t pt-6 max-h-[50vh] overflow-y-auto pr-4 text-justify whitespace-pre-wrap">
-                    <p className="text-muted-foreground leading-relaxed">
-                      {member.bio}
-                    </p>
                   </div>
-                </DialogContent>
-              </Dialog>
-            ))}
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
