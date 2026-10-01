@@ -73,7 +73,9 @@ export function ChapterCategoryInput(props: StringInputProps) {
       !t.includes('bihar') &&
       !t.includes('assam') &&
       !t.includes('gujarat') &&
-      !t.includes('japan chapter')
+      !t.includes('japan chapter') &&
+      !t.includes('think tank') &&
+      !t.includes('thinktank')
     );
   });
 

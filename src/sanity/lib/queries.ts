@@ -157,6 +157,21 @@ export const MEMBERS_QUERY = groq`
   }
 `;
 
+export const THINK_TANK_MEMBERS_QUERY = groq`
+  *[_type == "thinkTankMember" && hidden != true] | order(coalesce(order, 99) asc, name asc) {
+    _id,
+    name,
+    name_ja,
+    role,
+    role_ja,
+    bio,
+    bio_ja,
+    order,
+    hidden,
+    "imageUrl": coalesce(image.asset->url, imageUrl)
+  }
+`;
+
 export const GALLERY_QUERY = groq`
   *[_type == "galleryImage"] | order(_createdAt desc) {
     _id,

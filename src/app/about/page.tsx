@@ -40,7 +40,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { client } from "@/sanity/lib/client";
-import { MEMBERS_QUERY, CHAPTERS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
+import { MEMBERS_QUERY, CHAPTERS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY, THINK_TANK_MEMBERS_QUERY } from "@/sanity/lib/queries";
 import { PortableText } from "@portabletext/react";
 
 const verticals = [
@@ -63,22 +63,25 @@ export default function AboutPage() {
   const { tr, translateBatch } = useAutoTranslate();
   const [cmsMembers, setCmsMembers] = useState<any[]>([]);
   const [cmsChapters, setCmsChapters] = useState<any[]>([]);
+  const [cmsThinkTankMembers, setCmsThinkTankMembers] = useState<any[]>([]);
   const [cmsAbout, setCmsAbout] = useState<any>(null);
   const [siteSettings, setSiteSettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membersData, chaptersData, aboutData, settingsData] = await Promise.all([
+        const [membersData, chaptersData, aboutData, settingsData, thinkTankData] = await Promise.all([
           client.fetch(MEMBERS_QUERY),
           client.fetch(CHAPTERS_QUERY),
           client.fetch(ABOUT_PAGE_QUERY),
-          client.fetch(SITE_SETTINGS_QUERY)
+          client.fetch(SITE_SETTINGS_QUERY),
+          client.fetch(THINK_TANK_MEMBERS_QUERY)
         ]);
         setCmsMembers(membersData || []);
         setCmsChapters(chaptersData || []);
         setCmsAbout(aboutData);
         if (settingsData) setSiteSettings(settingsData);
+        setCmsThinkTankMembers(thinkTankData || []);
       } catch (error) {
         console.error("Failed to fetch from Sanity", error);
       }
@@ -478,9 +481,35 @@ export default function AboutPage() {
     return DEFAULT_JAPAN_MEMBERS.map(formatMember);
   })();
 
+  // 6.5. Resolve IJCC Think Tank Members (Isolated from chapters)
+  const thinkTankMembers = (() => {
+    const list: any[] = [];
+    const seen = new Set<string>();
+
+    (cmsThinkTankMembers || []).forEach((m: any) => {
+      if (!m.hidden && !seen.has(m._id)) {
+        seen.add(m._id);
+        list.push(formatMember(m));
+      }
+    });
+
+    (cmsMembers || []).forEach((m: any) => {
+      if (m.hidden) return;
+      const cat = (m.category || '').toLowerCase();
+      if ((cat.includes('think tank') || cat.includes('thinktank')) && !seen.has(m._id)) {
+        seen.add(m._id);
+        list.push(formatMember(m));
+      }
+    });
+
+    return list.sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+  })();
+
+  const shouldShowThinkTank = thinkTankMembers.length > 0;
+
   // 7. Resolve Dynamic Custom CMS Chapters (e.g. Kolkata Chapter, or newly added state chapters)
   const customChapters = (() => {
-    const defaultChapterKeys = ['up', 'uttar pradesh', 'bihar', 'assam', 'gujarat', 'apex', 'japan'];
+    const defaultChapterKeys = ['up', 'uttar pradesh', 'bihar', 'assam', 'gujarat', 'apex', 'japan', 'think tank', 'thinktank'];
     return (cmsChapters || [])
       .filter((c: any) => {
         if (c.hidden) return false;
@@ -1142,6 +1171,32 @@ export default function AboutPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* ========================================================
+                3. IJCC THINK TANK (Bilateral Policy & Research Advisory)
+                Only rendered if members > 0 and not explicitly hidden
+                ======================================================== */}
+            {shouldShowThinkTank && (
+              <div className="space-y-8 pt-12 border-t border-white/15">
+                <div className="text-center space-y-2 mb-10">
+                  <div className="text-xs uppercase tracking-widest text-accent font-bold">
+                    {language === 'ja' ? "研究・戦略・政策提言" : "RESEARCH, STRATEGY & POLICY ADVISORY"}
+                  </div>
+                  <h3 className="text-3xl sm:text-4xl font-headline tracking-wide uppercase font-bold text-white">
+                    {language === 'ja' ? "IJCC シンクタンク" : (cmsAbout?.thinkTankTitle || "IJCC THINK TANK")}
+                  </h3>
+                  <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                    {language === 'ja'
+                      ? "日印政策提言、戦略的研究および二国間イノベーションワーキンググループ"
+                      : (cmsAbout?.thinkTankSubtitle || "Strategic Policy, Bilateral Research & Innovation Working Group")}
+                  </p>
+                  <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {thinkTankMembers.map(renderRedCard)}
+                </div>
               </div>
             )}
           </div>

@@ -18,6 +18,7 @@ import { newsArticle } from './newsArticle';
 import { newsPage } from './newsPage';
 import { resourceItem } from './resourceItem';
 import { serviceItem } from './serviceItem';
+import { thinkTankMember } from './thinkTankMember';
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -31,6 +32,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     eventsPage,
     chapter,
     member,
+    thinkTankMember,
     associate,
     galleryImage,
     galleryPage,

@@ -7,7 +7,7 @@ const singleton = (S: S, title: string, schemaType: string, documentId: string) 
     .title(title)
     .child(S.document().schemaType(schemaType).documentId(documentId).title(title));
 
-const group = (S: S, title: string, items: ReturnType<S['listItem']>[]) =>
+const group = (S: S, title: string, items: (ReturnType<S['listItem']> | ReturnType<S['divider']>)[] | any[]) =>
   S.listItem()
     .title(title)
     .child(S.list().title(title).items(items));
@@ -53,7 +53,7 @@ export const structure: StructureResolver = async (S, context) => {
   };
 
   const indiaDynamicChapterItems = createdChapters
-    .filter((ch) => ch.region !== 'japan' && ch.region !== 'japan-sub')
+    .filter((ch) => ch.region !== 'japan' && ch.region !== 'japan-sub' && ch.region !== 'think-tank' && !ch.title.toLowerCase().includes('think tank'))
     .map(buildDynamicChapterItem);
 
   const japanDynamicChapterItems = createdChapters
@@ -68,7 +68,6 @@ export const structure: StructureResolver = async (S, context) => {
       group(S, 'About Us Page', [
         singleton(S, 'Page Texts', 'aboutPage', 'aboutPage'),
         S.documentTypeListItem('chapter').title('🏛️ Chapters / Regions (Create & Edit Chapters)'),
-        S.documentTypeListItem('member').title('👥 All Team Members'),
         S.listItem()
           .title('👥 Team by Chapter')
           .child(
@@ -215,6 +214,9 @@ export const structure: StructureResolver = async (S, context) => {
                   ),
               ])
           ),
+        S.divider(),
+        S.documentTypeListItem('thinkTankMember').title('💡 IJCC Think Tank'),
+        S.documentTypeListItem('member').title('👥 All Chapter Members'),
       ]),
 
       group(S, 'Services', [
