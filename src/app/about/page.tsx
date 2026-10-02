@@ -676,16 +676,17 @@ export default function AboutPage() {
   const advisors = cmsMembers
     .filter((m) => {
       if (m.hidden) return false;
-      if (m.category !== 'Advisory') return false;
-      if (['team-naveen', 'team-vinod', 'team-maushumi'].includes(m._id)) return false;
-      return true;
+      const cat = (m.category || '').toLowerCase();
+      return cat === 'advisory' || cat.includes('advisory');
     })
+    .sort((a, b) => (a.order ?? 99) - (b.order ?? 99))
     .map((m) => ({
       id: m._id,
-      imageUrl: m.imageUrl,
+      imageUrl: m.imageUrl || FALLBACK_MEMBER_IMAGES[m._id] || '',
       name: pickLang(m, 'name'),
       role: pickLang(m, 'role'),
       bio: pickLang(m, 'bio'),
+      order: m.order ?? 99,
     }));
 
   // ---- CMS-driven content (falls back to built-in text when CMS is empty) ----
