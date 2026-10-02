@@ -85,12 +85,10 @@ function writeLocalMembers(members: MemberRecord[]) {
     console.warn("Failed to write memberships file:", err);
   }
 
-  // Also try writing to local src/data if different and writable
+  // Always write directly to local src/data/memberships.json so git/file system is always in sync
   try {
     const localFile = path.join(LOCAL_DATA_DIR, "memberships.json");
-    if (localFile !== filePath) {
-      fs.writeFileSync(localFile, JSON.stringify(members, null, 2), "utf-8");
-    }
+    fs.writeFileSync(localFile, JSON.stringify(members, null, 2), "utf-8");
   } catch {}
 }
 
@@ -121,6 +119,11 @@ function writeLocalApplications(apps: any[]) {
   } catch (err) {
     console.warn("Failed to write applications file:", err);
   }
+
+  try {
+    const localFile = path.join(LOCAL_DATA_DIR, "membership-applications.json");
+    fs.writeFileSync(localFile, JSON.stringify(apps, null, 2), "utf-8");
+  } catch {}
 }
 
 // -------------------------------------------------------------
@@ -128,28 +131,26 @@ function writeLocalApplications(apps: any[]) {
 // -------------------------------------------------------------
 
 export async function getAllMembers(): Promise<MemberRecord[]> {
+  const localFilePath = path.join(LOCAL_DATA_DIR, "memberships.json");
+  const isInitialized = fs.existsSync(localFilePath);
+
   const localMembers = readLocalMembers();
 
-  // Also attempt Firestore sync in background if permissions allow
-  try {
-    const snap = await getDocs(collection(db, "memberships"));
-    if (!snap.empty) {
-      const fsMembers: MemberRecord[] = [];
-      snap.forEach((d) => {
-        fsMembers.push(d.data() as MemberRecord);
-      });
-      const map = new Map<string, MemberRecord>();
-      fsMembers.forEach((m) => map.set(m.memberId || m.id, m));
-      localMembers.forEach((m) => {
-        const k = m.memberId || m.id;
-        if (!map.has(k)) map.set(k, m);
-      });
-      const merged = Array.from(map.values());
-      writeLocalMembers(merged);
-      return merged;
-    }
-  } catch {
-    // Expected when Firestore rules require client authentication
+  // Only seed from Firestore on first setup if the local file has NEVER been initialized
+  if (!isInitialized && localMembers.length === 0) {
+    try {
+      const snap = await getDocs(collection(db, "memberships"));
+      if (!snap.empty) {
+        const fsMembers: MemberRecord[] = [];
+        snap.forEach((d) => {
+          fsMembers.push(d.data() as MemberRecord);
+        });
+        if (fsMembers.length > 0) {
+          writeLocalMembers(fsMembers);
+          return fsMembers;
+        }
+      }
+    } catch {}
   }
 
   return localMembers;
