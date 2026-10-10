@@ -507,24 +507,141 @@ export default function AboutPage() {
 
   const shouldShowThinkTank = thinkTankMembers.length > 0;
 
-  // 7. Resolve Dynamic Custom CMS Chapters (e.g. Kolkata Chapter, or newly added state chapters)
-  const customChapters = (() => {
-    const defaultChapterKeys = ['up', 'uttar pradesh', 'bihar', 'assam', 'gujarat', 'apex', 'japan', 'think tank', 'thinktank'];
-    return (cmsChapters || [])
+  // 7. Resolve All State Chapters dynamically (UP, Bihar, Assam, Gujarat + Any CMS State Chapters)
+  const allStateChapters = (() => {
+    const baselineDefs = [
+      {
+        id: "state-up",
+        matchKeys: ['up', 'uttar pradesh'],
+        defaultTitle: "UP CHAPTER TEAM",
+        defaultSubtitle: "Regional Leadership & State Coordination",
+        defaultOrder: 10,
+        defaultMembers: upMembers,
+      },
+      {
+        id: "state-bihar",
+        matchKeys: ['bihar'],
+        defaultTitle: "BIHAR CHAPTER TEAM",
+        defaultSubtitle: "Regional Leadership & State Coordination",
+        defaultOrder: 20,
+        defaultMembers: biharMembers,
+      },
+      {
+        id: "state-assam",
+        matchKeys: ['assam'],
+        defaultTitle: "ASSAM CHAPTER TEAM",
+        defaultSubtitle: "Regional Leadership & State Coordination",
+        defaultOrder: 30,
+        defaultMembers: assamMembers,
+      },
+      {
+        id: "state-gujarat",
+        matchKeys: ['gujarat'],
+        defaultTitle: "GUJARAT CHAPTER TEAM",
+        defaultSubtitle: "Regional Leadership & State Coordination",
+        defaultOrder: 40,
+        defaultMembers: gujaratMembers,
+      },
+    ];
+
+    const chaptersMap: Array<{
+      id: string;
+      title: string;
+      subtitle: string;
+      order: number;
+      members: any[];
+      isCmsPublished: boolean;
+    }> = [];
+
+    const matchedCmsIds = new Set<string>();
+
+    // Process baseline chapters and check if CMS has an override / document for them
+    baselineDefs.forEach((def) => {
+      const cmsMatch = (cmsChapters || []).find((c: any) => {
+        const titleLower = (c.title || '').toLowerCase();
+        return def.matchKeys.some((k) => titleLower.includes(k));
+      });
+
+      if (cmsMatch) {
+        matchedCmsIds.add(cmsMatch._id);
+        if (cmsMatch.hidden) {
+          // Chapter explicitly hidden in CMS -> do not display
+          return;
+        }
+
+        const cmsChapMembers: any[] = [];
+        const seen = new Set<string>();
+
+        if (Array.isArray(cmsMatch.members)) {
+          cmsMatch.members.forEach((m: any) => {
+            if (m && !m.hidden) {
+              const mId = m._id || m.name;
+              if (!seen.has(mId)) {
+                seen.add(mId);
+                cmsChapMembers.push(formatMember(m));
+              }
+            }
+          });
+        }
+
+        cmsMembers.forEach((m: any) => {
+          if (m.hidden) return;
+          const refId = m.chapterRef?._id;
+          const refTitle = m.chapterRef?.title?.toLowerCase();
+          const matches =
+            refId === cmsMatch._id ||
+            (refTitle && refTitle === cmsMatch.title?.toLowerCase()) ||
+            (m.category && m.category.toLowerCase().includes(cmsMatch.title?.toLowerCase()));
+          if (matches && !seen.has(m._id)) {
+            seen.add(m._id);
+            cmsChapMembers.push(formatMember(m));
+          }
+        });
+
+        const finalMembers = cmsChapMembers.length > 0 ? cmsChapMembers : def.defaultMembers;
+
+        if (finalMembers.length > 0) {
+          chaptersMap.push({
+            id: cmsMatch._id,
+            title: (cmsMatch.title || def.defaultTitle).toUpperCase(),
+            subtitle: cmsMatch.subtitle || def.defaultSubtitle,
+            order: cmsMatch.order ?? def.defaultOrder,
+            members: finalMembers.sort((a, b) => (a.order ?? 50) - (b.order ?? 50)),
+            isCmsPublished: true,
+          });
+        }
+      } else {
+        // No CMS document created yet -> use default baseline data
+        if (def.defaultMembers.length > 0) {
+          chaptersMap.push({
+            id: def.id,
+            title: def.defaultTitle,
+            subtitle: def.defaultSubtitle,
+            order: def.defaultOrder,
+            members: def.defaultMembers,
+            isCmsPublished: false,
+          });
+        }
+      }
+    });
+
+    // Process any other CMS State Chapters (e.g. Kolkata, Maharashtra, etc.)
+    (cmsChapters || [])
       .filter((c: any) => {
-        if (c.hidden) return false;
-        const titleNorm = (c.title || '').toLowerCase();
-        return !defaultChapterKeys.some((k) => titleNorm.includes(k));
+        if (c.hidden || matchedCmsIds.has(c._id)) return false;
+        const titleLower = (c.title || '').toLowerCase();
+        // Ignore Japan chapters, Apex, and Think Tank
+        if (c.region === 'japan' || c.region === 'japan-sub') return false;
+        if (titleLower.includes('apex') || titleLower.includes('think tank') || titleLower.includes('thinktank')) return false;
+        return true;
       })
-      .map((c: any) => {
+      .forEach((c: any) => {
         const membersList: any[] = [];
         const seen = new Set<string>();
 
-        // (i) Direct members from chapter's members array
         if (Array.isArray(c.members)) {
           c.members.forEach((m: any) => {
             if (m && !m.hidden) {
-              // Exclude demo member Nitin that was removed from CMS
               if (m.name?.toLowerCase().includes('nitin') && (m.bio?.toLowerCase().includes('demo') || m._type === 'chapterMember')) {
                 return;
               }
@@ -537,7 +654,6 @@ export default function AboutPage() {
           });
         }
 
-        // (ii) Members from cmsMembers referencing this chapter
         cmsMembers.forEach((m: any) => {
           if (m.hidden) return;
           const refId = m.chapterRef?._id;
@@ -546,38 +662,49 @@ export default function AboutPage() {
             refId === c._id ||
             (refTitle && refTitle === c.title?.toLowerCase()) ||
             (m.category && m.category.toLowerCase().includes(c.title?.toLowerCase()));
-
           if (matches && !seen.has(m._id)) {
             seen.add(m._id);
             membersList.push(formatMember(m));
           }
         });
 
-        const tabTitle = c.title.replace(/chapter.*team|chapter/i, '').trim() + " Chapter";
-
-        return {
+        chaptersMap.push({
           id: c._id,
-          tabTitle: tabTitle.trim() || c.title,
           title: c.title.toUpperCase(),
           subtitle: c.subtitle || "Regional Leadership & State Coordination",
-          region: c.region || 'india-state',
           order: c.order ?? 50,
           members: membersList.sort((a, b) => (a.order ?? 50) - (b.order ?? 50)),
-        };
-      })
-      .filter((c: any) => c.members && c.members.length > 0)
-      .sort((a: any, b: any) => (a.order ?? 50) - (b.order ?? 50));
+          isCmsPublished: true,
+        });
+      });
+
+    return chaptersMap.sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
   })();
 
-  const customIndiaStateChapters = customChapters.filter((c) => c.region !== 'japan' && c.region !== 'japan-sub');
-  const customJapanChapters = customChapters.filter((c) => c.region === 'japan' || c.region === 'japan-sub');
+  // 8. Resolve Japan Sub-Chapters from CMS if any
+  const customJapanChapters = (cmsChapters || [])
+    .filter((c: any) => !c.hidden && (c.region === 'japan-sub' || (c.region === 'japan' && c.chapterType === 'sub')))
+    .map((c: any) => {
+      const membersList: any[] = [];
+      const seen = new Set<string>();
+      if (Array.isArray(c.members)) {
+        c.members.forEach((m: any) => {
+          if (m && !m.hidden && !seen.has(m._id || m.name)) {
+            seen.add(m._id || m.name);
+            membersList.push(formatMember(m));
+          }
+        });
+      }
+      return {
+        id: c._id,
+        title: c.title.toUpperCase(),
+        subtitle: c.subtitle || "Tokyo Headquarters & Regional Operations",
+        members: membersList.sort((a, b) => (a.order ?? 50) - (b.order ?? 50)),
+      };
+    });
 
-  const shouldShowUP = upMembers.length > 0;
-  const shouldShowBihar = biharMembers.length > 0;
-  const shouldShowAssam = assamMembers.length > 0;
-  const shouldShowGujarat = gujaratMembers.length > 0;
   const shouldShowJapan = japanMembers.length > 0 || customJapanChapters.length > 0;
-  const hasAnyStateChapters = shouldShowUP || shouldShowBihar || shouldShowAssam || shouldShowGujarat || customIndiaStateChapters.length > 0;
+  const hasAnyStateChapters = allStateChapters.length > 0;
 
   // Red Card Component matching the live website theme exactly
   const renderRedCard = (member: any) => {
@@ -653,6 +780,15 @@ export default function AboutPage() {
 
   const getChapterTitle = (ch: any) => {
     if (language === 'ja') {
+      const titleLower = (ch.title || '').toLowerCase();
+      if (titleLower.includes('bihar')) return "ビハール支部チーム";
+      if (titleLower.includes('up') || titleLower.includes('uttar pradesh')) return "ウッタル・プラデーシュ支部チーム";
+      if (titleLower.includes('assam')) return "アッサム支部チーム";
+      if (titleLower.includes('gujarat')) return "グジャラート支部チーム";
+      if (titleLower.includes('kolkata')) return "コルカタ支部チーム";
+      if (titleLower.includes('mumbai')) return "ムンバイ支部チーム";
+      if (titleLower.includes('delhi')) return "デリー支部チーム";
+      if (titleLower.includes('japan')) return "日本支部チーム";
       const titlesJa: Record<string, string> = {
         up: "ウッタル・プラデーシュ支部チーム",
         bihar: "ビハール支部チーム",
@@ -668,6 +804,10 @@ export default function AboutPage() {
 
   const getChapterSubtitle = (ch: any) => {
     if (language === 'ja' && ch.subtitle) {
+      const subLower = (ch.subtitle || '').toLowerCase();
+      if (subLower.includes('regional leadership') || subLower.includes('state coordination')) {
+        return "地域リーダーシップおよび州連携";
+      }
       return tr(ch.subtitle);
     }
     return ch.subtitle;
@@ -981,10 +1121,10 @@ export default function AboutPage() {
               {/* Main Title: INDIA CHAPTER TEAM */}
               <div className="text-center space-y-3">
                 <div className="text-xs uppercase tracking-widest text-accent font-bold">
-                  {language === 'ja' ? "全国統括および州支部" : "NATIONAL & REGIONAL LEADERSHIP"}
+                  {language === 'ja' ? "全国統括・最高執行評議会" : "NATIONAL & REGIONAL LEADERSHIP"}
                 </div>
                 <h3 className="text-4xl sm:text-5xl font-headline tracking-wide uppercase font-bold text-white">
-                  {language === 'ja' ? "インド本部・支部" : "INDIA CHAPTER TEAM"}
+                  {language === 'ja' ? "インド本部・支部" : (cmsAbout?.indiaChapterTitle || "INDIA CHAPTER TEAM")}
                 </h3>
                 <div className="w-24 h-1 bg-accent mx-auto mt-2" />
               </div>
@@ -996,7 +1136,7 @@ export default function AboutPage() {
                     {language === 'ja' ? "最高執行評議会" : "Apex Governing Council"}
                   </h4>
                   <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                    {language === 'ja' ? "最高執行評議会および中央理事会" : "Apex Governing Council & Central Board"}
+                    {language === 'ja' ? "最高執行評議会および中央理事会" : (cmsAbout?.indiaChapterSubtitle || "Apex Governing Council & Central Board")}
                   </p>
                   <div className="w-16 h-0.5 bg-accent/60 mx-auto mt-2" />
                 </div>
@@ -1004,129 +1144,11 @@ export default function AboutPage() {
                   {apexLeadership.map(renderRedCard)}
                 </div>
               </div>
-
-              {/* 1B. Sub-title: STATE CHAPTER TEAMS (Sub chapters under India Chapter Team) */}
-              {hasAnyStateChapters && (
-                <div className="space-y-16 pt-12 border-t border-white/15">
-                  <div className="text-center space-y-2 mb-12">
-                    <h4 className="text-3xl sm:text-4xl font-headline font-bold text-accent uppercase tracking-wide">
-                      {language === 'ja' ? "州支部チーム" : "STATE CHAPTER TEAMS"}
-                    </h4>
-                    <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                      {language === 'ja' ? "各州における地域リーダーシップおよび産業連携" : "Regional Leadership & State Coordination across India"}
-                    </p>
-                    <div className="w-20 h-0.5 bg-accent mx-auto mt-2" />
-                  </div>
-
-                  {/* State Chapters Grid / Sections */}
-                  <div className="space-y-16">
-                    {/* UP Chapter Team */}
-                    {shouldShowUP && (
-                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
-                        <div className="text-center space-y-2 mb-8">
-                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                            {language === 'ja' ? "ウッタル・プラデーシュ支部チーム" : "UP CHAPTER TEAM"}
-                          </h5>
-                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                            Regional Leadership & State Coordination
-                          </p>
-                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                          {upMembers.map(renderRedCard)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Bihar Chapter Team */}
-                    {shouldShowBihar && (
-                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
-                        <div className="text-center space-y-2 mb-8">
-                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                            {language === 'ja' ? "ビハール支部チーム" : "BIHAR CHAPTER TEAM"}
-                          </h5>
-                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                            Regional Leadership & State Coordination
-                          </p>
-                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                          {biharMembers.map(renderRedCard)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Assam Chapter Team */}
-                    {shouldShowAssam && (
-                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
-                        <div className="text-center space-y-2 mb-8">
-                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                            {language === 'ja' ? "アッサム支部チーム" : "ASSAM CHAPTER TEAM"}
-                          </h5>
-                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                            Regional Leadership & State Coordination
-                          </p>
-                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                          {assamMembers.map(renderRedCard)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Gujarat Chapter Team */}
-                    {shouldShowGujarat && (
-                      <div className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
-                        <div className="text-center space-y-2 mb-8">
-                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                            {language === 'ja' ? "グジャラート支部チーム" : "GUJARAT CHAPTER TEAM"}
-                          </h5>
-                          <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                            Regional Leadership & State Coordination
-                          </p>
-                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                          {gujaratMembers.map(renderRedCard)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Dynamic CMS State Chapters (e.g. Kolkata Chapter) */}
-                    {customIndiaStateChapters.map((ch) => (
-                      <div key={ch.id} className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
-                        <div className="text-center space-y-2 mb-8">
-                          <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                            {ch.title}
-                          </h5>
-                          <p className="text-sm text-primary-foreground/75 italic">
-                            {ch.subtitle}
-                          </p>
-                          <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                          {ch.members && ch.members.length > 0 ? (
-                            ch.members.map(renderRedCard)
-                          ) : (
-                            <div className="col-span-full text-center py-8 text-white/60 bg-white/5 rounded-2xl border border-dashed border-white/10">
-                              <Users2 className="h-8 w-8 mx-auto text-white/30 mb-2" />
-                              <p className="text-sm font-medium">
-                                {language === 'ja'
-                                  ? "この支部の役員・リーダーシップ任命は近日発表されます。"
-                                  : "Regional leadership appointments for this chapter will be announced shortly."}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* ========================================================
                 2. MAIN CHAPTER: JAPAN CHAPTER TEAM
+                (Placed directly under India Chapter Team)
                 ======================================================== */}
             {shouldShowJapan && (
               <div className="space-y-8 pt-12 border-t border-white/15">
@@ -1135,10 +1157,10 @@ export default function AboutPage() {
                     {language === 'ja' ? "日本本部" : "HEADQUARTERS & REGIONAL OPERATIONS"}
                   </div>
                   <h3 className="text-3xl sm:text-4xl font-headline tracking-wide uppercase font-bold text-white">
-                    {language === 'ja' ? "日本支部チーム" : "JAPAN CHAPTER TEAM"}
+                    {language === 'ja' ? "日本支部チーム" : (cmsAbout?.japanChapterTitle || "JAPAN CHAPTER TEAM")}
                   </h3>
                   <p className="text-sm sm:text-base text-primary-foreground/75 italic">
-                    {language === 'ja' ? "東京本部および地域運営統括" : "Tokyo Headquarters & Regional Operations"}
+                    {language === 'ja' ? "東京本部および地域運営統括" : (cmsAbout?.japanChapterSubtitle || "Tokyo Headquarters & Regional Operations")}
                   </p>
                   <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
                 </div>
@@ -1151,10 +1173,10 @@ export default function AboutPage() {
                   <div key={ch.id} className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10 mt-12">
                     <div className="text-center space-y-2 mb-8">
                       <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
-                        {ch.title}
+                        {getChapterTitle(ch)}
                       </h5>
                       <p className="text-sm text-primary-foreground/75 italic">
-                        {ch.subtitle}
+                        {getChapterSubtitle(ch)}
                       </p>
                       <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
                     </div>
@@ -1165,7 +1187,9 @@ export default function AboutPage() {
                         <div className="col-span-full text-center py-8 text-white/60 bg-white/5 rounded-2xl border border-dashed border-white/10">
                           <Users2 className="h-8 w-8 mx-auto text-white/30 mb-2" />
                           <p className="text-sm font-medium">
-                            Regional leadership appointments for this chapter will be announced shortly.
+                            {language === 'ja'
+                              ? "この支部の役員・リーダーシップ任命は近日発表されます。"
+                              : "Regional leadership appointments for this chapter will be announced shortly."}
                           </p>
                         </div>
                       )}
@@ -1176,7 +1200,59 @@ export default function AboutPage() {
             )}
 
             {/* ========================================================
-                3. IJCC THINK TANK (Bilateral Policy & Research Advisory)
+                3. STATE CHAPTER TEAMS (Sub chapters across India)
+                (Placed directly under Japan Chapter Team)
+                ======================================================== */}
+            {hasAnyStateChapters && (
+              <div className="space-y-16 pt-12 border-t border-white/15">
+                <div className="text-center space-y-2 mb-12">
+                  <div className="text-xs uppercase tracking-widest text-accent font-bold">
+                    {language === 'ja' ? "地域統括・産業連携" : "REGIONAL LEADERSHIP & STATE COORDINATION"}
+                  </div>
+                  <h4 className="text-3xl sm:text-4xl font-headline font-bold text-accent uppercase tracking-wide">
+                    {language === 'ja' ? "州支部チーム" : (cmsAbout?.stateChaptersTitle || "STATE CHAPTER TEAMS")}
+                  </h4>
+                  <p className="text-sm sm:text-base text-primary-foreground/75 italic">
+                    {language === 'ja' ? "各州における地域リーダーシップおよび産業連携" : (cmsAbout?.stateChaptersSubtitle || "Regional Leadership & State Coordination across India")}
+                  </p>
+                  <div className="w-20 h-0.5 bg-accent mx-auto mt-2" />
+                </div>
+
+                {/* State Chapters Grid / Sections (Fully dynamic from CMS) */}
+                <div className="space-y-16">
+                  {allStateChapters.map((ch) => (
+                    <div key={ch.id} className="space-y-8 bg-white/[0.03] p-6 sm:p-10 rounded-3xl border border-white/10">
+                      <div className="text-center space-y-2 mb-8">
+                        <h5 className="text-2xl sm:text-3xl font-headline tracking-wide uppercase font-bold text-white">
+                          {getChapterTitle(ch)}
+                        </h5>
+                        <p className="text-sm text-primary-foreground/75 italic">
+                          {getChapterSubtitle(ch)}
+                        </p>
+                        <div className="w-16 h-0.5 bg-accent mx-auto mt-2" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {ch.members && ch.members.length > 0 ? (
+                          ch.members.map(renderRedCard)
+                        ) : (
+                          <div className="col-span-full text-center py-8 text-white/60 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                            <Users2 className="h-8 w-8 mx-auto text-white/30 mb-2" />
+                            <p className="text-sm font-medium">
+                              {language === 'ja'
+                                ? "この支部の役員・リーダーシップ任命は近日発表されます。"
+                                : "Regional leadership appointments for this chapter will be announced shortly."}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                4. IJCC THINK TANK (Bilateral Policy & Research Advisory)
                 Only rendered if members > 0 and not explicitly hidden
                 ======================================================== */}
             {shouldShowThinkTank && (
