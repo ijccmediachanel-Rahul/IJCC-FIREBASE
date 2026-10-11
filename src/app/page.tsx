@@ -187,10 +187,10 @@ export default function Home() {
             <Image
               src={cmsHome?.aboutImageUrl || "https://i.postimg.cc/4nC2jkgX/h1.png"}
               alt="About IJCC"
-              layout="fill"
-              objectFit="cover"
+              fill
+              className="rounded-xl object-cover"
              
-              className="rounded-xl"
+
             />
           </div>
           <div className="space-y-6">

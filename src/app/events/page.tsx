@@ -237,11 +237,9 @@ const modifiersStyles = {
                     )}>
                       <Image 
                           src={event.imageUrl} 
-                          alt={event.title} 
-                          layout="fill" 
-                          objectFit={(event.isVertical ? "contain" : "cover")}
-                         
-                          className={cn("transition-transform duration-300 hover:scale-105", event.isVertical && "bg-secondary p-2")}
+                          alt={event.title}
+                          fill
+                          className={cn("transition-transform duration-300 hover:scale-105", event.isVertical ? "object-contain bg-secondary p-2" : "object-cover")}
                       />
                     </div>
                   </DialogTrigger>

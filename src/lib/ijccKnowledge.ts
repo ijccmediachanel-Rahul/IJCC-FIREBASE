@@ -197,20 +197,99 @@ KEY SECTORS & INDIA-JAPAN TRADE FACTS
 - India imports from Japan: Machinery, electronic equipment, steel, transport equipment, chemicals
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+JESDC — JAPANESE LANGUAGE EDUCATION & SKILLING DEVELOPMENT CENTRES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Website Page: https://www.ijcc.in/jesdc-centres
+Official Helpline / WhatsApp: +91-92679 19281
+Official Email: info@ijcc.in
+
+OVERVIEW:
+JESDC (Japanese Language Education & Skilling Development Centre) is an accredited pan-India initiative by the Indo-Japan Chamber of Commerce (IJCC). It equips Indian youth, university students, and professionals with industry-standard Japanese language certifications (JLPT / NAT-TEST), workplace business etiquette (Keigo & manners), and skill training for high-growth careers and education in Japan.
+
+ACTIVE JESDC CENTRES (Pan-India Network):
+1. Delhi JESDC Centre (NCR Hub):
+   - Address: 3rd Floor, D-21 Corporate Park, Sector 21, Dwarka, New Delhi - 110077
+   - Contact / Phone: +91-92679 19281
+   - Email: del@ijcc.in
+   - Status: Active Admissions & Weekend Batches
+   - Facilities: Audio-Visual Classrooms, JLPT Study Desks, Native Sensei Sessions, Career Counselling Cell.
+
+2. Kolkata JESDC Centre (Eastern India Hub):
+   - Address: 5th Floor, Infinity Benchmark, Block EP & GP, Sector V, Salt Lake, Kolkata - 700091
+   - Contact / Phone: +91-92679 19281
+   - Email: ccu@ijcc.in
+   - Status: Active Admissions & Weekend Batches
+   - Facilities: Interactive Language Lab, JLPT Study Desks, Japanese Cultural Immersion Lounge, Corporate Training Cell.
+
+3. Patna JESDC Centre (Bihar & Regional Hub):
+   - Address: 2nd Floor, Maurya Centre, Fraser Road, Near Dak Bungalow, Patna - 800001
+   - Contact / Phone: +91-92679 19281
+   - Email: pat@ijcc.in
+   - Status: Active Admissions & Weekend Batches
+   - Facilities: Audio-Visual Classroom, Mock Test Desks, Student Orientation Helpdesk, High-Speed Internet.
+
+JESDC TRAINING PROGRAMS:
+01. SSW / TITP Japanese Language (Blue-Collar & Technical Intern Training):
+    - Targeted preparation for Specified Skilled Worker (SSW) and Technical Intern Training Program (TITP) jobs in Japan.
+    - Focus: Everyday conversational fluency (Kaiwa), industry vocabulary (caregiving, food service, construction, manufacturing, hospitality), interview readiness, and Japan visa clearance.
+02. Japanese for University Students:
+    - Designed for undergrad & postgraduate college students.
+    - JLPT N5 to N3 certification preparation, reading, writing (Kanji, Hiragana, Katakana), and interview prep for Japanese MNCs and exchange programs.
+03. Japanese for Professionals (IT & Non-IT):
+    - Business Japanese (Keigo), professional email drafting, cross-cultural corporate communication, technical client interactions, and on-site deployment readiness for Japanese IT firms and global enterprises.
+04. Japanese for Further Studies:
+    - Academic Japanese preparation for students aspiring for undergraduate, masters, or doctoral programs in Japanese universities. JLPT N2/N1 pathway and EJU exam readiness.
+05. University Admission Assistance:
+    - Comprehensive guidance on scholarships (MEXT, JASSO), university selection, Statement of Purpose (SOP) drafting, professor outreach, and student visa processing.
+
+HOW TO ENROL FOR JESDC:
+- Visit https://www.ijcc.in/jesdc-centres and click "Book Free Counselling" or "Enquire for this Program".
+- Or contact the helpline directly at +91-92679 19281 / info@ijcc.in.
+- An academic coordinator reaches out within 24 hours to schedule orientation.
+
+PARTNER WITH US / OPEN A JESDC CENTRE:
+- Universities, colleges, and educational institutions across India can affiliate with IJCC to establish an accredited JESDC Centre on their campus.
+- IJCC provides curriculum, certified faculty training, examination certifications, and placement facilitation.
+- Institutions can apply at https://www.ijcc.in/jesdc-centres (Click "Partner with Us").
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTACT INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Website: https://www.ijcc.in
 Contact Page: https://www.ijcc.in/contact
-[NOTE TO ADMIN: Add email, phone, and office address below]
-Email: [Add official email]
-Phone: [Add phone number]
-Address: [Add office address]
+JESDC Page: https://www.ijcc.in/jesdc-centres
+Phone / Helpline: +91-92679 19281
+Email: info@ijcc.in
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FREQUENTLY ASKED QUESTIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Q: How do I become a member?
+Q: What is JESDC?
+A: JESDC (Japanese Language Education & Skilling Development Centre) is an initiative by IJCC providing professional Japanese language courses (JLPT/NAT-TEST) and technical skill development across Delhi, Kolkata, and Patna for careers and higher education in Japan.
+
+Q: Where are the JESDC centres located?
+A: IJCC currently operates three active centres:
+1. Delhi: D-21 Corporate Park, Sector 21, Dwarka, New Delhi.
+2. Kolkata: Infinity Benchmark, Sector V, Salt Lake, Kolkata.
+3. Patna: Maurya Centre, Fraser Road, Near Dak Bungalow, Patna.
+Helpline for all centres: +91-92679 19281.
+
+Q: What programs are offered at JESDC centres?
+A: JESDC offers 5 core programs:
+1. SSW / TITP Japanese (Blue-Collar & Technical Interns)
+2. Japanese for University Students
+3. Japanese for Professionals (IT & Non-IT)
+4. Japanese for Further Studies
+5. University Admission Assistance & MEXT Scholarships.
+
+Q: How can I enrol or book a counselling session?
+A: Visit ijcc.in/jesdc-centres and fill the enquiry form, or call +91-92679 19281. Orientation counselling is free.
+
+Q: Can colleges or institutions open a JESDC centre?
+A: Yes! Universities and institutes can partner with IJCC to launch an accredited JESDC Centre on their campus. Apply via the "Partner with Us" section on ijcc.in/jesdc-centres.
+
+Q: How do I become a member of IJCC?
 A: Visit ijcc.in/contact, fill the membership inquiry form, and the IJCC team will get back to you within 2-3 business days. Membership is open to companies and individuals with India-Japan business interests.
 
 Q: What are the membership benefits?
@@ -225,33 +304,30 @@ A: Yes. IJCC provides market entry guidance, regulatory briefings, partner match
 Q: How can I attend IJCC events?
 A: Most events are open to members. Some events are open to non-members as well. Visit ijcc.in/events for the latest calendar and registration details.
 
-Q: Does IJCC offer Japanese language resources?
-A: Yes. IJCC provides JLPT (Japanese Language Proficiency Test) preparation materials and resources in its resource library at ijcc.in/resources.
-
 Q: Where can I find IJCC on social media?
 A: Instagram: @ijccindia | LinkedIn: Indo-Japan Chamber of Commerce | Facebook & YouTube links available at ijcc.in
 `;
 
 export const SUGGESTED_QUESTIONS = [
+  "What is JESDC and what Japanese programs are offered?",
+  "Where are the JESDC centres located (Delhi, Kolkata, Patna)?",
+  "How can I enrol for Japanese language counselling at JESDC?",
+  "How can colleges partner with IJCC to open a JESDC centre?",
   "How can I become a member of IJCC?",
   "What events does IJCC have coming up?",
   "How can IJCC help my business expand to Japan?",
   "What trade opportunities exist between India and Japan?",
-  "How do I find Japanese business partners?",
-  "What services does IJCC offer?",
-  "Who are IJCC's associate partners?",
-  "What is the membership fee for IJCC?",
 ];
 
 export const SUGGESTED_QUESTIONS_JA = [
+  "JESDC日本語教育・研修センターについて教えてください",
+  "JESDCセンターはどこにありますか？（デリー、コルカタ、パトナ）",
+  "どのような日本語教育プログラムが提供されていますか？",
+  "教育機関がJESDCセンターを開設するための提携方法は？",
   "IJCCの会員になるにはどうすればよいですか？",
   "近日開催予定のイベントやセミナーはありますか？",
   "日本への事業進出をどのようにサポートしてくれますか？",
-  "日印間にはどのような貿易機会がありますか？",
-  "日本のビジネスパートナーを見つけるにはどうすればよいですか？",
-  "IJCCはどのようなサービスを提供していますか？",
-  "IJCCの提携機関やアソシエイトは誰ですか？",
-  "IJCCの会費・メンバーシップ料金はいくらですか？",
+  "日印間の貿易やビジネス機会について教えてください",
 ];
 
 export type Message = {

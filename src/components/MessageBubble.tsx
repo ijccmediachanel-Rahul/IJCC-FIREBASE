@@ -14,7 +14,8 @@ function renderMarkdown(text: string): string {
 
 export default function MessageBubble({ message, isLatest }: { message: Message; isLatest: boolean }) {
   const isUser = message.role === "user";
-  const timeStr = message.timestamp.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const dateObj = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp || Date.now());
+  const timeStr = isNaN(dateObj.getTime()) ? "" : dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
   if (isUser) {
     return (
       <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:"8px" }}>

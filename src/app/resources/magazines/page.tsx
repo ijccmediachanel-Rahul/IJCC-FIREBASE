@@ -159,10 +159,8 @@ export default function MagazinesPage() {
                 <Image
                     src={featuredMagazine.imageUrl}
                     alt={featuredMagazine.title}
-                    layout="fill"
-                    objectFit="cover"
-                   
-                    className="rounded-lg"
+                    fill
+                    className="rounded-lg object-cover"
                 />
             </div>
         </div>
@@ -188,9 +186,8 @@ export default function MagazinesPage() {
                     <Image
                         src={magazine.imageUrl}
                         alt={magazine.title}
-                        layout="fill"
-                        objectFit="cover"
-                       
+                        fill
+                        className="object-cover"
                     />
                 </div>
                 <div className="p-6">

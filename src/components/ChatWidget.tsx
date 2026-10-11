@@ -7,14 +7,14 @@ import { useTranslation } from "@/hooks/use-translation";
 const WELCOME_EN: Message = {
   id: "welcome",
   role: "assistant",
-  content: "Namaste! 🇮🇳🤝🇯🇵 Welcome to **Indo-Japan Chamber of Commerce**!\n\nI can help you with:\n- Membership information\n- Upcoming events & seminars\n- India-Japan trade opportunities\n- Business networking & partnerships\n\nHow can I assist you today?",
+  content: "Namaste! 🇮🇳🤝🇯🇵 Welcome to **Indo-Japan Chamber of Commerce**!\n\nI can help you with:\n- **JESDC Japanese Language Centres** (Delhi, Kolkata, Patna)\n- Membership & Corporate tiers\n- Upcoming events & trade missions\n- India-Japan trade & partnerships\n\nHow can I assist you today?",
   timestamp: new Date(),
 };
 
 const WELCOME_JA: Message = {
   id: "welcome",
   role: "assistant",
-  content: "こんにちは！🇮🇳🤝🇯🇵 **印日商工会議所（IJCC）**へようこそ！\n\n以下についてご案内できます：\n- 会員・メンバーシップ情報\n- 今後のイベント＆セミナー\n- 日印間の貿易・ビジネス機会\n- ネットワーキング＆事業提携\n\nどのようなご用件でしょうか？",
+  content: "こんにちは！🇮🇳🤝🇯🇵 **印日商工会議所（IJCC）**へようこそ！\n\n以下についてご案内できます：\n- **JESDC日本語教育・研修センター**（デリー、コルカタ、パトナ）\n- 会員・メンバーシップ情報\n- 今後のイベント＆セミナー\n- 日印間の貿易・ビジネス機会\n\nどのようなご用件でしょうか？",
   timestamp: new Date(),
 };
 
@@ -161,7 +161,23 @@ export default function ChatWidget() {
 
   const currentSuggestions = isJa ? SUGGESTED_QUESTIONS_JA : SUGGESTED_QUESTIONS;
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <button
+        suppressHydrationWarning
+        className="fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center cursor-pointer shadow-xl border-none transition-transform active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, #C8102E, #8B0A1F)",
+          boxShadow: "0 8px 32px rgba(200,16,46,0.4)",
+        }}
+        aria-label="Open chat"
+      >
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    );
+  }
 
   return (
     <>
