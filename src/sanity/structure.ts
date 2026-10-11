@@ -7,6 +7,18 @@ const singleton = (S: S, title: string, schemaType: string, documentId: string) 
     .title(title)
     .child(S.document().schemaType(schemaType).documentId(documentId).title(title));
 
+const centreSingleton = (S: S, title: string, documentId: string, centreKey: string) =>
+  S.listItem()
+    .id(documentId)
+    .title(title)
+    .child(
+      S.document()
+        .schemaType('jesdcCentre')
+        .documentId(documentId)
+        .title(title)
+        .initialValueTemplate('jesdc-centre-template', { centreKey })
+    );
+
 const group = (S: S, title: string, items: (ReturnType<S['listItem']> | ReturnType<S['divider']>)[] | any[]) =>
   S.listItem()
     .title(title)
@@ -244,6 +256,24 @@ export const structure: StructureResolver = async (S, context) => {
         S.documentTypeListItem('resourceItem').title('All Resources'),
         singleton(S, 'Associates Page Titles', 'newsPage', 'newsPage'),
         S.documentTypeListItem('newsArticle').title('Associates Posts'),
+      ]),
+
+      group(S, '🏢 JESDC Centres Page', [
+        singleton(S, '📄 Page Content & Banners', 'jesdcPage', 'jesdcPage'),
+        S.divider(),
+        centreSingleton(S, '📍 JESDC Delhi NCR (Central Hub)', 'jesdc-delhi', 'delhi'),
+        centreSingleton(S, '📍 JESDC Kolkata Regional Centre', 'jesdc-kolkata', 'kolkata'),
+        centreSingleton(S, '📍 JESDC Bihar Centre (Patna)', 'jesdc-patna', 'patna'),
+        S.listItem()
+          .title('➕ Add Other / New Centres')
+          .child(
+            S.documentList()
+              .title('Other Centres (Add More)')
+              .schemaType('jesdcCentre')
+              .filter(
+                '_type == "jesdcCentre" && !(_id in ["jesdc-delhi", "jesdc-kolkata", "jesdc-patna", "drafts.jesdc-delhi", "drafts.jesdc-kolkata", "drafts.jesdc-patna"])'
+              )
+          ),
       ]),
 
       singleton(S, 'Contact Page', 'contactPage', 'contactPage'),

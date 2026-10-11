@@ -143,6 +143,7 @@ export function AppHeader() {
     },
     { href: "/events", label: t('navEvents') },
     { href: "/resources", label: t('navResources') },
+    { href: "/jesdc-centres", label: t('navJesdcCentres') || "JESDC Centres" },
     { href: "/contact", label: t('navContact') },
   ];
   
@@ -215,10 +216,10 @@ export function AppHeader() {
         <div className="flex items-center justify-end gap-2">
             <LanguageSwitcher />
             
-            <Button asChild variant="ghost" size="icon">
-              <Link href="https://sh003.webhostingservices.com:2096/webmaillogout.cgi" target="_blank" rel="noopener noreferrer">
+            <Button asChild variant="ghost" size="icon" title="IJCC Webmail (Outlook)">
+              <Link href="https://outlook.office.com/mail/?prompt=select_account" target="_blank" rel="noopener noreferrer">
                 <Mail className="h-5 w-5" />
-                <span className="sr-only">Webmail</span>
+                <span className="sr-only">Outlook Webmail</span>
               </Link>
             </Button>
             
@@ -298,6 +299,15 @@ export function AppHeader() {
                   <hr className="my-2"/>
                    {!loading && (
                     <div className="flex flex-col gap-2">
+                        <Link
+                          href="https://outlook.office.com/mail/?prompt=select_account"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-muted-foreground hover:text-primary py-1"
+                        >
+                          <Mail className="h-4 w-4" />
+                          <span>{language === 'ja' ? 'ウェブメール (Outlook)' : 'Webmail (Outlook)'}</span>
+                        </Link>
                         {user ? (
                             <>
                                 <Link href="/profile" className="text-muted-foreground hover:text-primary">{t('userMenuProfile')}</Link>

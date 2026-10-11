@@ -387,3 +387,55 @@ export const SERVICE_DETAIL_QUERY = groq`
     }
   }
 `;
+
+export const JESDC_PAGE_QUERY = groq`
+  *[_type == "jesdcPage"][0] {
+    bannerBadge,
+    bannerTitle,
+    bannerSubtitle,
+    bannerTagline,
+    bannerDescription,
+    objectivesTitle,
+    objectivesSubtitle,
+    objectives[] {
+      number,
+      title,
+      category,
+      description,
+      points
+    },
+    whyJesdcTitle,
+    whyJesdcSubtitle,
+    whyJesdcPoints[] {
+      title,
+      description
+    },
+    openCentreTitle,
+    openCentreDescription,
+    ctaTitle,
+    centralHelpline,
+    centralEmail
+  }
+`;
+
+export const JESDC_CENTRES_QUERY = groq`
+  *[_type == "jesdcCentre" && hidden != true] | order(coalesce(order, 10) asc, name asc) {
+    _id,
+    name,
+    cityName,
+    stateName,
+    address,
+    coordinatorName,
+    phone,
+    email,
+    timings,
+    googleMapUrl,
+    programsAvailable,
+    facilities,
+    upcomingBatchDate,
+    availableSeats,
+    order,
+    hidden
+  }
+`;
+

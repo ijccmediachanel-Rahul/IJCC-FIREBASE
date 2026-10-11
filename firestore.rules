@@ -18,6 +18,16 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // JESDC Student Enquiries & Form Submissions
+    match /jesdc_enquiries/{enquiryId} {
+      allow read, write: if true;
+    }
+
+    // JESDC Centre Partnership Proposals
+    match /jesdc_partnerships/{partnerId} {
+      allow read, write: if true;
+    }
+
     // Chat messages - allow read/write for all users (public chatbot)
     match /chats/{chatId} {
       allow read, write: if true;

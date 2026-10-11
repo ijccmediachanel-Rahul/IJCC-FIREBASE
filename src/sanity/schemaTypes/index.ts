@@ -19,6 +19,8 @@ import { newsPage } from './newsPage';
 import { resourceItem } from './resourceItem';
 import { serviceItem } from './serviceItem';
 import { thinkTankMember } from './thinkTankMember';
+import { jesdcPage } from './jesdcPage';
+import { jesdcCentre } from './jesdcCentre';
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -42,5 +44,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     newsArticle,
     newsPage,
     serviceItem,
+    jesdcPage,
+    jesdcCentre,
   ],
 };

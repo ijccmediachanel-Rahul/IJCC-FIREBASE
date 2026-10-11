@@ -316,6 +316,14 @@ const nextConfig: NextConfig = {
         source: '/resources/self_study',
         destination: '/resources/self-study',
       },
+      {
+        source: '/jesdc%20centres',
+        destination: '/jesdc-centres',
+      },
+      {
+        source: '/jesdc centres',
+        destination: '/jesdc-centres',
+      },
     ];
   },
   env: {

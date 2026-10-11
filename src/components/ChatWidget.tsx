@@ -22,9 +22,10 @@ export default function ChatWidget() {
   const { language } = useTranslation();
   const isJa = language === "ja";
 
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([isJa ? WELCOME_JA : WELCOME_EN]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_EN]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -33,6 +34,12 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
+
+  // Mount only on client to prevent extension injection hydration mismatch (e.g. fdprocessedid)
+  useEffect(() => {
+    setMounted(true);
+    setMessages([isJa ? WELCOME_JA : WELCOME_EN]);
+  }, []);
 
   // Dynamically update initial welcome message when language toggles in the header
   useEffect(() => {
@@ -154,6 +161,8 @@ export default function ChatWidget() {
 
   const currentSuggestions = isJa ? SUGGESTED_QUESTIONS_JA : SUGGESTED_QUESTIONS;
 
+  if (!mounted) return null;
+
   return (
     <>
       <style>{`
@@ -168,6 +177,7 @@ export default function ChatWidget() {
 
       {!isOpen && (
         <button
+          suppressHydrationWarning
           className="fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center cursor-pointer shadow-xl border-none transition-transform active:scale-95"
           style={{
             background: "linear-gradient(135deg, #C8102E, #8B0A1F)",
