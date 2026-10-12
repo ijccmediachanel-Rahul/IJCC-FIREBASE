@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,42 @@ function SignupForm() {
       router.replace(redirectUrl);
     }
   }, [user, authLoading, router, redirectUrl]);
+
+  // Handle Google redirect sign-in results on mount
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          const authedUser = result.user;
+          await setDoc(
+            doc(db, "users", authedUser.uid),
+            {
+              uid: authedUser.uid,
+              displayName: authedUser.displayName || authedUser.email?.split("@")[0] || "",
+              email: authedUser.email,
+              phoneNumber: authedUser.phoneNumber || "",
+              createdAt: new Date(),
+              membershipTier: "none",
+              emailVerified: true,
+            },
+            { merge: true }
+          );
+
+          logUserSignupToGoogleSheet({
+            uid: authedUser.uid,
+            displayName: authedUser.displayName || authedUser.email?.split("@")[0] || "",
+            email: authedUser.email || "",
+            phoneNumber: authedUser.phoneNumber || "",
+            createdAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+            membershipTier: "none",
+          }).catch((sheetErr) => console.warn("Google Sheet sync failed:", sheetErr));
+
+          toast({ title: 'Welcome!', description: 'Account created with Google successfully!' });
+          window.location.href = redirectUrl;
+        }
+      })
+      .catch(() => {});
+  }, [redirectUrl, toast]);
 
   // 60-second cooldown timer for resending OTP
   useEffect(() => {
@@ -93,13 +129,37 @@ function SignupForm() {
         window.location.href = redirectUrl;
       }
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-        toast({
-          variant: 'destructive',
-          title: 'Google Sign-up Failed',
-          description: error.message,
-        });
+      // 1. Silent clean exit if user closes/cancels popup
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request' ||
+        error.code === 'auth/user-cancelled'
+      ) {
+        return;
       }
+
+      // 2. Fallback to redirect sign-in if popup blocked
+      if (error.code === 'auth/popup-blocked') {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectErr: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Popup Blocked',
+            description: 'Please allow popups or disable adblocker for this site.',
+          });
+          return;
+        }
+      }
+
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-up Failed',
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,18 @@ function LoginForm() {
   const reason = searchParams.get('reason');
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    // Check if returning from a Google redirect
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          toast({ title: 'Success', description: 'Logged in with Google successfully!' });
+          router.push(redirectUrl);
+        }
+      })
+      .catch(() => {});
+  }, [redirectUrl, router, toast]);
 
   useEffect(() => {
     // Redirect if the user is already logged in and the auth state is no longer loading
@@ -60,13 +72,35 @@ function LoginForm() {
       toast({ title: 'Success', description: 'Logged in with Google successfully!' });
       router.push(redirectUrl);
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-        toast({
-          variant: 'destructive',
-          title: 'Google Login Failed',
-          description: error.message,
-        });
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request' ||
+        error.code === 'auth/user-cancelled'
+      ) {
+        return;
       }
+
+      if (error.code === 'auth/popup-blocked') {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectErr: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Popup Blocked',
+            description: 'Please allow popups or disable adblocker for this site.',
+          });
+          return;
+        }
+      }
+
+      toast({
+        variant: 'destructive',
+        title: 'Google Login Failed',
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }

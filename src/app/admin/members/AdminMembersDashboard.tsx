@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
   ShieldCheck,
@@ -191,6 +191,17 @@ export default function AdminMembersDashboard() {
         }
       } catch {}
 
+      // Check if user is returning from a Google redirect sign-in
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user && result.user.email) {
+            sessionStorage.removeItem("ijcc_admin_logged_out");
+            localStorage.removeItem("ijcc_admin_logged_out");
+            verifyAndLoginGoogleUser(result.user.email);
+          }
+        })
+        .catch(() => {});
+
       const isLoggedOut =
         sessionStorage.getItem("ijcc_admin_logged_out") === "true" ||
         localStorage.getItem("ijcc_admin_logged_out") === "true";
@@ -298,9 +309,30 @@ export default function AdminMembersDashboard() {
         await verifyAndLoginGoogleUser(authedUser.email);
       }
     } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
-        setAuthError(err.message || "Google sign-in was cancelled or failed.");
+      // 1. If user simply closed the popup or cancelled, cleanly reset without showing red error or needing refresh
+      if (
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/cancelled-popup-request" ||
+        err.code === "auth/user-cancelled"
+      ) {
+        setAuthError(null);
+        return;
       }
+
+      // 2. If browser, extension, or ad-blocker blocked the popup, seamlessly fallback to redirect sign-in
+      if (err.code === "auth/popup-blocked") {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: "select_account" });
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectErr: any) {
+          setAuthError("Popup was blocked by your browser. Please allow popups or disable adblocker for this site.");
+          return;
+        }
+      }
+
+      setAuthError(err.message || "Google sign-in was cancelled or failed.");
     } finally {
       setIsGoogleSigningIn(false);
     }

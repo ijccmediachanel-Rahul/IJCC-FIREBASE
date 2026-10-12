@@ -70,6 +70,7 @@ function getFallbackResponse(
 ): string {
   const isJa = language === "ja" || hasJapanese(message);
   const lower = message.toLowerCase().trim();
+  const dict = isJa ? FALLBACK_RESPONSES_JA : FALLBACK_RESPONSES_EN;
 
   // 1. INTENT: Enrolment, Registration, Counselling, How to Join JESDC
   if (
