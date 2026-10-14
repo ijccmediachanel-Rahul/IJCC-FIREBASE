@@ -97,8 +97,23 @@ export const jesdcCentre = defineType({
       };
     }
     return {
-      order: 40,
+      order: 50,
       hidden: false,
+      timings: 'Mon–Sat, 09:00 AM – 06:00 PM',
+      phone: '+91-92679 19281',
+      programsAvailable: [
+        'SSW / TITP Japanese (Blue-Collar)',
+        'Japanese for University Students',
+        'Japanese for Professionals (IT / Non-IT)',
+        'Japanese for Further Studies',
+        'University Admission Assistance',
+      ],
+      facilities: [
+        'Japanese Library',
+        'Audio-Visual Classroom',
+        'Online / Hybrid Classes',
+        'Placement Guidance Cell',
+      ],
     };
   },
   orderings: [
@@ -214,9 +229,10 @@ export const jesdcCentre = defineType({
       hidden: 'hidden',
     },
     prepare({ title, subtitle, hidden }) {
+      const cleanCity = (subtitle || '').replace(/^["']|["']$/g, '').trim();
       return {
         title: `${title || 'Untitled Centre'}${hidden ? ' 🚫 [HIDDEN]' : ''}`,
-        subtitle: subtitle ? `📍 ${subtitle}` : 'Regional Centre',
+        subtitle: cleanCity ? `📍 ${cleanCity}` : 'Regional Centre',
       };
     },
   },

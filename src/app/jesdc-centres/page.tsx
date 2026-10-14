@@ -333,7 +333,7 @@ export default function JesdcCentresPage() {
           client.fetch(JESDC_CENTRES_QUERY),
         ]);
         if (pageData) setCmsPageData(pageData);
-        if (centresData && Array.isArray(centresData) && centresData.length > 0) {
+        if (Array.isArray(centresData)) {
           setCmsCentres(centresData);
         }
       } catch (err) {
@@ -345,57 +345,41 @@ export default function JesdcCentresPage() {
     fetchData();
   }, []);
 
-  // Effective centres list (CMS if present, merged with defaults for unedited centres)
+  // Effective centres list: Once Sanity CMS data is loaded, Sanity is the authoritative single source of truth.
+  // 1. Any centre with hidden === true is strictly EXCLUDED.
+  // 2. Any centre deleted from Sanity does not exist in cmsCentres, so it is strictly EXCLUDED.
+  // 3. Baseline DEFAULT_CENTRES are ONLY used as fallback before CMS data has finished loading (null) or on network failure.
   const centresList = useMemo(() => {
-    const validCmsCentres = (cmsCentres || []).filter((c) => !c.hidden);
-    if (!validCmsCentres.length) {
+    if (cmsCentres === null) {
       return DEFAULT_CENTRES;
     }
 
-    const result: any[] = [];
-    const usedCmsIds = new Set<string>();
-
-    // 1. Process default centres in standard order
-    DEFAULT_CENTRES.forEach((dc) => {
-      // Check if user specifically hid this centre in CMS
-      const hiddenCms = (cmsCentres || []).find(
-        (cc) => cc._id === dc._id && cc.hidden === true
-      );
-      if (hiddenCms) {
-        return;
-      }
-
-      // Find matching CMS document by ID or cityName
-      const matchingCms = validCmsCentres.find((cc) => {
-        if (cc._id === dc._id) return true;
-        const cCity = cc.cityName?.toLowerCase()?.trim();
-        const dCity = dc.cityName?.toLowerCase()?.trim();
-        if (cCity && dCity && (cCity === dCity || dCity.includes(cCity) || cCity.includes(dCity))) {
-          return true;
-        }
-        return false;
-      });
-
-      if (matchingCms) {
-        result.push({
-          ...dc,
-          ...matchingCms,
-        });
-        usedCmsIds.add(matchingCms._id);
-      } else {
-        // Keep default centre intact if not yet published in CMS
-        result.push(dc);
-      }
-    });
-
-    // 2. Add any additional centres created in CMS
-    validCmsCentres.forEach((cc) => {
-      if (!usedCmsIds.has(cc._id)) {
-        result.push(cc);
-      }
-    });
-
-    return result.sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+    return (cmsCentres || [])
+      .filter((c: any) => !c.hidden)
+      .map((c: any) => ({
+        ...c,
+        cityName: (c.cityName || "").replace(/^["']|["']$/g, "").trim(),
+        programsAvailable:
+          Array.isArray(c.programsAvailable) && c.programsAvailable.length > 0
+            ? c.programsAvailable
+            : [
+                "SSW / TITP Japanese (Blue-Collar)",
+                "Japanese for University Students",
+                "Japanese for Professionals (IT / Non-IT)",
+                "Japanese for Further Studies",
+                "University Admission Assistance",
+              ],
+        facilities:
+          Array.isArray(c.facilities) && c.facilities.length > 0
+            ? c.facilities
+            : [
+                "Japanese Library",
+                "Audio-Visual Classroom",
+                "Online / Hybrid Classes",
+                "Placement Guidance Cell",
+              ],
+      }))
+      .sort((a: any, b: any) => (a.order ?? 50) - (b.order ?? 50));
   }, [cmsCentres]);
 
   // Unique cities list for filtering

@@ -419,7 +419,7 @@ export const JESDC_PAGE_QUERY = groq`
 `;
 
 export const JESDC_CENTRES_QUERY = groq`
-  *[_type == "jesdcCentre" && hidden != true] | order(coalesce(order, 10) asc, name asc) {
+  *[_type == "jesdcCentre"] | order(coalesce(order, 10) asc, name asc) {
     _id,
     name,
     cityName,
