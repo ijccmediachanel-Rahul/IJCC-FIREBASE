@@ -22,6 +22,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [organization, setOrganization] = useState('');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -35,6 +37,8 @@ export default function ProfilePage() {
             const data = docSnap.data();
             setProfileData(data);
             setName(data.displayName || currentUser.displayName || '');
+            setPhoneNumber(data.phoneNumber || currentUser.phoneNumber || '');
+            setOrganization(data.organization || data.company || '');
         } else {
             // If doc doesn't exist (e.g., user signed up but doc creation failed), create it.
             const initialData = {
@@ -42,12 +46,16 @@ export default function ProfilePage() {
                 email: currentUser.email,
                 displayName: currentUser.displayName || '',
                 photoURL: currentUser.photoURL || null,
+                phoneNumber: currentUser.phoneNumber || '',
+                organization: '',
                 createdAt: new Date(),
                 membershipTier: "none",
             };
-            await setDoc(userDocRef, initialData);
+            await setDoc(userDocRef, initialData, { merge: true });
             setProfileData(initialData);
             setName(initialData.displayName);
+            setPhoneNumber(initialData.phoneNumber);
+            setOrganization(initialData.organization);
             console.log("Created user document for the first time.");
         }
     } catch (error) {
@@ -56,6 +64,7 @@ export default function ProfilePage() {
         // Fallback to auth data to prevent crashing UI
         setProfileData({ email: currentUser.email });
         setName(currentUser.displayName || '');
+        setPhoneNumber(currentUser.phoneNumber || '');
     } finally {
         setLoading(false);
     }
@@ -77,7 +86,7 @@ export default function ProfilePage() {
   
   const updateUserProfile = async (userId: string, dataToUpdate: Partial<DocumentData>) => {
       const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, dataToUpdate);
+      await setDoc(userDocRef, dataToUpdate, { merge: true });
   
       if (auth.currentUser) {
           const authUpdateData: { displayName?: string } = {};
@@ -96,8 +105,10 @@ export default function ProfilePage() {
     setUpdating(true);
 
     try {
-        const updatedData: {displayName: string;} = {
+        const updatedData: Record<string, any> = {
             displayName: name,
+            phoneNumber: phoneNumber,
+            organization: organization,
         };
 
         await updateUserProfile(user.uid, updatedData);
@@ -177,7 +188,26 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p className="font-semibold">{user.email}</p>
+                    <p className="font-semibold text-sm">{user.email}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input 
+                    id="phone" 
+                    type="tel"
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    placeholder="e.g. +91 98XXXXXXXX"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organization">Organization / Company</Label>
+                  <Input 
+                    id="organization" 
+                    value={organization} 
+                    onChange={(e) => setOrganization(e.target.value)} 
+                    placeholder="e.g. Company or Firm name"
+                  />
                 </div>
                 {profileData && profileData.createdAt && (
                   <div className="space-y-1">

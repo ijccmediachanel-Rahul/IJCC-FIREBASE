@@ -23,6 +23,7 @@ function SignupForm() {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [allowDirectSignup, setAllowDirectSignup] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -33,6 +34,8 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isStep2Unlocked = emailVerified || allowDirectSignup;
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,6 +62,7 @@ function SignupForm() {
               uid: authedUser.uid,
               displayName: authedUser.displayName || authedUser.email?.split("@")[0] || "",
               email: authedUser.email,
+              photoURL: authedUser.photoURL || "",
               phoneNumber: authedUser.phoneNumber || "",
               createdAt: new Date(),
               membershipTier: "none",
@@ -107,6 +111,7 @@ function SignupForm() {
             uid: authedUser.uid,
             displayName: authedUser.displayName || authedUser.email?.split("@")[0] || "",
             email: authedUser.email,
+            photoURL: authedUser.photoURL || "",
             phoneNumber: authedUser.phoneNumber || "",
             createdAt: new Date(),
             membershipTier: "none",
@@ -188,17 +193,21 @@ function SignupForm() {
           description: `A 6-digit verification code has been sent to ${email.trim()}.`,
         });
       } else {
+        if ((res as any)?.allowDirectSignup) {
+          setAllowDirectSignup(true);
+        }
         toast({
           variant: 'destructive',
-          title: 'Failed to Send OTP',
-          description: res.message || 'Could not send verification email.',
+          title: 'OTP Delivery Notice',
+          description: res.message || 'Could not send verification email. You can register directly below.',
         });
       }
     } catch (err: any) {
+      setAllowDirectSignup(true);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: err.message || 'Something went wrong.',
+        title: 'Notice',
+        description: 'Email service is busy. You can proceed with Direct Registration below.',
       });
     } finally {
       setSendingOtp(false);
@@ -245,11 +254,11 @@ function SignupForm() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!emailVerified) {
+    if (!emailVerified && !allowDirectSignup) {
       toast({
         variant: 'destructive',
         title: 'Email Not Verified',
-        description: 'Please verify your email address with OTP before creating your account.',
+        description: 'Please verify your email address or click "Skip OTP & Register Directly".',
       });
       return;
     }
@@ -361,7 +370,7 @@ function SignupForm() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span className="truncate">Continue with Google</span>
+            <span className="truncate">Sign up with Google</span>
           </Button>
 
           <div className="relative py-1">
@@ -422,6 +431,35 @@ function SignupForm() {
                   </Button>
                 )}
               </div>
+
+              {!emailVerified && (
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5 px-0.5">
+                  <span>Having trouble receiving OTP?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAllowDirectSignup(true);
+                      toast({
+                        title: "Direct Registration Enabled",
+                        description: "You can now enter your details and create your account directly.",
+                      });
+                    }}
+                    className="text-primary hover:underline font-semibold cursor-pointer flex items-center gap-1"
+                  >
+                    ⚡ Register Directly (Skip OTP)
+                  </button>
+                </div>
+              )}
+
+              {allowDirectSignup && !emailVerified && (
+                <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Direct registration mode active. Complete details below.
+                  </span>
+                  <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">Unlocked</span>
+                </div>
+              )}
             </div>
 
             {/* OTP Verification Box */}
@@ -461,12 +499,12 @@ function SignupForm() {
               </div>
             )}
 
-            {/* Step 2: Full Name, Phone, Password (unlocked after email verification) */}
-            <div className={`space-y-4 transition-all duration-300 ${!emailVerified ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
-              {!emailVerified && (
+            {/* Step 2: Full Name, Phone, Password */}
+            <div className={`space-y-4 transition-all duration-300 ${!isStep2Unlocked ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+              {!isStep2Unlocked && (
                 <div className="rounded-lg bg-muted/60 p-2.5 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 border border-dashed border-border">
                   <ShieldCheck className="w-4 h-4 text-primary" />
-                  <span>Please verify your email above to continue</span>
+                  <span>Send OTP or click &ldquo;Register Directly&rdquo; above to continue</span>
                 </div>
               )}
 
@@ -478,8 +516,8 @@ function SignupForm() {
                   placeholder="e.g. Full Name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  disabled={!emailVerified}
-                  required={emailVerified}
+                  disabled={!isStep2Unlocked}
+                  required={isStep2Unlocked}
                 />
               </div>
 
@@ -491,8 +529,8 @@ function SignupForm() {
                   placeholder="e.g. +91 98XXXXXXXX"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  disabled={!emailVerified}
-                  required={emailVerified}
+                  disabled={!isStep2Unlocked}
+                  required={isStep2Unlocked}
                 />
               </div>
 
@@ -505,14 +543,14 @@ function SignupForm() {
                     placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={!emailVerified}
+                    disabled={!isStep2Unlocked}
                     className="pr-10"
-                    required={emailVerified}
+                    required={isStep2Unlocked}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    disabled={!emailVerified}
+                    disabled={!isStep2Unlocked}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -530,14 +568,14 @@ function SignupForm() {
                     placeholder="Re-enter password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={!emailVerified}
+                    disabled={!isStep2Unlocked}
                     className="pr-10"
-                    required={emailVerified}
+                    required={isStep2Unlocked}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    disabled={!emailVerified}
+                    disabled={!isStep2Unlocked}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
@@ -549,7 +587,7 @@ function SignupForm() {
               <Button
                 type="submit"
                 className="w-full rounded-full mt-2"
-                disabled={loading || !emailVerified}
+                disabled={loading || !isStep2Unlocked}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Account
