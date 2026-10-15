@@ -216,6 +216,32 @@ export const jesdcCentre = defineType({
       initialValue: 10,
     }),
     defineField({
+      name: 'image',
+      title: 'Primary / Featured Centre Photo',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      description: 'Main featured photo of the centre campus, audio-visual classroom, or building.',
+    }),
+    defineField({
+      name: 'gallery',
+      title: 'Additional Centre Photos / Gallery (Multiple Images)',
+      type: 'array',
+      of: [
+        {
+          type: 'image',
+          options: {
+            hotspot: true,
+          },
+        },
+      ],
+      options: {
+        layout: 'grid',
+      },
+      description: 'Upload multiple photos of classrooms, language labs, libraries, cultural events, or campus facilities for this centre.',
+    }),
+    defineField({
       name: 'hidden',
       title: 'Hide Centre from Website',
       type: 'boolean',
@@ -227,12 +253,14 @@ export const jesdcCentre = defineType({
       title: 'name',
       subtitle: 'cityName',
       hidden: 'hidden',
+      media: 'image',
     },
-    prepare({ title, subtitle, hidden }) {
+    prepare({ title, subtitle, hidden, media }) {
       const cleanCity = (subtitle || '').replace(/^["']|["']$/g, '').trim();
       return {
         title: `${title || 'Untitled Centre'}${hidden ? ' 🚫 [HIDDEN]' : ''}`,
         subtitle: cleanCity ? `📍 ${cleanCity}` : 'Regional Centre',
+        media,
       };
     },
   },

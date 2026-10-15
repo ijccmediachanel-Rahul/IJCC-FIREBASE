@@ -435,7 +435,9 @@ export const JESDC_CENTRES_QUERY = groq`
     upcomingBatchDate,
     availableSeats,
     order,
-    hidden
+    hidden,
+    "imageUrl": coalesce(image.asset->url, imageUrl),
+    "galleryImages": gallery[].asset->url
   }
 `;
 

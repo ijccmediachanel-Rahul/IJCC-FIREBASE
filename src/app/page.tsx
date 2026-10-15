@@ -105,9 +105,9 @@ export default function Home() {
   return (
     <>
       <FloatingSocials />
-      <section className="relative w-full h-[600px] flex items-center justify-center text-center text-white overflow-hidden">
+      <section className="relative w-full h-[600px] flex items-center justify-center text-center text-white overflow-hidden bg-black">
         <Carousel
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full bg-black"
           plugins={[
             Autoplay({
               delay: 4000,
@@ -117,9 +117,9 @@ export default function Home() {
             loop: true,
           }}
         >
-          <CarouselContent className="h-full">
+          <CarouselContent className="h-full ml-0">
             {slides.map((item: any, index: number) => (
-              <CarouselItem key={index} className="h-full">
+              <CarouselItem key={index} className="h-full pl-0 relative bg-black">
                 {item.slideType === 'image' ? (
                     <Image
                       src={item.imageUrl}
@@ -158,24 +158,38 @@ export default function Home() {
               <p className="max-w-2xl mx-auto text-lg md:text-xl">
                 {language === 'ja' ? t('heroDescription') : (cmsHome?.heroSubtitle || t('heroDescription'))}
               </p>
-              <div className="flex flex-col gap-4 sm:flex-row justify-center">
-                <Button asChild size="lg" className="rounded-full">
+              <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4 pt-2 w-full">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md px-6 sm:px-8 transition-transform hover:scale-105"
+                >
                   <Link href={cmsHome?.heroPrimaryButtonLink || "/contact"}>
-                    {t('heroJoinUsButton')} <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('heroJoinUsButton')} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <span className="flex flex-col sm:flex-row gap-4">
-                  <Button asChild size="lg" variant="secondary" className="rounded-full">
-                    <Link href={cmsHome?.heroSecondaryButtonLink || "/events"}>
-                      {t('heroUpcomingEventsButton')}
+
+                <Button
+                  asChild
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold px-6 sm:px-8 transition-transform hover:scale-105 backdrop-blur-sm"
+                >
+                  <Link href={cmsHome?.heroSecondaryButtonLink || "/events"}>
+                    {t('heroUpcomingEventsButton')}
                     </Link>
-                  </Button>
-                  <Button asChild size="lg" variant="secondary" className="rounded-full">
-                    <Link href={cmsHome?.heroTertiaryButtonLink || "/gallery"}>
-                      {t('heroGalleryButton')}
-                    </Link>
-                  </Button>
-                </span>
+                </Button>
+
+                <Button
+                  asChild
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold px-6 sm:px-8 transition-transform hover:scale-105 backdrop-blur-sm"
+                >
+                  <Link href={cmsHome?.heroTertiaryButtonLink || "/gallery"}>
+                    {t('heroGalleryButton')}
+                  </Link>
+                </Button>
               </div>
             </div>
         </div>

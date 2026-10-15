@@ -29,7 +29,10 @@ import {
   Check,
   Briefcase,
   Layers,
+  ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Library,
   Video,
   MonitorCheck,
@@ -43,6 +46,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAutoTranslate } from "@/hooks/use-auto-translate";
@@ -63,6 +68,7 @@ const DEFAULT_CENTRES = [
     email: "delhi@jesdc.ijcc.in",
     timings: "Mon–Sat, 09:00 AM – 06:30 PM",
     googleMapUrl: "https://maps.google.com/?q=New+Delhi",
+    imageUrl: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80",
     programsAvailable: [
       "SSW / TITP Japanese (Blue-Collar)",
       "Japanese for University Students",
@@ -91,6 +97,7 @@ const DEFAULT_CENTRES = [
     email: "kolkata@jesdc.ijcc.in",
     timings: "Mon–Sat, 09:30 AM – 06:00 PM",
     googleMapUrl: "https://maps.google.com/?q=Salt+Lake+Sector+V+Kolkata",
+    imageUrl: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80",
     programsAvailable: [
       "SSW / TITP Japanese (Blue-Collar)",
       "Japanese for University Students",
@@ -119,6 +126,7 @@ const DEFAULT_CENTRES = [
     email: "bihar@jesdc.ijcc.in",
     timings: "Mon–Sat, 09:00 AM – 05:30 PM",
     googleMapUrl: "https://maps.google.com/?q=Patna+Exhibition+Road",
+    imageUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80",
     programsAvailable: [
       "SSW / TITP Japanese (Blue-Collar)",
       "Japanese for University Students",
@@ -135,6 +143,60 @@ const DEFAULT_CENTRES = [
     upcomingBatchDate: "10th November 2026",
     availableSeats: "20 Seats Open",
     order: 30,
+  },
+];
+
+// Helper to provide realistic, high-resolution Japanese language centre imagery when no CMS image is uploaded
+function getCentreFallbackImage(cityName?: string, name?: string): string {
+  const combined = `${cityName || ""} ${name || ""}`.toLowerCase();
+  if (combined.includes("delhi")) {
+    return "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80";
+  }
+  if (combined.includes("kolkata") || combined.includes("bengal")) {
+    return "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80";
+  }
+  if (combined.includes("assam") || combined.includes("dibrugarh")) {
+    return "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80";
+  }
+  if (combined.includes("patna") || combined.includes("bihar")) {
+    return "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80";
+  }
+  return "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=900&q=80";
+}
+
+// Campus & Training Visual Showcase Slides (Option B)
+const SHOWCASE_SLIDES = [
+  {
+    title: "JESDC Delhi NCR (Central Training Hub)",
+    location: "New Delhi • India Habitat Centre",
+    tag: "CENTRAL HUB",
+    description: "Equipped with dedicated Japanese Audio-Visual Language Lab, native curriculum desks, and high-speed hybrid skilling facilities.",
+    image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1400&q=80",
+    centreName: "JESDC Delhi NCR (Central Training Hub)",
+  },
+  {
+    title: "JESDC Kolkata Regional Centre",
+    location: "Kolkata • Salt Lake Sector V",
+    tag: "EAST REGIONAL HUB",
+    description: "State-of-the-art interactive smart classroom, library of Japanese study materials, and direct interview placement guidance cell.",
+    image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1400&q=80",
+    centreName: "JESDC Kolkata Regional Centre",
+  },
+  {
+    title: "JESDC Assam Centre (Dibrugarh)",
+    location: "Dibrugarh • Assam",
+    tag: "NORTHEAST GATEWAY",
+    description: "Dedicated skilling wing for Northeast youth, fostering SSW & TITP technical training, language proficiency, and work visa pathways.",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
+    centreName: "JESDC Assam Centre (Dibrugarh)",
+  },
+  {
+    title: "Smart Audio-Visual Classrooms & Hybrid Learning",
+    location: "Pan-India JESDC Network",
+    tag: "MODERN INFRASTRUCTURE",
+    description: "Standardized JLPT/NAT training infrastructure with live remote Japanese mentor sessions, audio pronunciation drills, and mock tests.",
+    image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1400&q=80",
+    centreName: "Nearest Available Centre",
   },
 ];
 
@@ -299,6 +361,8 @@ export default function JesdcCentresPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
 
+
+
   // Modal states
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
@@ -356,29 +420,46 @@ export default function JesdcCentresPage() {
 
     return (cmsCentres || [])
       .filter((c: any) => !c.hidden)
-      .map((c: any) => ({
-        ...c,
-        cityName: (c.cityName || "").replace(/^["']|["']$/g, "").trim(),
-        programsAvailable:
-          Array.isArray(c.programsAvailable) && c.programsAvailable.length > 0
-            ? c.programsAvailable
-            : [
-                "SSW / TITP Japanese (Blue-Collar)",
-                "Japanese for University Students",
-                "Japanese for Professionals (IT / Non-IT)",
-                "Japanese for Further Studies",
-                "University Admission Assistance",
-              ],
-        facilities:
-          Array.isArray(c.facilities) && c.facilities.length > 0
-            ? c.facilities
-            : [
-                "Japanese Library",
-                "Audio-Visual Classroom",
-                "Online / Hybrid Classes",
-                "Placement Guidance Cell",
-              ],
-      }))
+      .map((c: any) => {
+        const rawImages: string[] = [];
+        if (c.imageUrl) rawImages.push(c.imageUrl);
+        if (Array.isArray(c.galleryImages)) {
+          c.galleryImages.forEach((imgUrl: string) => {
+            if (imgUrl && !rawImages.includes(imgUrl)) rawImages.push(imgUrl);
+          });
+        }
+        const effectiveImages =
+          rawImages.length > 0
+            ? rawImages
+            : [getCentreFallbackImage(c.cityName, c.name)];
+
+        return {
+          ...c,
+          cityName: (c.cityName || "").replace(/^["']|["']$/g, "").trim(),
+          stateName: (c.stateName || "").replace(/^["']|["']$/g, "").trim(),
+          imageUrl: effectiveImages[0],
+          images: effectiveImages,
+          programsAvailable:
+            Array.isArray(c.programsAvailable) && c.programsAvailable.length > 0
+              ? c.programsAvailable
+              : [
+                  "SSW / TITP Japanese (Blue-Collar)",
+                  "Japanese for University Students",
+                  "Japanese for Professionals (IT / Non-IT)",
+                  "Japanese for Further Studies",
+                  "University Admission Assistance",
+                ],
+          facilities:
+            Array.isArray(c.facilities) && c.facilities.length > 0
+              ? c.facilities
+              : [
+                  "Japanese Library",
+                  "Audio-Visual Classroom",
+                  "Online / Hybrid Classes",
+                  "Placement Guidance Cell",
+                ],
+        };
+      })
       .sort((a: any, b: any) => (a.order ?? 50) - (b.order ?? 50));
   }, [cmsCentres]);
 
@@ -410,6 +491,78 @@ export default function JesdcCentresPage() {
       return matchesCity && matchesSearch;
     });
   }, [centresList, selectedCity, searchQuery]);
+
+  // Dynamic slides for Top Hero from centresList (supports multiple images per centre)
+  const heroSlides = useMemo(() => {
+    if (centresList && centresList.length > 0) {
+      const slides: any[] = [];
+      centresList.forEach((c: any) => {
+        const centreImages = c.images && c.images.length > 0 ? c.images : [c.imageUrl];
+        centreImages.forEach((img: string) => {
+          slides.push({
+            title: c.name,
+            location: `${c.cityName || "India"}${c.stateName ? ` • ${c.stateName}` : ""}`,
+            tag: c.cityName ? `${c.cityName.toUpperCase()} CENTRE` : "JESDC CENTRE",
+            description: c.address || "Accredited Japanese Language & Hybrid Skilling Infrastructure",
+            image: img,
+            centreName: c.name,
+          });
+        });
+      });
+      return slides.length > 0 ? slides : SHOWCASE_SLIDES;
+    }
+    return SHOWCASE_SLIDES;
+  }, [centresList]);
+
+  // Dynamic Centres Showcase for slider under directory (supports multiple images per centre)
+  const dynamicCentresShowcase = useMemo(() => {
+    if (centresList && centresList.length > 0) {
+      const showcaseItems: any[] = [];
+      centresList.forEach((c: any) => {
+        const centreImages = c.images && c.images.length > 0 ? c.images : [c.imageUrl];
+        centreImages.forEach((img: string, imgIdx: number) => {
+          showcaseItems.push({
+            id: `${c._id || c.name}-${imgIdx}`,
+            name: c.name,
+            cityName: c.cityName || "India",
+            stateName: c.stateName || "",
+            address: c.address || "",
+            imageUrl: img,
+            facilities: c.facilities || [],
+            googleMapUrl: c.googleMapUrl,
+            upcomingBatchDate: c.upcomingBatchDate,
+            availableSeats: c.availableSeats,
+            centreRaw: c,
+          });
+        });
+      });
+      return showcaseItems;
+    }
+    return [];
+  }, [centresList]);
+
+  // Ensure enough items for smooth infinite loop in multi-card carousel
+  const sliderItems = useMemo(() => {
+    if (dynamicCentresShowcase.length === 0) return [];
+    if (dynamicCentresShowcase.length < 5) {
+      return [...dynamicCentresShowcase, ...dynamicCentresShowcase, ...dynamicCentresShowcase];
+    }
+    return dynamicCentresShowcase;
+  }, [dynamicCentresShowcase]);
+
+  // Infinite marquee rows (Sunlit Consultants style) - duplicated for seamless loop
+  const marqueeCentresRow1 = useMemo(() => {
+    if (dynamicCentresShowcase.length === 0) return [];
+    return [...dynamicCentresShowcase, ...dynamicCentresShowcase, ...dynamicCentresShowcase, ...dynamicCentresShowcase];
+  }, [dynamicCentresShowcase]);
+
+  const marqueeCentresRow2 = useMemo(() => {
+    if (dynamicCentresShowcase.length === 0) return [];
+    const shifted = dynamicCentresShowcase.length > 1
+      ? [...dynamicCentresShowcase.slice(1), dynamicCentresShowcase[0]]
+      : dynamicCentresShowcase;
+    return [...shifted, ...shifted, ...shifted, ...shifted];
+  }, [dynamicCentresShowcase]);
 
   // Objectives list (CMS or baseline)
   const objectivesList = useMemo(() => {
@@ -676,44 +829,84 @@ export default function JesdcCentresPage() {
       {/* ========================================================
           1. HERO BANNER & INTRO (Synced with IJCC signature style)
           ======================================================== */}
-      <section className="relative py-14 sm:py-20 md:py-24 overflow-hidden bg-primary text-primary-foreground">
-        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        <div className="container relative z-10 px-4 sm:px-6 text-center">
+      {/* ========================================================
+          1. FULL-SCREEN HERO SLIDER (Edge-to-Edge like Homepage)
+          ======================================================== */}
+      <section className="relative w-full h-[560px] sm:h-[640px] flex items-center justify-center text-center text-white overflow-hidden bg-black">
+        <Carousel
+          className="absolute inset-0 w-full h-full bg-black"
+          plugins={[
+            Autoplay({
+              delay: 4500,
+            }),
+          ]}
+          opts={{
+            loop: true,
+          }}
+        >
+          <CarouselContent className="h-full ml-0">
+            {heroSlides.map((slide, index) => (
+              <CarouselItem key={index} className="h-full pl-0 relative bg-black">
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className="w-full h-full object-cover brightness-[0.72] contrast-[1.05] block select-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/15" />
+                {/* Active Slide Centre Badge at top */}
+                <div className="absolute top-6 left-6 z-20 hidden sm:flex items-center gap-2">
+                  <span className="px-3.5 py-1 rounded-full bg-primary/95 text-white text-xs font-bold uppercase tracking-wider shadow-sm">
+                    {slide.tag}
+                  </span>
+                  <span className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/95 text-xs font-medium border border-white/20 inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
+                    <span>{slide.location}</span>
+                  </span>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white bg-black/40 hover:bg-black/70 border-none" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white bg-black/40 hover:bg-black/70 border-none" />
+        </Carousel>
+
+        {/* Hero Content Overlay (Always centered, highly legible & responsive) */}
+        <div className="relative z-10 container px-4 sm:px-6">
           <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
             {/* Floating Badge */}
-            <Badge className="rounded-full bg-accent text-accent-foreground px-4 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-1 sm:mb-2 shadow-xs">
+            <Badge className="rounded-full bg-accent text-accent-foreground px-4 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-1 sm:mb-2 shadow-sm">
               {language === 'ja'
                 ? tr(cmsPageData?.bannerBadge, "日印教育・技能開発イニシアチブ")
                 : (cmsPageData?.bannerBadge || "AN INITIATIVE OF IJCC")}
             </Badge>
 
             {/* Main Title */}
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-headline tracking-tight leading-tight text-white font-normal">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-headline tracking-tight leading-tight text-white font-bold drop-shadow-md">
               {language === 'ja'
                 ? tr(cmsPageData?.bannerTitle, "JESDC センター")
                 : (cmsPageData?.bannerTitle || "JESDC Centres")}
             </h1>
 
             {/* Subtitle */}
-            <p className="text-lg sm:text-xl md:text-2xl font-headline text-primary-foreground/90 font-medium">
+            <p className="text-base sm:text-xl md:text-2xl font-headline text-white/95 font-medium drop-shadow">
               {language === 'ja'
                 ? tr(cmsPageData?.bannerSubtitle, "日本教育・技能開発センター")
                 : (cmsPageData?.bannerSubtitle || "Japan Education & Skill Development Centre")}
             </p>
 
             {/* Tagline */}
-            <p className="text-lg sm:text-2xl md:text-3xl font-headline italic text-accent px-2">
+            <p className="text-base sm:text-xl md:text-2xl font-headline italic text-accent px-2 drop-shadow">
               "{language === 'ja'
                 ? tr(cmsPageData?.bannerTagline, "日本語を学び、技術を磨き、日本での未来を創る")
                 : (cmsPageData?.bannerTagline || "Learn Japanese. Build Skills. Create Your Future in Japan.")}"
             </p>
 
             {/* Description */}
-            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-primary-foreground/90 font-sans leading-relaxed pt-1 px-2 sm:px-0">
+            <p className="max-w-3xl mx-auto text-xs sm:text-sm md:text-base text-white/85 font-sans leading-relaxed pt-1 px-2 sm:px-0 drop-shadow">
               {language === 'ja'
                 ? tr(cmsPageData?.bannerDescription, "JESDCは、日本での就労・留学を目指す学生や社会人を対象に、実践的な日本語教育、キャリア指導、大学進学支援を提供するIJCC公認の総合研修ネットワークです。")
                 : (cmsPageData?.bannerDescription ||
-                  "JESDC is IJCC's network of training and guidance centres. Each centre offers Japanese language training, career preparation and admission support for students and professionals who want to work or study in Japan.")}
+                  "JESDC is IJCC's network of accredited training centres across India. Each centre offers Japanese language training, career preparation, and visa pathways for students and professionals.")}
             </p>
 
             {/* Action CTAs */}
@@ -733,7 +926,7 @@ export default function JesdcCentresPage() {
                 size="lg"
                 variant="secondary"
                 onClick={() => handleOpenEnquiry()}
-                className="w-full sm:w-auto rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold px-6 sm:px-8 transition-transform hover:scale-105"
+                className="w-full sm:w-auto rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold px-6 sm:px-8 transition-transform hover:scale-105 backdrop-blur-sm"
               >
                 <Send className="mr-2 h-4 w-4" />
                 {language === 'ja' ? "入会・受講相談" : "Enrol / Book Counselling"}
@@ -934,8 +1127,9 @@ export default function JesdcCentresPage() {
                 {/* Centre Header */}
                 <CardHeader className="p-5 sm:p-6 pb-2 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-3 py-1">
-                      📍 {tr(centre.cityName) || "India"}
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-3 py-1">
+                      <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span>{tr(centre.cityName) || "India"}</span>
                     </span>
                     {centre.stateName && (
                       <span className="text-[11px] font-mono font-medium text-muted-foreground uppercase">
@@ -1108,6 +1302,105 @@ export default function JesdcCentresPage() {
             </Button>
           </div>
         )}
+
+        {/* ========================================================
+            3.5. DYNAMIC CENTRES & CAMPUS INFRASTRUCTURE MARQUEE
+            (Infinite moving cards like Sunlit Consultants - fully dynamic & bright)
+            ======================================================== */}
+        <div className="mt-14 sm:mt-20 pt-10 sm:pt-14 border-t overflow-hidden">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10 px-4 sm:px-6 max-w-7xl mx-auto">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-bold">
+                <Sparkles className="h-3.5 w-3.5" />
+                {language === 'ja' ? "施設・キャンパス ライブショーケース" : "ACCREDITED JESDC CENTRES SHOWCASE"}
+              </div>
+              <h3 className="text-2xl sm:text-4xl font-headline font-bold text-foreground">
+                {language === 'ja' ? "JESDC センター＆施設ギャラリー" : "JESDC Centres & Training Infrastructure"}
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">
+                {language === 'ja'
+                  ? "全国のJESDCスマート教室、日本語ラボ、ハイブリッド研修施設。ホバーすると一時停止します。"
+                  : "Explore our accredited Japanese audio-visual classrooms, libraries, and native training infrastructure across India. Hover over any centre to pause."}
+              </p>
+            </div>
+
+            {/* Quick Centre Count Badge */}
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs font-semibold text-foreground border-border bg-card shadow-xs inline-flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                <span>{centresList.length} {language === 'ja' ? "拠点展開中" : "Active Centres"}</span>
+              </Badge>
+            </div>
+          </div>
+
+          {/* Infinite Marquee Wrapper with soft edge gradients */}
+          <div className="relative w-full overflow-hidden space-y-4 sm:space-y-6 py-2">
+            {/* Left and Right Edge Gradient Masks for Smooth Fade */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 md:w-44 z-20 bg-gradient-to-r from-background via-background/80 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-44 z-20 bg-gradient-to-l from-background via-background/80 to-transparent" />
+
+            {/* ROW 1: Gliding smoothly from right to left */}
+            <div className="animate-marquee-infinite flex gap-3 sm:gap-4">
+              {marqueeCentresRow1.map((centre, mIdx) => (
+                <div
+                  key={`row1-${centre.id}-${mIdx}`}
+                  className="w-[200px] sm:w-[230px] md:w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group select-none"
+                >
+                  {/* Clean, Bright Photo */}
+                  <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-muted">
+                    <img
+                      src={centre.imageUrl}
+                      alt={centre.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-100 select-none"
+                    />
+                  </div>
+
+                  {/* Clean Centre Name ONLY */}
+                  <div className="p-2.5 sm:p-3 text-center bg-card flex flex-col justify-center min-h-[52px]">
+                    <h4 className="text-xs sm:text-sm font-bold font-headline text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {tr(centre.name)}
+                    </h4>
+                    <span className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1.5 mt-0.5">
+                      <MapPin className="h-3 w-3 text-primary shrink-0" />
+                      <span>{tr(centre.cityName) || "India"}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ROW 2: Gliding smoothly in reverse direction (Sunlit Consultants style) */}
+            <div className="animate-marquee-infinite-reverse flex gap-3 sm:gap-4">
+              {marqueeCentresRow2.map((centre, mIdx) => (
+                <div
+                  key={`row2-${centre.id}-${mIdx}`}
+                  className="w-[200px] sm:w-[230px] md:w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group select-none"
+                >
+                  {/* Clean, Bright Photo */}
+                  <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-muted">
+                    <img
+                      src={centre.imageUrl}
+                      alt={centre.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-100 select-none"
+                    />
+                  </div>
+
+                  {/* Clean Centre Name ONLY */}
+                  <div className="p-2.5 sm:p-3 text-center bg-card flex flex-col justify-center min-h-[52px]">
+                    <h4 className="text-xs sm:text-sm font-bold font-headline text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {tr(centre.name)}
+                    </h4>
+                    <span className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1.5 mt-0.5">
+                      <MapPin className="h-3 w-3 text-primary shrink-0" />
+                      <span>{tr(centre.cityName) || "India"}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ========================================================
