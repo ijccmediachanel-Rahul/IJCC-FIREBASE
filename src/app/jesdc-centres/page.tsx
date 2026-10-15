@@ -550,18 +550,15 @@ export default function JesdcCentresPage() {
     return dynamicCentresShowcase;
   }, [dynamicCentresShowcase]);
 
-  // Infinite marquee rows (Sunlit Consultants style) - duplicated for seamless loop
-  const marqueeCentresRow1 = useMemo(() => {
+  // Infinite marquee (Sunlit Consultants style) - duplicated for seamless single-row loop
+  const marqueeCentres = useMemo(() => {
     if (dynamicCentresShowcase.length === 0) return [];
-    return [...dynamicCentresShowcase, ...dynamicCentresShowcase, ...dynamicCentresShowcase, ...dynamicCentresShowcase];
-  }, [dynamicCentresShowcase]);
-
-  const marqueeCentresRow2 = useMemo(() => {
-    if (dynamicCentresShowcase.length === 0) return [];
-    const shifted = dynamicCentresShowcase.length > 1
-      ? [...dynamicCentresShowcase.slice(1), dynamicCentresShowcase[0]]
-      : dynamicCentresShowcase;
-    return [...shifted, ...shifted, ...shifted, ...shifted];
+    return [
+      ...dynamicCentresShowcase,
+      ...dynamicCentresShowcase,
+      ...dynamicCentresShowcase,
+      ...dynamicCentresShowcase,
+    ];
   }, [dynamicCentresShowcase]);
 
   // Objectives list (CMS or baseline)
@@ -1025,7 +1022,7 @@ export default function JesdcCentresPage() {
       {/* ========================================================
           3. OUR CENTRES DIRECTORY (ONE CARD PER CENTRE + FILTERS)
           ======================================================== */}
-      <section id="centres-directory" className="py-12 sm:py-20 md:py-28 container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+      <section id="centres-directory" className="pt-10 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-8 container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
         <div className="text-center max-w-3xl mx-auto space-y-2.5 sm:space-y-3 mb-8 sm:mb-12">
           <div className="text-xs uppercase tracking-widest text-accent font-bold">
             {language === 'ja' ? "全国トレーニング拠点" : "ACCREDITED PAN-INDIA NETWORK"}
@@ -1307,9 +1304,9 @@ export default function JesdcCentresPage() {
             3.5. DYNAMIC CENTRES & CAMPUS INFRASTRUCTURE MARQUEE
             (Infinite moving cards like Sunlit Consultants - fully dynamic & bright)
             ======================================================== */}
-        <div className="mt-14 sm:mt-20 pt-10 sm:pt-14 border-t overflow-hidden">
+        <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t overflow-hidden">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10 px-4 sm:px-6 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4 sm:mb-6 px-4 sm:px-6 max-w-7xl mx-auto">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-bold">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -1334,21 +1331,21 @@ export default function JesdcCentresPage() {
             </div>
           </div>
 
-          {/* Infinite Marquee Wrapper with soft edge gradients */}
-          <div className="relative w-full overflow-hidden space-y-4 sm:space-y-6 py-2">
+          {/* Infinite Marquee Wrapper with soft edge gradients (SINGLE SCROLL) */}
+          <div className="relative w-full overflow-hidden py-1 sm:py-2">
             {/* Left and Right Edge Gradient Masks for Smooth Fade */}
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 md:w-44 z-20 bg-gradient-to-r from-background via-background/80 to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-44 z-20 bg-gradient-to-l from-background via-background/80 to-transparent" />
 
-            {/* ROW 1: Gliding smoothly from right to left */}
-            <div className="animate-marquee-infinite flex gap-3 sm:gap-4">
-              {marqueeCentresRow1.map((centre, mIdx) => (
+            {/* SINGLE ROW: Gliding smoothly across the screen */}
+            <div className="animate-marquee-infinite flex gap-4 sm:gap-5">
+              {marqueeCentres.map((centre, mIdx) => (
                 <div
-                  key={`row1-${centre.id}-${mIdx}`}
-                  className="w-[200px] sm:w-[230px] md:w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group select-none"
+                  key={`marquee-${centre.id}-${mIdx}`}
+                  className="w-[220px] sm:w-[260px] md:w-[280px] shrink-0 rounded-2xl border border-border/80 bg-card shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group select-none"
                 >
                   {/* Clean, Bright Photo */}
-                  <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-muted">
+                  <div className="relative h-32 sm:h-36 md:h-40 w-full overflow-hidden bg-muted">
                     <img
                       src={centre.imageUrl}
                       alt={centre.name}
@@ -1357,37 +1354,7 @@ export default function JesdcCentresPage() {
                   </div>
 
                   {/* Clean Centre Name ONLY */}
-                  <div className="p-2.5 sm:p-3 text-center bg-card flex flex-col justify-center min-h-[52px]">
-                    <h4 className="text-xs sm:text-sm font-bold font-headline text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {tr(centre.name)}
-                    </h4>
-                    <span className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-1.5 mt-0.5">
-                      <MapPin className="h-3 w-3 text-primary shrink-0" />
-                      <span>{tr(centre.cityName) || "India"}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ROW 2: Gliding smoothly in reverse direction (Sunlit Consultants style) */}
-            <div className="animate-marquee-infinite-reverse flex gap-3 sm:gap-4">
-              {marqueeCentresRow2.map((centre, mIdx) => (
-                <div
-                  key={`row2-${centre.id}-${mIdx}`}
-                  className="w-[200px] sm:w-[230px] md:w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group select-none"
-                >
-                  {/* Clean, Bright Photo */}
-                  <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-muted">
-                    <img
-                      src={centre.imageUrl}
-                      alt={centre.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-100 select-none"
-                    />
-                  </div>
-
-                  {/* Clean Centre Name ONLY */}
-                  <div className="p-2.5 sm:p-3 text-center bg-card flex flex-col justify-center min-h-[52px]">
+                  <div className="p-3 sm:p-3.5 text-center bg-card flex flex-col justify-center min-h-[54px]">
                     <h4 className="text-xs sm:text-sm font-bold font-headline text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {tr(centre.name)}
                     </h4>
@@ -1406,9 +1373,9 @@ export default function JesdcCentresPage() {
       {/* ========================================================
           4. WHY JESDC? (Harmonized with Home page Key Features)
           ======================================================== */}
-      <section className="py-12 sm:py-20 md:py-28 bg-secondary/50 border-y">
+      <section className="py-8 sm:py-12 md:py-14 bg-secondary/50 border-y">
         <div className="container px-4 sm:px-6">
-          <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center mb-10 sm:mb-16 max-w-3xl mx-auto">
+          <div className="flex flex-col items-center justify-center space-y-2.5 sm:space-y-3 text-center mb-6 sm:mb-8 max-w-3xl mx-auto">
             <div className="inline-block rounded-full bg-muted px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {language === 'ja' ? "JESDCを選ぶ理由" : "DISTINCTIVE ADVANTAGES"}
             </div>
